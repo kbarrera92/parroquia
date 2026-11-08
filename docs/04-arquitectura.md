@@ -19,6 +19,7 @@ El acceso va por EF Core; el resto del código no depende del motor salvo la bú
 - Migraciones versionadas en el repo; cada despliegue aplica migraciones.
 - *Complex types* para `FechaParcial` (con columna generada `*_clave_orden`) y *owned type* para `Contrayente`. Ids por secuencia HiLo en entidades auditables.
 - **Interceptor `SaveChanges`** genera `Auditoria` y rellena `CreadoPor/ModificadoPor` desde el usuario actual. Ningún código de negocio escribe auditoría a mano. Solo audita cambios reales de valor; `Anulado` false→true es `Anulacion` y true→false `RevertirAnulacion`; el borrado físico lanza excepción.
+- **Colecciones de texto** (padrinos de Bautismo): `List<string>` mapeada a `text[]`. Asignar siempre una lista nueva al editar. El interceptor las compara por contenido y en orden (null = vacía) y las audita unidas con "; " (vacía = sin valor).
 - Concurrencia optimista (`xmin` / `rowversion`).
 - Filtro global EF: los `Anulado` no salen en listados, búsquedas ni constancias. El Administrador los ve con "Incluir anulados" en el listado y en el detalle (`IgnoreQueryFilters`, protegido por `Registros.RevertirAnulacion`). La búsqueda de Inicio nunca los incluye.
 - Columnas **derivadas** (órdenes naturales, `BusquedaNormalizada`) se marcan con `.NoAuditar()`: se guardan pero no ensucian el historial; un cambio solo en ellas se guarda sin crear `Auditoria`.

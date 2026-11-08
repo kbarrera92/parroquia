@@ -28,7 +28,9 @@ Al margen se lee:   {NotasMarginales | "Sin anotaciones"}
 
 Mazatenango, {FechaEmision}                         {Párroco} / Párroco.
 ```
-Decisión: el nombre va **sin rótulo** (se elimina el primer "Al margen se lee:" del original, que era un rótulo equivocado). Valores subrayados en el original. Si solo hay un progenitor o un padrino, no imprimir " y ".
+Decisión: el nombre va **sin rótulo** (se elimina el primer "Al margen se lee:" del original, que era un rótulo equivocado). Valores subrayados en el original. Si solo hay un progenitor o un padrino, no imprimir " y "; con 3 o más padrinos: "A, B y C".
+
+**Implementado en M4** (`PlantillaBautismo`). Prueba golden: `tests/Parroquia.Pruebas/Constancias/Golden/bautismo.txt` (datos del ejemplo; fechas con "de"; emisión 4/11/2026). Una línea de texto plano por párrafo: la introducción ("El infrascrito Párroco… Bautismo de:") es un solo párrafo; las cinco filas "rótulo: valor" salen como `Parrafo.Fila` (rótulo en columna fija a la izquierda, valor subrayado; en texto plano "{rótulo} {valor}"). Reglas: "Nació el {fecha}" solo si hay fecha de nacimiento (**"Nació" con tilde**, corrección del "Nacio" del papel); padres y padrinos se unen con `FormatoConstancia.UnirLista`; ministro vacío deja la fila con el valor en blanco (y avisa); cierre `Mazatenango, {fecha larga}`. Avisos antes de imprimir: falta nombre/apellido, fecha de bautismo incompleta, falta nacimiento, faltan padres, faltan padrinos, falta ministro, falta libro/folio, "Revisar". Esta constancia no imprime la partida.
 
 ### 2.2 Confirmación — `CERTIFICACIÓN DE CONFIRMACIÓN`
 ```

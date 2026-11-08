@@ -28,6 +28,9 @@
 | 21 | PDF (M3) | QuestPDF Community + fuentes Liberation (OFL) incrustadas; maquetación validada contra el ejemplo de Comunión |
 | 22 | Campos de Comunión (M3) | Mínimos (nombres, apellidos, fecha, libro, folio, partida, ministro, notas) hasta tener fotos de páginas reales (M0) |
 | 23 | Avisos al imprimir (M3) | Cualquier aviso (dato faltante o "Revisar") exige una casilla de confirmación; queda `ConAdvertencias` en la bitácora |
+| 24 | Padrinos de Bautismo (M4) | Lista de texto 0..n (máx. 10) en el orden del libro, columna `text[]`; auditada como texto unido. Tabla hija descartada (borrado físico prohibido) |
+| 25 | "Nació" en la constancia de Bautismo (M4) | Con tilde (el papel dice "Nacio"); corrección consciente, ya en el golden |
+| 26 | Nacimiento vs. bautismo (M4) | Opcional; no puede ser posterior al bautismo, comparando solo hasta la precisión común |
 
 ## 🟡 Pendientes
 

@@ -1,0 +1,6 @@
+@model string?
+@* Una fila de la lista de padrinos. Todas comparten el nombre "Input.Padrinos": el orden de la lista es el del formulario. *@
+<div class="input-group mb-2" data-fila>
+    <input name="Input.Padrinos" value="@Model" class="form-control" maxlength="150" autocomplete="off" aria-label="Nombre del padrino" />
+    <button type="button" class="btn btn-outline-secondary" data-quitar-fila aria-label="Quitar este padrino">Quitar</button>
+</div>

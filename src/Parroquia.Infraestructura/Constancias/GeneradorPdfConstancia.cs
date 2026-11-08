@@ -93,16 +93,32 @@ public sealed class GeneradorPdfConstancia
         var caja = c.PaddingTop(p.EspacioAntes);
         if (p.LineaInferior) caja = caja.PaddingHorizontal(36).BorderBottom(1).PaddingBottom(2);
 
-        caja.Text(t =>
+        if (p.Rotulo is null)
         {
-            Alinear(t, p.Alineacion);
-            foreach (var s in p.Segmentos)
-            {
-                var span = t.Span(s.Texto);
-                if (s.Negrita) span.Bold();
-                if (s.Subrayado) span.Underline();
-            }
+            caja.Text(t => Segmentos(t, p));
+            return;
+        }
+
+        // Fila "rótulo: valor": el valor arranca siempre en la misma columna.
+        caja.Row(fila =>
+        {
+            fila.ConstantItem(AnchoRotulo).Text(p.Rotulo);
+            fila.RelativeItem().Text(t => Segmentos(t, p));
         });
+    }
+
+    /// <summary>Ancho (pt) de la columna de rótulos de las filas "rótulo: valor".</summary>
+    private const float AnchoRotulo = 130;
+
+    private static void Segmentos(TextDescriptor t, Parrafo p)
+    {
+        Alinear(t, p.Alineacion);
+        foreach (var s in p.Segmentos)
+        {
+            var span = t.Span(s.Texto);
+            if (s.Negrita) span.Bold();
+            if (s.Subrayado) span.Underline();
+        }
     }
 
     /// <summary>Nombre y cargo del firmante, a la derecha, con aire arriba para la firma y el sello manuales.</summary>

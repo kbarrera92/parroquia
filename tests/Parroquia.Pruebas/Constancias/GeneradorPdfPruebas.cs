@@ -68,6 +68,28 @@ public class GeneradorPdfPruebas
         Encoding.ASCII.GetString(pdf, 0, 5).Should().Be("%PDF-");
     }
 
+    private static DocumentoConstancia EjemploBautismo() => PlantillaBautismo.Render(
+        new DatosBautismo("Juan Carlos", "Hidalgo Arevalo",
+            FechaParcial.Crear(1978, 8, 13, new DateOnly(2026, 11, 7)),
+            FechaParcial.Crear(1977, 1, 5, new DateOnly(2026, 11, 7)),
+            "Carlos B. Hidalgo", "Josefa Arévalo", ["Gildardo Alvarado", "Sonia de Alvarado"],
+            "P. Julio Rodriguez", null, "80", "388", false),
+        Contexto);
+
+    [Fact]
+    public void Maqueta_filas_con_rotulo_y_las_notas_largas_no_rompen_el_documento()
+    {
+        var datos = new DatosBautismo("Juan Carlos", "Hidalgo Arevalo",
+            FechaParcial.Crear(1978, 8, 13, new DateOnly(2026, 11, 7)), FechaParcial.Vacia,
+            "Carlos B. Hidalgo", null, ["Ana Paz", "Luis Mena", "Rosa Díaz"], "P. Julio Rodriguez",
+            string.Join(' ', Enumerable.Repeat("Se casó por la Iglesia en la parroquia de la cabecera.", 12)), "80", "388", false);
+
+        var pdf = new GeneradorPdfConstancia().Generar(PlantillaBautismo.Render(datos, Contexto), null);
+
+        Encoding.ASCII.GetString(pdf, 0, 5).Should().Be("%PDF-");
+        Encoding.Latin1.GetString(pdf).Should().Contain("/Count 1");
+    }
+
     [Fact]
     public void Muestra_visual_opcional_para_revisar_contra_el_ejemplo()
     {
@@ -77,10 +99,13 @@ public class GeneradorPdfPruebas
         Directory.CreateDirectory(carpeta);
         var generador = new GeneradorPdfConstancia();
         var logo = LogoDeReferencia();
-        File.WriteAllBytes(Path.Combine(carpeta, "comunion.pdf"), generador.Generar(Ejemplo(), logo));
-        generador.Construir(Ejemplo(), logo).GenerateImages(
-            i => Path.Combine(carpeta, $"comunion-{i}.png"),
-            new ImageGenerationSettings { ImageFormat = ImageFormat.Png, RasterDpi = 110 });
+        foreach (var (nombre, documento) in new[] { ("comunion", Ejemplo()), ("bautismo", EjemploBautismo()) })
+        {
+            File.WriteAllBytes(Path.Combine(carpeta, $"{nombre}.pdf"), generador.Generar(documento, logo));
+            generador.Construir(documento, logo).GenerateImages(
+                i => Path.Combine(carpeta, $"{nombre}-{i}.png"),
+                new ImageGenerationSettings { ImageFormat = ImageFormat.Png, RasterDpi = 110 });
+        }
     }
 
     /// <summary>El logo de docs/referencias, si se encuentra subiendo desde la carpeta de las pruebas.</summary>

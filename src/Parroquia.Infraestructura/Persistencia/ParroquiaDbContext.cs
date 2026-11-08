@@ -19,6 +19,7 @@ public class ParroquiaDbContext(DbContextOptions<ParroquiaDbContext> options)
     public DbSet<ConfiguracionParroquia> Configuraciones => Set<ConfiguracionParroquia>();
     public DbSet<ParrocoVigente> Parrocos => Set<ParrocoVigente>();
     public DbSet<Comunion> Comuniones => Set<Comunion>();
+    public DbSet<Bautismo> Bautismos => Set<Bautismo>();
     public DbSet<ConstanciaEmitida> ConstanciasEmitidas => Set<ConstanciaEmitida>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -73,6 +74,7 @@ public class ParroquiaDbContext(DbContextOptions<ParroquiaDbContext> options)
         });
 
         builder.ApplyConfiguration(new ConfiguracionComunion());
+        builder.ApplyConfiguration(new ConfiguracionBautismo());
 
         ConfiguracionAuditable.Aplicar(builder); // siempre al final
     }

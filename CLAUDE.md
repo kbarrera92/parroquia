@@ -70,6 +70,7 @@ Patrón: **Comunión** (copiar y adaptar; `X` = el sacramento). Carpeta por mód
 7. **Páginas**: `Pages/X/{Index,_Resultados,Editar,Detalle}` copiando las de Comunión (autorización manual con `IAuthorizationService` según crear/editar; "Guardar y nuevo"; botón de imprimir hacia `/Constancias/{clave}/{id}`).
 8. **Pruebas**: servicio con `ServidorPostgresFixture` (`ServicioComunionPruebas`), web con `AppFixture` (`ComunionWebPruebas`, `ConstanciaWebPruebas`) y datos sintéticos únicos por prueba (la base web se comparte).
 9. Si el libro trae más campos que la constancia, agregarlos como opcionales y reflejarlos en `docs/02`.
+10. **Colecciones** (padrinos, testigos): `List<string>` → `text[]` (patrón: **Bautismo**). Formulario: filas `name="Input.X"` repetido + parcial `_FilaX` y handler `OnGetFilaXAsync` para htmx; baja con `data-quitar-fila` (`wwwroot/js/filas-dinamicas.js`). Constancia: filas "rótulo: valor" con `Parrafo.Fila` y listas con `FormatoConstancia.UnirLista`.
 
 ## Al terminar una tarea
 Resume qué cambió, qué pruebas corriste y qué decisiones de `docs/06` quedaron afectadas.

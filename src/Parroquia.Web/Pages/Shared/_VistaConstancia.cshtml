@@ -37,6 +37,19 @@
 
     @foreach (var p in d.Cuerpo.Append(d.Cierre))
     {
+        if (p.Rotulo is not null)
+        {
+            <div class="d-flex mb-2" style="margin-top: @(p.EspacioAntes)px">
+                <div class="flex-shrink-0" style="width: 11rem">@p.Rotulo</div>
+                <div class="@Alinear(p.Alineacion) flex-grow-1">
+                    @foreach (var s in p.Segmentos)
+                    {
+                        <span class="@(s.Negrita ? "fw-bold" : "") @(s.Subrayado ? "text-decoration-underline" : "")">@s.Texto</span>
+                    }
+                </div>
+            </div>
+            continue;
+        }
         <p class="@Alinear(p.Alineacion) mb-2 @(p.LineaInferior ? "border-bottom border-dark mx-5 pb-1" : "")"
            style="margin-top: @(p.EspacioAntes)px">
             @foreach (var s in p.Segmentos)

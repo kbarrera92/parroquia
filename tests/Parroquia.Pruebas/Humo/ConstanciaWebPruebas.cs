@@ -180,7 +180,7 @@ public class ConstanciaWebPruebas(AppFixture app)
         var (id, _) = await RegistroNuevoAsync();
         var s = await app.ClienteConRolAsync(Roles.Secretaria);
 
-        (await s.GetAsync($"/Constancias/bautismo/{id}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await s.GetAsync($"/Constancias/sacramento-inexistente/{id}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
         (await s.GetAsync("/Constancias/comunion/99999999")).StatusCode.Should().Be(HttpStatusCode.NotFound);
 
         var capturista = await app.ClienteConRolAsync(Roles.Capturista);

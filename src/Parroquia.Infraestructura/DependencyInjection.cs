@@ -43,6 +43,8 @@ public static class DependencyInjection
         services.AddScoped<ServicioConstancias>();
 
         // Un sacramento = un módulo: su servicio y su registro como IModuloSacramental.
+        services.AddScoped<ServicioBautismo>();
+        services.AddModuloSacramental<ModuloBautismo>();
         services.AddScoped<ServicioComunion>();
         services.AddModuloSacramental<ModuloComunion>();
 

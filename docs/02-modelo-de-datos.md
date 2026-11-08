@@ -49,8 +49,8 @@ Implementada como clase base abstracta `RegistroSacramental` (M3). **Columnas de
 `Nombres`, `Apellidos`, `FechaComunion` (FechaParcial; tabla `comunion`, columnas `fecha_comunion_*`). *(Opcionales a confirmar en M0, aún sin fotos de páginas reales: `Padre`, `Madre`, `ParroquiaBautismo`; si el libro los trae se agregan con una migración.)*
 Reglas de captura: `Nombres` y `Apellidos` obligatorios salvo registro "Revisar" con motivo; la fecha exige al menos el año; ministro opcional (catálogo o texto libre).
 
-**`Bautismo`**
-`Nombres`, `Apellidos`, `FechaBautismo` (FechaParcial), `FechaNacimiento` (FechaParcial), `LugarNacimiento?` *(opcional, no se imprime)*, `Padre?`, `Madre?` (nombre completo c/u; el libro puede traer solo uno), `Padrinos` (colección 0..n con `Orden` y `Nombre`; la constancia los une con " y "), `Ministro` (quien bautizó; sale en "Firma de ministro"), `NotasMarginales` (si vacío → "Sin anotaciones").
+**`Bautismo`** — **Implementado en M4** (tabla `bautismo`; fechas `fecha_bautismo_*` y `fecha_nacimiento_*`).
+`Nombres`, `Apellidos`, `FechaBautismo` (FechaParcial; obligatoria al menos el año), `FechaNacimiento` (FechaParcial; opcional; no puede ser posterior al bautismo, se compara solo hasta donde ambas fechas tienen dato), `LugarNacimiento?` *(opcional, no se imprime)*, `Padre?`, `Madre?` (nombre completo c/u; el libro puede traer solo uno), `Padrinos` (lista de texto 0..n, máx. 10, en el orden del libro; columna `text[]`, no tabla hija: quitar uno sería un borrado físico fuera de la auditoría; el historial la muestra unida con "; "; la constancia los une con ", " y " y "), `Ministro` (quien bautizó; catálogo o texto libre; sale en "Firma de ministro"), `NotasMarginales` (si vacío → "Sin anotaciones"). Duplicados: igual libro+folio+partida, o igual persona + fecha de bautismo.
 
 **`Confirmacion`**
 `Nombres`, `Apellidos`, `FechaConfirmacion` (FechaParcial), `Padrinos` (0..n; el ejemplo trae uno), `Ministro?` *(opcional: obispo; no se imprime hoy)*. *(Opcionales a confirmar: `Padre`, `Madre`, `ParroquiaBautismo`.)*

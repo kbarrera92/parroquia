@@ -118,8 +118,8 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
     {
         var cambios = new Dictionary<string, Cambio>();
         foreach (var p in entrada.Properties.Where(Auditable))
-            if (p.CurrentValue is not null)
-                cambios[p.Metadata.Name] = new Cambio(null, Valor(p.CurrentValue));
+            if (Valor(p.CurrentValue) is { } valor)
+                cambios[p.Metadata.Name] = new Cambio(null, valor);
 
         foreach (var cp in entrada.ComplexProperties)
         {
@@ -174,13 +174,21 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
         return unido.Length == 0 ? null : unido;
     }
 
-    private static bool Iguales(object? a, object? b) =>
-        a is byte[] x && b is byte[] y ? x.AsSpan().SequenceEqual(y) : Equals(a, b);
+    private static bool Iguales(object? a, object? b) => (a, b) switch
+    {
+        (byte[] x, byte[] y) => x.AsSpan().SequenceEqual(y),
+        // Colecciones de texto (p. ej. padrinos, text[]): el orden cuenta; null y lista vacía son lo mismo.
+        (IEnumerable<string>, _) or (_, IEnumerable<string>) =>
+            (a as IEnumerable<string> ?? []).SequenceEqual(b as IEnumerable<string> ?? []),
+        _ => Equals(a, b),
+    };
 
     private static object? Valor(object? v) => v switch
     {
         null => null,
         byte[] bytes => $"[{bytes.Length} bytes]",
+        // Lista de texto: "A; B; C" en el orden del libro; vacía = sin valor.
+        IEnumerable<string> lista => lista.Any() ? string.Join("; ", lista) : null,
         bool or string or short or int or long => v,
         Enum e => e.ToString(),
         IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),

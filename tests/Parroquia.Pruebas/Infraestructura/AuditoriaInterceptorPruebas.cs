@@ -14,6 +14,9 @@ public class EntidadPrueba : EntidadAuditable, IAnulable
     /// <summary>Columna derivada (como BusquedaNormalizada): se guarda pero no ensucia el historial.</summary>
     public string? Derivado { get; set; }
     public FechaParcial Fecha { get; set; } = FechaParcial.Vacia;
+
+    /// <summary>Colección primitiva (text[]), como los padrinos de un bautismo.</summary>
+    public List<string> Lista { get; set; } = [];
     public bool Anulado { get; set; }
     public string? MotivoAnulacion { get; set; }
 }
@@ -266,6 +269,57 @@ public class AuditoriaInterceptorPruebas(BaseDatosAuditoriaFixture bd) : IClassF
         var c = Cambios(h[1]).GetProperty("Fecha");
         c.GetProperty("anterior").GetString().Should().Be("1978");
         c.GetProperty("nuevo").GetString().Should().Be("13 de agosto de 1978");
+    }
+
+    [Fact]
+    public async Task Lista_de_texto_se_audita_como_texto_unido()
+    {
+        await using var ctx = Ctx();
+        var e = new EntidadPrueba { Nombre = "Ana", Lista = ["Luis Mena", "Rosa Díaz"] };
+        ctx.Add(e);
+        await ctx.SaveChangesAsync();
+
+        // Cambio de orden y quitar uno: cada uno es una modificación real.
+        e.Lista = ["Rosa Díaz", "Luis Mena"];
+        await ctx.SaveChangesAsync();
+        e.Lista = ["Rosa Díaz"];
+        await ctx.SaveChangesAsync();
+
+        await using var lectura = Ctx();
+        (await lectura.Entidades.SingleAsync(x => x.Id == e.Id)).Lista.Should().Equal("Rosa Díaz");
+
+        var h = await HistorialAsync(lectura, e.Id);
+        h.Should().HaveCount(3);
+        Cambios(h[0]).GetProperty("Lista").GetProperty("nuevo").GetString().Should().Be("Luis Mena; Rosa Díaz");
+        var orden = Cambios(h[1]).GetProperty("Lista");
+        orden.GetProperty("anterior").GetString().Should().Be("Luis Mena; Rosa Díaz");
+        orden.GetProperty("nuevo").GetString().Should().Be("Rosa Díaz; Luis Mena");
+        var quitar = Cambios(h[2]).GetProperty("Lista");
+        quitar.GetProperty("anterior").GetString().Should().Be("Rosa Díaz; Luis Mena");
+        quitar.GetProperty("nuevo").GetString().Should().Be("Rosa Díaz");
+    }
+
+    [Fact]
+    public async Task Lista_igual_no_audita_y_lista_vacia_no_aparece_en_el_alta()
+    {
+        await using var ctx = Ctx();
+        var e = new EntidadPrueba { Nombre = "Ana" };
+        ctx.Add(e);
+        await ctx.SaveChangesAsync();
+
+        e.Lista = []; // otra lista, mismo contenido
+        await ctx.SaveChangesAsync();
+        e.Lista = ["A"];
+        await ctx.SaveChangesAsync();
+        e.Lista = ["A"]; // otra instancia, mismo contenido
+        await ctx.SaveChangesAsync();
+
+        await using var lectura = Ctx();
+        var h = await HistorialAsync(lectura, e.Id);
+        h.Should().HaveCount(2); // Alta + agregar "A"
+        Cambios(h[0]).EnumerateObject().Select(p => p.Name).Should().NotContain("Lista");
+        Cambios(h[1]).GetProperty("Lista").GetProperty("anterior").ValueKind.Should().Be(JsonValueKind.Null);
+        Cambios(h[1]).GetProperty("Lista").GetProperty("nuevo").GetString().Should().Be("A");
     }
 
     [Fact]
