@@ -1,0 +1,26 @@
+using Parroquia.Aplicacion.Sacramentos;
+
+namespace Parroquia.Infraestructura.Sacramentos;
+
+/// <summary>Registro de Primera Comunión en el menú y la búsqueda global.</summary>
+public sealed class ModuloComunion(ServicioComunion servicio) : IModuloSacramental
+{
+    public string Clave => "comunion";
+    public string Nombre => "Primera Comunión";
+    public string Entidad => ServicioComunion.NombreEntidad;
+    public int Orden => 30;
+    public string RutaListado => "/Comunion";
+    public string RutaDetalle(long id) => $"/Comunion/Detalle/{id}";
+
+    public async Task<ResultadosModulo> BuscarAsync(ConsultaBusqueda consulta, int maximo, CancellationToken ct = default)
+    {
+        var pagina = await servicio.BuscarAsync(
+            new FiltroComunion(Texto: consulta.Texto, IncluirAnulados: consulta.IncluirAnulados), 1, maximo, ct);
+
+        return new ResultadosModulo(
+            [.. pagina.Items.Select(f => new ResultadoBusquedaRegistro(
+                Clave, Nombre, f.Id, f.Nombres, f.Apellidos, f.Fecha, f.Libro, f.Folio, f.Partida,
+                f.Revisar, f.Anulado, RutaDetalle(f.Id)))],
+            pagina.Total);
+    }
+}

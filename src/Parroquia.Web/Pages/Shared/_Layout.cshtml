@@ -1,6 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @using Parroquia.Aplicacion.Seguridad
+@using Parroquia.Aplicacion.Sacramentos
 @inject IAuthorizationService Autorizacion
+@inject IEnumerable<IModuloSacramental> Modulos
 @{
     var autenticado = User.Identity?.IsAuthenticated == true;
     async Task<bool> Puede(string permiso) => autenticado && (await Autorizacion.AuthorizeAsync(User, permiso)).Succeeded;
@@ -29,9 +31,17 @@
                 {
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" asp-page="/Index">Búsqueda</a></li>
-                        @if (verLibros)
+                        @if (verLibros && Modulos.Any())
                         {
-                            <li class="nav-item"><a class="nav-link" asp-page="/Comunion/Index">Comuniones</a></li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Libros</a>
+                                <ul class="dropdown-menu">
+                                    @foreach (var modulo in Modulos.OrderBy(m => m.Orden))
+                                    {
+                                        <li><a class="dropdown-item" href="@Url.Content("~" + modulo.RutaListado)">@modulo.Nombre</a></li>
+                                    }
+                                </ul>
+                            </li>
                         }
                         @if (verAdministracion)
                         {
