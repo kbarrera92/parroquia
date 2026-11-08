@@ -15,6 +15,12 @@
             </div>
         </div>
         <div class="d-flex gap-2">
+            @if (Model.PuedeImprimir)
+            {
+                <a class="btn btn-primary" asp-page="/Constancias/Emitir" asp-route-clave="@Model.Clave" asp-route-id="@r.Id">
+                    @(Model.YaImpresa ? "Reimprimir constancia" : "Imprimir constancia")
+                </a>
+            }
             @if (Model.PuedeEditar && !r.Anulado)
             {
                 <a class="btn btn-outline-primary" asp-page="/Comunion/Editar" asp-route-id="@r.Id">Editar</a>
@@ -78,6 +84,27 @@
             <button type="submit" class="btn btn-outline-danger">Revertir anulación</button>
         </form>
     }
+
+    <h2 class="h5">Constancias impresas</h2>
+    <table class="table table-sm mb-4">
+        <thead><tr><th>Impresa</th><th>Por</th><th>Fecha en la constancia</th><th>Firmó</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var e in Model.Emitidas)
+        {
+            <tr>
+                <td class="text-nowrap">@DetalleModel.FormatoEmision(e.EmitidaEn)</td>
+                <td>@e.EmitidaPor</td>
+                <td>@e.FechaImpresa.ToString("dd/MM/yyyy")@(e.FechaAjustadaPor is null ? "" : $" (ajustada por {e.FechaAjustadaPor})")</td>
+                <td>@e.Firmante</td>
+                <td>@if (e.ConAdvertencias) { <span class="badge text-bg-warning">Con avisos</span> }</td>
+            </tr>
+        }
+        @if (Model.Emitidas.Count == 0)
+        {
+            <tr><td colspan="5" class="text-muted">Aún no se ha impreso ninguna constancia de este registro.</td></tr>
+        }
+        </tbody>
+    </table>
 
     <h2 class="h5">Historial de cambios</h2>
     <partial name="_HistorialRegistro" model="Model.Movimientos" />

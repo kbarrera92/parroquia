@@ -617,6 +617,85 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     b.ToTable("comunion", (string)null);
                 });
 
+            modelBuilder.Entity("Parroquia.Infraestructura.Constancias.ConstanciaEmitida", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("ConAdvertencias")
+                        .HasColumnType("boolean")
+                        .HasColumnName("con_advertencias");
+
+                    b.Property<DateTimeOffset>("EmitidaEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("emitida_en");
+
+                    b.Property<string>("EmitidaPor")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("emitida_por");
+
+                    b.Property<string>("FechaAjustadaPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("fecha_ajustada_por");
+
+                    b.Property<DateOnly>("FechaImpresa")
+                        .HasColumnType("date")
+                        .HasColumnName("fecha_impresa");
+
+                    b.Property<string>("Firmante")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("firmante");
+
+                    b.Property<string>("HashPdf")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("hash_pdf");
+
+                    b.Property<string>("InstantaneaJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("instantanea_json");
+
+                    b.Property<long>("RegistroId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("registro_id");
+
+                    b.Property<long?>("SolicitudId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("solicitud_id");
+
+                    b.Property<string>("TipoSacramento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tipo_sacramento");
+
+                    b.Property<string>("UsuarioId")
+                        .HasColumnType("text")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_constancias_emitidas");
+
+                    b.HasIndex("EmitidaEn")
+                        .HasDatabaseName("ix_constancias_emitidas_emitida_en");
+
+                    b.HasIndex("TipoSacramento", "RegistroId")
+                        .HasDatabaseName("ix_constancias_emitidas_tipo_sacramento_registro_id");
+
+                    b.ToTable("constancias_emitidas", (string)null);
+                });
+
             modelBuilder.Entity("Parroquia.Infraestructura.Identidad.Usuario", b =>
                 {
                     b.Property<string>("Id")

@@ -1,3 +1,4 @@
+using Parroquia.Aplicacion.Constancias;
 using Parroquia.Aplicacion.Sacramentos;
 
 namespace Parroquia.Pruebas.Aplicacion;
@@ -16,6 +17,9 @@ public class BusquedaGlobalPruebas
         public int Orden => orden;
         public string RutaListado => $"/{clave}";
         public string RutaDetalle(long id) => $"/{clave}/Detalle/{id}";
+
+        public Task<ConstanciaPreparada?> PrepararConstanciaAsync(long id, ContextoConstancia contexto, CancellationToken ct = default) =>
+            Task.FromResult<ConstanciaPreparada?>(null);
 
         public Task<ResultadosModulo> BuscarAsync(ConsultaBusqueda consulta, int maximo, CancellationToken ct = default)
         {

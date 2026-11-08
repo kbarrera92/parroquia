@@ -7,6 +7,7 @@ using Parroquia.Aplicacion.Sacramentos;
 using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura.Catalogos;
 using Parroquia.Infraestructura.Configuracion;
+using Parroquia.Infraestructura.Constancias;
 using Parroquia.Infraestructura.Historial;
 using Parroquia.Infraestructura.Identidad;
 using Parroquia.Infraestructura.Persistencia;
@@ -38,6 +39,8 @@ public static class DependencyInjection
         services.AddScoped<ServicioConfiguracionParroquia>();
         services.AddScoped<ServicioHistorial>();
         services.AddScoped<BusquedaGlobal>();
+        services.AddSingleton<GeneradorPdfConstancia>();
+        services.AddScoped<ServicioConstancias>();
 
         // Un sacramento = un módulo: su servicio y su registro como IModuloSacramental.
         services.AddScoped<ServicioComunion>();

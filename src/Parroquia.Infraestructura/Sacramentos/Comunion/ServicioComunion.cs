@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Parroquia.Aplicacion.Comun;
+using Parroquia.Aplicacion.Sacramentos;
 using Parroquia.Dominio.Comun;
 using Parroquia.Dominio.Sacramentos;
 using Parroquia.Infraestructura.Persistencia;
@@ -161,6 +162,13 @@ public sealed class ServicioComunion(ParroquiaDbContext db, TimeProvider reloj)
             c.Libro, c.Folio, c.Partida, c.NombreMinistro, c.NotasMarginales,
             c.Revisar, c.MotivoRevision, c.Anulado, c.MotivoAnulacion, c.Version,
             c.CreadoPor, c.CreadoEn, c.ModificadoPor, c.ModificadoEn);
+    }
+
+    /// <summary>Datos que imprime la constancia; null si el registro no existe o está anulado.</summary>
+    public async Task<DatosComunion?> DatosParaConstanciaAsync(long id, CancellationToken ct = default)
+    {
+        var c = await db.Comuniones.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        return c is null ? null : new DatosComunion(c.Nombres, c.Apellidos, c.FechaComunion, c.Libro, c.Folio, c.Revisar);
     }
 
     public async Task<ResultadoOperacion> AnularAsync(long id, string? motivo, CancellationToken ct = default)

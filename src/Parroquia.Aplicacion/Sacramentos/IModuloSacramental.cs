@@ -1,3 +1,5 @@
+using Parroquia.Aplicacion.Constancias;
+
 namespace Parroquia.Aplicacion.Sacramentos;
 
 /// <param name="Texto">Lo que escribió el usuario; cada módulo lo normaliza con <c>NormalizadorBusqueda</c>.</param>
@@ -9,6 +11,9 @@ public sealed record ResultadoBusquedaRegistro(
     string Libro, string Folio, string Partida, bool Revisar, bool Anulado, string RutaDetalle);
 
 public sealed record ResultadosModulo(IReadOnlyList<ResultadoBusquedaRegistro> Items, int Total);
+
+/// <summary>Constancia armada para un registro: el documento a imprimir y los avisos que se muestran antes de imprimir.</summary>
+public sealed record ConstanciaPreparada(DocumentoConstancia Documento, IReadOnlyList<string> Advertencias);
 
 /// <summary>
 /// Un sacramento = un módulo autocontenido. Se registra con <c>AddModuloSacramental&lt;T&gt;()</c> y el menú,
@@ -35,4 +40,10 @@ public interface IModuloSacramental
 
     /// <summary>Busca por nombres y apellidos (parcial, sin tildes). Devuelve hasta <paramref name="maximo"/> filas y el total.</summary>
     Task<ResultadosModulo> BuscarAsync(ConsultaBusqueda consulta, int maximo, CancellationToken ct = default);
+
+    /// <summary>
+    /// Arma la constancia del registro con la plantilla del módulo (función pura sobre los datos del libro).
+    /// Null si el registro no existe o está anulado.
+    /// </summary>
+    Task<ConstanciaPreparada?> PrepararConstanciaAsync(long id, ContextoConstancia contexto, CancellationToken ct = default);
 }

@@ -5,3 +5,9 @@ html {
 body {
   margin-bottom: 2rem;
 }
+
+/* Vista previa de la constancia: aproximación de la hoja carta (el PDF usa el mismo modelo de documento). */
+.constancia-hoja {
+  max-width: 8.5in;
+  font-size: 0.95rem;
+}
