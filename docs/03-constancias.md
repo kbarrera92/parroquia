@@ -46,6 +46,8 @@ Mazatenango, Such. {FechaEmision},                 {Párroco} / Párroco.
 ```
 Decisión: se corrige la errata "Confirmacion" → "Confirmación".
 
+**Implementado en M5** (`PlantillaConfirmacion`). Prueba golden: `tests/Parroquia.Pruebas/Constancias/Golden/confirmacion.txt` (datos del ejemplo; fechas con "de"; emisión 6/11/2026). Una línea por párrafo; los padrinos van en su propia línea bajo "Sus padrinos fueron:", unidos con `FormatoConstancia.UnirLista` (sin padrinos queda la línea en blanco y avisa). Cierre `{TextoLugarEmision} {fecha larga},` (con la coma final del papel). Estilos del ejemplo: nombre, fecha, padrinos y "Según consta…" en negrita; la fecha **no** va subrayada. Esta constancia no imprime partida, ministro ni notas marginales. Avisos antes de imprimir: falta nombre/apellido, fecha incompleta, faltan padrinos, falta libro/folio, "Revisar".
+
 ### 2.3 Primera Comunión — `CERTIFICACIÓN DE COMUNIÓN`
 ```
 Por la presente se hace constar que:

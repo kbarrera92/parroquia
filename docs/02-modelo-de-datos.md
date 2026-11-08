@@ -52,8 +52,8 @@ Reglas de captura: `Nombres` y `Apellidos` obligatorios salvo registro "Revisar"
 **`Bautismo`** — **Implementado en M4** (tabla `bautismo`; fechas `fecha_bautismo_*` y `fecha_nacimiento_*`).
 `Nombres`, `Apellidos`, `FechaBautismo` (FechaParcial; obligatoria al menos el año), `FechaNacimiento` (FechaParcial; opcional; no puede ser posterior al bautismo, se compara solo hasta donde ambas fechas tienen dato), `LugarNacimiento?` *(opcional, no se imprime)*, `Padre?`, `Madre?` (nombre completo c/u; el libro puede traer solo uno), `Padrinos` (lista de texto 0..n, máx. 10, en el orden del libro; columna `text[]`, no tabla hija: quitar uno sería un borrado físico fuera de la auditoría; el historial la muestra unida con "; "; la constancia los une con ", " y " y "), `Ministro` (quien bautizó; catálogo o texto libre; sale en "Firma de ministro"), `NotasMarginales` (si vacío → "Sin anotaciones"). Duplicados: igual libro+folio+partida, o igual persona + fecha de bautismo.
 
-**`Confirmacion`**
-`Nombres`, `Apellidos`, `FechaConfirmacion` (FechaParcial), `Padrinos` (0..n; el ejemplo trae uno), `Ministro?` *(opcional: obispo; no se imprime hoy)*. *(Opcionales a confirmar: `Padre`, `Madre`, `ParroquiaBautismo`.)*
+**`Confirmacion`** — **Implementada en M5** con campos mínimos (tabla `confirmacion`; fecha `fecha_confirmacion_*`).
+`Nombres`, `Apellidos`, `FechaConfirmacion` (FechaParcial; obligatoria al menos el año), `Padrinos` (lista de texto 0..n, máx. 10, orden del libro; `text[]`, auditada unida con "; "), `Ministro?` *(opcional: obispo; catálogo o texto libre; no se imprime)*, `NotasMarginales?` *(no se imprimen)*. Duplicados: igual libro+folio+partida, o igual persona + fecha. *(Opcionales a confirmar en M0, aún sin fotos del libro: `Padre`, `Madre`, `ParroquiaBautismo`; se agregarían con una migración.)*
 
 **`Matrimonio`**
 `FechaMatrimonio` (FechaParcial), `LugarCelebracion` (default "Iglesia de Mazatenango, Suchitepéquez"), `Testigos` (colección 0..n, ejemplo: 2), `Ministro` ("Firma:"), `NotasMarginales`, más dos contrayentes (owned type `Contrayente`, columnas con prefijo `Esposo_` / `Esposa_`):

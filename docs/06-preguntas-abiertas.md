@@ -1,8 +1,8 @@
 # Decisiones y preguntas abiertas
 
-Última actualización: 7-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
+Última actualización: 8-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
 
-## ✅ Resueltas (7-nov-2026; 20–23 durante M3)
+## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5)
 | # | Tema | Decisión |
 |---|---|---|
 | 1 | Servidor | PC de oficina, Windows 10/11, dedicada, encendida 24/7 |
@@ -31,6 +31,7 @@
 | 24 | Padrinos de Bautismo (M4) | Lista de texto 0..n (máx. 10) en el orden del libro, columna `text[]`; auditada como texto unido. Tabla hija descartada (borrado físico prohibido) |
 | 25 | "Nació" en la constancia de Bautismo (M4) | Con tilde (el papel dice "Nacio"); corrección consciente, ya en el golden |
 | 26 | Nacimiento vs. bautismo (M4) | Opcional; no puede ser posterior al bautismo, comparando solo hasta la precisión común |
+| 27 | Campos de Confirmación (M5) | Mínimos (nombres, apellidos, fecha, padrinos 0..10, libro, folio, partida, ministro/obispo, notas) hasta tener fotos del libro real (M0 [B]); `Padre`, `Madre` y `ParroquiaBautismo` quedan pendientes |
 
 ## 🟡 Pendientes
 
