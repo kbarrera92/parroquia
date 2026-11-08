@@ -1,7 +1,10 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura.Identidad;
 using Testcontainers.PostgreSql;
 
@@ -48,6 +51,41 @@ public sealed class AppFixture : WebApplicationFactory<Program>, IAsyncLifetime
     /// <summary>Cliente con cookies y sin seguir redirecciones.</summary>
     public HttpClient Cliente() =>
         CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = true });
+
+    public const string PasswordUsuariosPrueba = "Clave-De-Prueba-123";
+
+    /// <summary>Cliente con sesión iniciada como el administrador sembrado.</summary>
+    public async Task<HttpClient> ClienteAdminAsync()
+    {
+        var c = Cliente();
+        (await LoginAsync(c, UsuarioAdmin, PasswordAdmin)).StatusCode.Should().Be(HttpStatusCode.Redirect);
+        return c;
+    }
+
+    /// <summary>Crea un usuario sintético con el rol indicado y devuelve un cliente con su sesión.</summary>
+    public async Task<HttpClient> ClienteConRolAsync(string rol)
+    {
+        var nombre = $"{rol}_{Guid.NewGuid():N}"[..24];
+        using (var scope = Services.CreateScope())
+        {
+            var usuarios = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+            var u = new Usuario { UserName = nombre, NombreCompleto = "Prueba", Activo = true, LockoutEnabled = true };
+            (await usuarios.CreateAsync(u, PasswordUsuariosPrueba)).Succeeded.Should().BeTrue();
+            (await usuarios.AddToRoleAsync(u, rol)).Succeeded.Should().BeTrue();
+        }
+
+        var c = Cliente();
+        (await LoginAsync(c, nombre, PasswordUsuariosPrueba)).StatusCode.Should().Be(HttpStatusCode.Redirect);
+        return c;
+    }
+
+    /// <summary>POST de formulario con token antiforgery tomado de <paramref name="paginaConToken"/>.</summary>
+    public static async Task<HttpResponseMessage> PostFormAsync(
+        HttpClient c, string paginaConToken, string urlPost, Dictionary<string, string> campos)
+    {
+        campos["__RequestVerificationToken"] = await TokenAsync(c, paginaConToken);
+        return await c.PostAsync(urlPost, new FormUrlEncodedContent(campos));
+    }
 
     /// <summary>Inicia sesión por el formulario real. Devuelve la respuesta del POST.</summary>
     public static async Task<HttpResponseMessage> LoginAsync(HttpClient c, string usuario, string password)

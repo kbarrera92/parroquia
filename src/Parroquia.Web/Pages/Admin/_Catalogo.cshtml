@@ -1,0 +1,57 @@
+@model Parroquia.Web.Pages.Admin.ICatalogoPagina
+
+<div class="mt-4">
+    <h1 class="h3">@Model.Titulo</h1>
+    <p class="text-muted">@Model.Descripcion</p>
+
+    @if (Model.Mensaje is not null)
+    {
+        <div class="alert alert-success" role="status">@Model.Mensaje</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.Error</div>
+    }
+
+    <form method="post" asp-page-handler="Crear" class="row g-2 align-items-end mb-4">
+        <div class="col-md-6">
+            <label for="nuevo" class="form-label">@Model.EtiquetaNuevo</label>
+            <input id="nuevo" name="valor" class="form-control" maxlength="150" autocomplete="off" autofocus />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Agregar</button>
+        </div>
+    </form>
+
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Nombre</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr class="@(item.Activo ? "" : "text-muted")">
+                <td>
+                    <form method="post" asp-page-handler="Editar" class="d-flex gap-2">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <input name="valor" value="@item.Valor" class="form-control" maxlength="150" aria-label="Nombre" />
+                        <button type="submit" class="btn btn-outline-primary">Guardar</button>
+                    </form>
+                </td>
+                <td>@(item.Activo ? "Activo" : "Inactivo")</td>
+                <td class="text-end">
+                    <form method="post" asp-page-handler="Activo">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <input type="hidden" name="activo" value="@((!item.Activo).ToString().ToLowerInvariant())" />
+                        <button type="submit" class="btn btn-outline-secondary">@(item.Activo ? "Desactivar" : "Activar")</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="3" class="text-muted">Aún no hay elementos.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

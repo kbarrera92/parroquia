@@ -22,6 +22,9 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence("secuencia_id")
+                .IncrementsBy(10);
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -184,6 +187,104 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasName("pk_asp_net_user_tokens");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Parroquia.Dominio.Catalogos.Ministro", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "secuencia_id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activo");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("CreadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("creado_por");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificado_en");
+
+                    b.Property<string>("ModificadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("modificado_por");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nombre");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ministros");
+
+                    b.ToTable("ministros", (string)null);
+                });
+
+            modelBuilder.Entity("Parroquia.Dominio.Catalogos.Tratamiento", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "secuencia_id");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activo");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("CreadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("creado_por");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificado_en");
+
+                    b.Property<string>("ModificadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("modificado_por");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("texto");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tratamientos");
+
+                    b.ToTable("tratamientos", (string)null);
                 });
 
             modelBuilder.Entity("Parroquia.Infraestructura.Identidad.Usuario", b =>

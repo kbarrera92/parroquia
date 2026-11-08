@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Parroquia.Aplicacion.Seguridad;
+using Parroquia.Infraestructura.Catalogos;
 using Parroquia.Infraestructura.Identidad;
 using Parroquia.Infraestructura.Persistencia;
 
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IUsuarioActual, UsuarioActualHttp>();
         services.AddScoped<AuditoriaInterceptor>();
         services.AddScoped<IBitacoraAcceso, ServicioBitacoraAcceso>();
+        services.AddScoped(typeof(ServicioCatalogo<>));
 
         services.AddDbContext<ParroquiaDbContext>((sp, o) => o
             .UseNpgsql(cadena, npgsql => npgsql.MigrationsHistoryTable("migraciones_historial"))
