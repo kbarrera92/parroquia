@@ -1,0 +1,18 @@
+# PostgreSQL SOLO para desarrollo. Producción usa PostgreSQL nativo (docs/04 ADR-08).
+# Credenciales de desarrollo, sin valor fuera de esta máquina.
+services:
+  db:
+    image: postgres:17
+    container_name: parroquia-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: parroquia
+      POSTGRES_PASSWORD: parroquia_dev
+      POSTGRES_DB: parroquia
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - parroquia-pgdata:/var/lib/postgresql/data
+
+volumes:
+  parroquia-pgdata:

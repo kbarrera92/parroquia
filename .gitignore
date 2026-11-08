@@ -1,0 +1,23 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+
+
+# Logs y datos locales
+logs/
+*.log
+docs/
+
+# Respaldos y secretos: nunca al repo
+*.dump
+*.bak
+*.sql.gz
+backups/
+respaldos/
+.env
+appsettings.Production.json
+secrets.json
+CLAUDE.md

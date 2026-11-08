@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Parroquia.Aplicacion/Parroquia.Aplicacion.csproj" />
+    <Project Path="src/Parroquia.Dominio/Parroquia.Dominio.csproj" />
+    <Project Path="src/Parroquia.Infraestructura/Parroquia.Infraestructura.csproj" />
+    <Project Path="src/Parroquia.Web/Parroquia.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Parroquia.Pruebas/Parroquia.Pruebas.csproj" />
+  </Folder>
+</Solution>

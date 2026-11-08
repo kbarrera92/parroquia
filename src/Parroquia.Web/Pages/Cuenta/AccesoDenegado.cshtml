@@ -1,0 +1,12 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+@{
+    ViewData["Title"] = "Acceso denegado";
+}
+
+<div class="mt-5 text-center">
+    <h1 class="h3">Acceso denegado</h1>
+    <p class="lead">Su usuario no tiene permiso para esta opción.</p>
+    <a asp-page="/Index" class="btn btn-primary btn-lg">Volver al inicio</a>
+</div>

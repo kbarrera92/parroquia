@@ -1,0 +1,7 @@
+html {
+  font-size: 18px; /* texto grande y legible (docs/01 RNF Usabilidad) */
+}
+
+body {
+  margin-bottom: 2rem;
+}

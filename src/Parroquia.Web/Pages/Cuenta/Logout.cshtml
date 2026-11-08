@@ -1,0 +1,15 @@
+@page
+@model Parroquia.Web.Pages.Cuenta.LogoutModel
+@{
+    ViewData["Title"] = "Cerrar sesión";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5 text-center">
+        <h1 class="h3 mb-4">¿Cerrar sesión?</h1>
+        <form method="post">
+            <button type="submit" class="btn btn-primary btn-lg">Cerrar sesión</button>
+            <a asp-page="/Index" class="btn btn-link btn-lg">Cancelar</a>
+        </form>
+    </div>
+</div>
