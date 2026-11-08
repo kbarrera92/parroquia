@@ -6,5 +6,22 @@
 
 <div class="mt-4">
     <h1 class="h3">Búsqueda de registros</h1>
-    <p class="lead text-muted">Próximamente: búsqueda por nombres y apellidos en los libros sacramentales.</p>
+    <p class="text-muted">Escriba nombres y/o apellidos; se busca en todos los libros, sin importar tildes ni mayúsculas.</p>
+
+    <form method="get" class="row g-2 align-items-end mb-3"
+          hx-get="@Url.Page("/Index")" hx-target="#resultados" hx-push-url="true"
+          hx-trigger="submit, input delay:300ms from:#texto">
+        <div class="col-md-8">
+            <label for="texto" class="form-label visually-hidden">Nombres y apellidos</label>
+            <input id="texto" name="texto" value="@Model.Texto" class="form-control form-control-lg" autofocus autocomplete="off"
+                   placeholder="Por ejemplo: hidalgo arevalo" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary btn-lg">Buscar</button>
+        </div>
+    </form>
+
+    <div id="resultados" aria-live="polite">
+        <partial name="_ResultadosGlobales" model="Model" />
+    </div>
 </div>

@@ -1,0 +1,75 @@
+@page "/Constancias/{clave}/{id:long}"
+@model Parroquia.Web.Pages.Constancias.EmitirModel
+@{
+    ViewData["Title"] = "Imprimir constancia";
+}
+
+<div class="mt-4">
+    @if (Model.Hoja is null)
+    {
+        <h1 class="h3">No se puede imprimir la constancia</h1>
+        <div class="alert alert-danger" role="alert">@Model.Error</div>
+        <a class="btn btn-outline-secondary" href="@Url.Content("~" + Model.RutaDetalle)">Volver al registro</a>
+    }
+    else
+    {
+        var v = Model.Vista;
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <h1 class="h3 mb-0">Constancia · @v.NombreSacramento</h1>
+            <a class="btn btn-outline-secondary" href="@Url.Content("~" + Model.RutaDetalle)">Volver al registro</a>
+        </div>
+
+        @if (Model.Error is not null)
+        {
+            <div class="alert alert-danger" role="alert">@Model.Error</div>
+        }
+        @if (v.EmisionesPrevias > 0)
+        {
+            <div class="alert alert-info" role="status">
+                Esta constancia ya se imprimió @v.EmisionesPrevias @(v.EmisionesPrevias == 1 ? "vez" : "veces").
+                Una reimpresión lleva al párroco vigente hoy y queda en la bitácora.
+            </div>
+        }
+        @if (v.Advertencias.Count > 0)
+        {
+            <div class="alert alert-warning" role="alert">
+                <strong>Revise antes de imprimir:</strong>
+                <ul class="mb-0">
+                    @foreach (var a in v.Advertencias)
+                    {
+                        <li>@a</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (Model.PuedeCambiarFecha)
+        {
+            <form method="get" class="row g-2 align-items-end mb-3">
+                <div class="col-auto">
+                    <label for="fecha-vista" class="form-label">Fecha de emisión (solo Administrador)</label>
+                    <input id="fecha-vista" name="fecha" type="date" value="@Model.FechaIso" max="@Model.HoyIso" class="form-control" />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-outline-secondary">Ver con esta fecha</button>
+                </div>
+                <div class="col-12 form-text">Si cambia la fecha, quedará registrado quién la ajustó.</div>
+            </form>
+        }
+
+        <form method="post" target="_blank" class="mb-4">
+            <input type="hidden" name="fecha" value="@Model.FechaIso" />
+            @if (v.Advertencias.Count > 0)
+            {
+                <div class="form-check mb-3">
+                    <input id="confirmar" name="confirmar" type="checkbox" value="true" class="form-check-input" required />
+                    <label for="confirmar" class="form-check-label">Revisé los avisos y quiero imprimir de todos modos.</label>
+                </div>
+            }
+            <button type="submit" class="btn btn-primary btn-lg">@(v.EmisionesPrevias > 0 ? "Reimprimir constancia (PDF)" : "Imprimir constancia (PDF)")</button>
+            <span class="text-muted ms-2">Se abre en una pestaña nueva.</span>
+        </form>
+
+        <partial name="_VistaConstancia" model="Model.Hoja" />
+    }
+</div>

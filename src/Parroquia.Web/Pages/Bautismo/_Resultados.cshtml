@@ -1,0 +1,54 @@
+@model Parroquia.Web.Pages.Bautismo.IndexModel
+@{
+    var r = Model.Resultado;
+}
+
+<p class="text-muted" aria-live="polite">@r.Total.ToString("N0") registros</p>
+
+<table class="table table-sm align-middle">
+    <thead>
+        <tr><th>Apellidos</th><th>Nombres</th><th>Fecha de bautismo</th><th>Libro</th><th>Folio</th><th>Partida</th><th></th></tr>
+    </thead>
+    <tbody>
+    @foreach (var f in r.Items)
+    {
+        <tr class="@(f.Anulado ? "text-decoration-line-through text-muted" : "")">
+            <td><a asp-page="/Bautismo/Detalle" asp-route-id="@f.Id">@(f.Apellidos.Length == 0 ? "(sin apellidos)" : f.Apellidos)</a></td>
+            <td>@f.Nombres</td>
+            <td>@f.Fecha</td>
+            <td>@f.Libro</td>
+            <td>@f.Folio</td>
+            <td>@f.Partida</td>
+            <td>
+                @if (f.Revisar) { <span class="badge text-bg-warning">Revisar</span> }
+                @if (f.Anulado) { <span class="badge text-bg-secondary">Anulado</span> }
+            </td>
+        </tr>
+    }
+    @if (r.Items.Count == 0)
+    {
+        <tr><td colspan="7" class="text-muted">@(Model.HayFiltros ? "No hay registros con esos datos." : "Aún no hay registros en este libro.")</td></tr>
+    }
+    </tbody>
+</table>
+
+@if (r.TotalPaginas > 1)
+{
+    <nav aria-label="Páginas" hx-boost="true" hx-target="#resultados" hx-push-url="true">
+        <ul class="pagination">
+            <li class="page-item @(r.PaginaActual <= 1 ? "disabled" : "")">
+                <a class="page-link" asp-page="/Bautismo/Index" asp-route-texto="@Model.Texto" asp-route-libro="@Model.Libro"
+                   asp-route-folio="@Model.Folio" asp-route-desde="@Model.Desde" asp-route-hasta="@Model.Hasta"
+                   asp-route-pendientes="@(Model.Pendientes ? "true" : null)" asp-route-anulados="@(Model.Anulados ? "true" : null)"
+                   asp-route-pagina="@(r.PaginaActual - 1)">Anterior</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link">Página @r.PaginaActual de @r.TotalPaginas</span></li>
+            <li class="page-item @(r.PaginaActual >= r.TotalPaginas ? "disabled" : "")">
+                <a class="page-link" asp-page="/Bautismo/Index" asp-route-texto="@Model.Texto" asp-route-libro="@Model.Libro"
+                   asp-route-folio="@Model.Folio" asp-route-desde="@Model.Desde" asp-route-hasta="@Model.Hasta"
+                   asp-route-pendientes="@(Model.Pendientes ? "true" : null)" asp-route-anulados="@(Model.Anulados ? "true" : null)"
+                   asp-route-pagina="@(r.PaginaActual + 1)">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+}

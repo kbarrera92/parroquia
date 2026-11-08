@@ -17,6 +17,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="QuestPDF" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Fuentes Liberation (SIL OFL 1.1) incrustadas: el PDF sale igual en cualquier equipo, sin depender de fuentes de Windows ni de internet. -->
+    <EmbeddedResource Include="Constancias\Fuentes\*.ttf" LogicalName="Fuentes.%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

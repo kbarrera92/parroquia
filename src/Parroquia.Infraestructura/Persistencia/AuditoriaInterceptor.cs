@@ -62,7 +62,8 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
                     var cambios = CambiosDeModificacion(entrada);
                     if (cambios.Count == 0)
                     {
-                        entrada.State = EntityState.Unchanged;
+                        // Solo cambió una columna derivada (NoAuditar): se guarda tal cual, sin auditoría ni ModificadoPor.
+                        if (!CambioDerivado(entrada)) entrada.State = EntityState.Unchanged;
                         break;
                     }
 
@@ -104,14 +105,21 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
     private static bool Auditable(PropertyEntry p) =>
         !p.Metadata.IsShadowProperty()
         && p.Metadata.ValueGenerated == ValueGenerated.Never
-        && !CamposIgnorados.Contains(p.Metadata.Name);
+        && !CamposIgnorados.Contains(p.Metadata.Name)
+        && p.Metadata.FindAnnotation(ConfiguracionAuditable.AnotacionNoAuditar) is null;
+
+    private static bool CambioDerivado(EntityEntry<IAuditable> entrada) =>
+        entrada.Properties.Any(p =>
+            p.IsModified
+            && p.Metadata.FindAnnotation(ConfiguracionAuditable.AnotacionNoAuditar) is not null
+            && !Iguales(p.OriginalValue, p.CurrentValue));
 
     private static Dictionary<string, Cambio> CambiosDeAlta(EntityEntry<IAuditable> entrada)
     {
         var cambios = new Dictionary<string, Cambio>();
         foreach (var p in entrada.Properties.Where(Auditable))
-            if (p.CurrentValue is not null)
-                cambios[p.Metadata.Name] = new Cambio(null, Valor(p.CurrentValue));
+            if (Valor(p.CurrentValue) is { } valor)
+                cambios[p.Metadata.Name] = new Cambio(null, valor);
 
         foreach (var cp in entrada.ComplexProperties)
         {
@@ -166,13 +174,21 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
         return unido.Length == 0 ? null : unido;
     }
 
-    private static bool Iguales(object? a, object? b) =>
-        a is byte[] x && b is byte[] y ? x.AsSpan().SequenceEqual(y) : Equals(a, b);
+    private static bool Iguales(object? a, object? b) => (a, b) switch
+    {
+        (byte[] x, byte[] y) => x.AsSpan().SequenceEqual(y),
+        // Colecciones de texto (p. ej. padrinos, text[]): el orden cuenta; null y lista vacía son lo mismo.
+        (IEnumerable<string>, _) or (_, IEnumerable<string>) =>
+            (a as IEnumerable<string> ?? []).SequenceEqual(b as IEnumerable<string> ?? []),
+        _ => Equals(a, b),
+    };
 
     private static object? Valor(object? v) => v switch
     {
         null => null,
         byte[] bytes => $"[{bytes.Length} bytes]",
+        // Lista de texto: "A; B; C" en el orden del libro; vacía = sin valor.
+        IEnumerable<string> lista => lista.Any() ? string.Join("; ", lista) : null,
         bool or string or short or int or long => v,
         Enum e => e.ToString(),
         IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),

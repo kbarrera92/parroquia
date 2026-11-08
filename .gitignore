@@ -9,7 +9,6 @@ obj/
 # Logs y datos locales
 logs/
 *.log
-docs/
 
 # Respaldos y secretos: nunca al repo
 *.dump
@@ -20,4 +19,3 @@ respaldos/
 .env
 appsettings.Production.json
 secrets.json
-CLAUDE.md

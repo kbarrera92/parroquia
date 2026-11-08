@@ -1,0 +1,25 @@
+@model IReadOnlyList<Parroquia.Web.Presentacion.FilaAuditoria>
+
+<table class="table table-sm align-top">
+    <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Cambios</th></tr></thead>
+    <tbody>
+    @foreach (var f in Model)
+    {
+        <tr>
+            <td class="text-nowrap">@f.Fecha</td>
+            <td>@f.Usuario</td>
+            <td>@f.Accion</td>
+            <td>
+                @foreach (var c in f.Cambios)
+                {
+                    <div><strong>@c.Campo:</strong> @c.Anterior → @c.Nuevo</div>
+                }
+            </td>
+        </tr>
+    }
+    @if (Model.Count == 0)
+    {
+        <tr><td colspan="4" class="text-muted">Sin movimientos registrados.</td></tr>
+    }
+    </tbody>
+</table>

@@ -1,0 +1,185 @@
+@page "{id:long?}"
+@model Parroquia.Web.Pages.Bautismo.EditarModel
+@{
+    ViewData["Title"] = Model.EsNuevo ? "Nuevo registro de Bautismo" : "Editar registro de Bautismo";
+    var focoNombres = Model.ContinuaSerie;
+}
+
+<div class="mt-4">
+    <h1 class="h3">@(Model.EsNuevo ? "Nuevo registro" : "Editar registro") · Bautismo</h1>
+    <p class="text-muted">
+        Escriba los datos tal como están en el libro. Use <kbd>Tab</kbd> para pasar de un campo al siguiente
+        @if (Model.EsNuevo)
+        {
+            <text>y <kbd>Enter</kbd> para guardar y abrir un registro nuevo con el mismo libro.</text>
+        }
+        else
+        {
+            <text>y <kbd>Enter</kbd> para guardar.</text>
+        }
+    </p>
+
+    @if (Model.Mensaje is not null)
+    {
+        <div class="alert alert-success" role="status">@Model.Mensaje</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @Model.Error
+            @if (Model.Id is not null)
+            {
+                <a asp-page="/Bautismo/Detalle" asp-route-id="@Model.Id" class="alert-link">Abrir el registro actualizado</a>
+            }
+        </div>
+    }
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    @if (Model.Duplicados.Count > 0)
+    {
+        <div class="alert alert-warning" role="alert">
+            <strong>Ya existe un registro parecido.</strong> Revise si es el mismo antes de guardar:
+            <ul class="mb-2">
+                @foreach (var d in Model.Duplicados)
+                {
+                    <li>
+                        <a asp-page="/Bautismo/Detalle" asp-route-id="@d.Id" target="_blank" rel="noopener">@(d.Nombre.Length == 0 ? "(sin nombre)" : d.Nombre)</a>
+                        · libro @d.Libro, folio @d.Folio, partida @d.Partida · @d.Fecha
+                    </li>
+                }
+            </ul>
+            Si es otra persona, use «Guardar de todos modos», al final del formulario.
+        </div>
+    }
+
+    <form method="post" id="formulario" class="row g-3">
+        <input asp-for="Input.Version" type="hidden" />
+
+        <div class="col-md-2">
+            <label asp-for="Input.Libro" class="form-label">Libro</label>
+            <input asp-for="Input.Libro" class="form-control" maxlength="30" autofocus="@(!focoNombres)" autocomplete="off" />
+            <span asp-validation-for="Input.Libro" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Input.Folio" class="form-label">Folio</label>
+            <input asp-for="Input.Folio" class="form-control" maxlength="30" autocomplete="off" />
+            <span asp-validation-for="Input.Folio" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Input.Partida" class="form-label">Partida</label>
+            <input asp-for="Input.Partida" class="form-control" maxlength="30" autocomplete="off" />
+            <span asp-validation-for="Input.Partida" class="text-danger"></span>
+        </div>
+        <div class="col-12"></div>
+
+        <div class="col-md-5">
+            <label asp-for="Input.Nombres" class="form-label">Nombres</label>
+            <input asp-for="Input.Nombres" class="form-control" maxlength="150" autofocus="@focoNombres" autocomplete="off" />
+            <span asp-validation-for="Input.Nombres" class="text-danger"></span>
+        </div>
+        <div class="col-md-5">
+            <label asp-for="Input.Apellidos" class="form-label">Apellidos</label>
+            <input asp-for="Input.Apellidos" class="form-control" maxlength="150" autocomplete="off" />
+            <span asp-validation-for="Input.Apellidos" class="text-danger"></span>
+        </div>
+        <div class="col-12"></div>
+
+        <div class="col-md-4">
+            <label asp-for="Input.FechaBautismo" class="form-label">Fecha del bautismo</label>
+            <input asp-for="Input.FechaBautismo" class="form-control" maxlength="10" placeholder="13/8/1978" autocomplete="off" aria-describedby="ayuda-fecha" />
+            <div id="ayuda-fecha" class="form-text">Día/mes/año (13/8/1978), mes/año (8/1978) o solo el año (1978).</div>
+            <span asp-validation-for="Input.FechaBautismo" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.FechaNacimiento" class="form-label">Fecha de nacimiento (opcional)</label>
+            <input asp-for="Input.FechaNacimiento" class="form-control" maxlength="10" placeholder="5/1/1977" autocomplete="off" />
+            <span asp-validation-for="Input.FechaNacimiento" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.LugarNacimiento" class="form-label">Lugar de nacimiento (opcional, no se imprime)</label>
+            <input asp-for="Input.LugarNacimiento" class="form-control" maxlength="150" autocomplete="off" />
+            <span asp-validation-for="Input.LugarNacimiento" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Input.Padre" class="form-label">Padre</label>
+            <input asp-for="Input.Padre" class="form-control" maxlength="150" autocomplete="off" />
+            <span asp-validation-for="Input.Padre" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Input.Madre" class="form-label">Madre</label>
+            <input asp-for="Input.Madre" class="form-control" maxlength="150" autocomplete="off" />
+            <span asp-validation-for="Input.Madre" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label" id="etiqueta-padrinos">Padrinos</label>
+            <div id="padrinos" data-filas role="group" aria-labelledby="etiqueta-padrinos">
+                @foreach (var padrino in Model.Input.Padrinos)
+                {
+                    <partial name="_FilaPadrino" model="padrino" />
+                }
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-agregar-fila
+                    hx-get="@Url.Page("/Bautismo/Editar", "FilaPadrino")" hx-target="#padrinos" hx-swap="beforeend">
+                Agregar padrino
+            </button>
+            <div class="form-text">En el orden del libro. Las filas vacías se ignoran.</div>
+            <span asp-validation-for="Input.Padrinos" class="text-danger d-block"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Input.Ministro" class="form-label">Ministro que bautizó (opcional)</label>
+            <input asp-for="Input.Ministro" class="form-control" maxlength="150" list="lista-ministros" autocomplete="off" />
+            <datalist id="lista-ministros">
+                @foreach (var m in Model.Ministros)
+                {
+                    <option value="@m"></option>
+                }
+            </datalist>
+            <div class="form-text">Elija de la lista o escriba otro nombre.</div>
+            <span asp-validation-for="Input.Ministro" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Input.NotasMarginales" class="form-label">Notas marginales (opcional)</label>
+            <textarea asp-for="Input.NotasMarginales" class="form-control" rows="2" maxlength="2000"></textarea>
+            <span asp-validation-for="Input.NotasMarginales" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <div class="form-check">
+                <input asp-for="Input.Revisar" class="form-check-input" />
+                <label asp-for="Input.Revisar" class="form-check-label">Revisar este registro (dato dudoso o ilegible en el libro)</label>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Input.MotivoRevision" class="form-label">Motivo de la revisión</label>
+            <input asp-for="Input.MotivoRevision" class="form-control" maxlength="500" autocomplete="off" />
+            <span asp-validation-for="Input.MotivoRevision" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 d-flex flex-wrap gap-2">
+            @if (Model.EsNuevo)
+            {
+                @* Primer botón = el que se activa con Enter. *@
+                <button type="submit" name="accion" value="nuevo" class="btn btn-primary">Guardar y nuevo</button>
+                <button type="submit" name="accion" value="guardar" class="btn btn-outline-primary">Guardar</button>
+                <a asp-page="/Bautismo/Index" class="btn btn-link">Cancelar</a>
+            }
+            else
+            {
+                <button type="submit" name="accion" value="guardar" class="btn btn-primary">Guardar cambios</button>
+                <a asp-page="/Bautismo/Detalle" asp-route-id="@Model.Id" class="btn btn-link">Cancelar</a>
+            }
+            @if (Model.Duplicados.Count > 0)
+            {
+                @* Al final a propósito: Enter nunca debe saltarse el aviso de duplicados. *@
+                <button type="submit" name="accion" value="@(Model.AccionPrevia)-forzar" class="btn btn-warning ms-auto">Guardar de todos modos</button>
+            }
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/filas-dinamicas.js" asp-append-version="true"></script>
+}
