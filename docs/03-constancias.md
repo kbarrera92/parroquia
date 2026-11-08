@@ -86,6 +86,17 @@ ______________________
 ```
 Decisiones: se corrigen "antes los testigos" → "ante los testigos" y "San Barolomé" → "San Bartolomé"; el tratamiento ("don", "la Srita.", etc.) es un **campo por contrayente** tomado del catálogo `Tratamiento` (valores por defecto: "don" / "la Srita."). Pendiente 🟡: qué es **"Ref:"** (correlativo, dato libre o se elimina) — el usuario lo averiguará; hasta entonces se imprime la línea en blanco. El formato de fecha dd/MM/yyyy del cierre solo aparece en esta constancia (🟡 unificar a formato largo si el párroco lo aprueba).
 
+**Implementado en M6** (`PlantillaMatrimonio`). Prueba golden: `tests/Parroquia.Pruebas/Constancias/Golden/matrimonio.txt` (datos del ejemplo; emisión 6/11/2026). Una línea de texto plano por párrafo:
+1. La introducción ("El infrascrito párroco… que literalmente dice:") es un párrafo.
+2. Todo lo que va entre `<<` y la firma es **un solo párrafo** ("<<En la {lugar} en fecha: … contrajo {trat}: {NOMBRE} de {edad} años, originario de: …, hijo legítimo de: A y B con {trat} {NOMBRE} de {edad} años, originaria de: …, feligrés de …, hija legítima de: C y D").
+3. `Firma:` es una fila `Parrafo.Fila` ("Firma: {ministro}").
+4. `Al margen se lee: "{notas | Sin anotaciones}">>`.
+5. El párrafo "Para los usos…" con la fecha `dd/MM/yyyy`.
+6. `Ref:` (en blanco).
+7. Raya de firma (`DocumentoConstancia.LineaFirma`; en texto plano `______________________`), nombre y "Párroco.".
+
+Reglas: nombres de contrayentes **tal cual el libro** (no se pasan a mayúsculas; en negrita y subrayados, como en el papel); lugar vacío → "Iglesia de Mazatenango, Suchitepéquez"; testigos y padres con `FormatoConstancia.UnirLista`; sin tratamiento se omite "don:" / "la Srita." sin dejar signos sueltos; **sin edad se omite "de N años"**; la esposa lleva "feligrés de {x}" sin dos puntos, como el papel; la errata "parriquia" del ejemplo no se reproduce (el dato es lo que digite el capturista). La legitimidad es texto fijo (pregunta abierta en `06`). Avisos antes de imprimir (por contrayente, "del esposo" / "de la esposa"): falta nombre/apellido, edad, lugar de origen, feligresía, padres; y en general fecha incompleta, faltan testigos, falta ministro, falta libro/folio/partida, "Revisar".
+
 ## 3. Reglas de plantilla
 - **Una función pura por sacramento** `Render(registro, contexto) → modelo de documento`; el PDF solo maqueta. Así el texto se prueba sin renderizar PDF.
 - **Pruebas golden:** con los datos de cada ejemplo, el texto resultante debe coincidir **carácter por carácter** con el esperado (tras decidir las correcciones 🟡 arriba, el archivo esperado se actualiza **conscientemente**, no por accidente).

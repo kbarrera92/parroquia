@@ -1017,6 +1017,296 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     b.ToTable("confirmacion", (string)null);
                 });
 
+            modelBuilder.Entity("Parroquia.Dominio.Sacramentos.Matrimonio", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "secuencia_id");
+
+                    b.Property<bool>("Anulado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("anulado");
+
+                    b.Property<string>("BusquedaEsposa")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("busqueda_esposa")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<string>("BusquedaEsposo")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("busqueda_esposo")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<string>("BusquedaNormalizada")
+                        .IsRequired()
+                        .HasMaxLength(800)
+                        .HasColumnType("character varying(800)")
+                        .HasColumnName("busqueda_normalizada")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("CreadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("creado_por");
+
+                    b.Property<string>("Folio")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("folio");
+
+                    b.Property<string>("FolioOrden")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("folio_orden")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<string>("Libro")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("libro");
+
+                    b.Property<string>("LibroOrden")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("libro_orden")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<string>("LugarCelebracion")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("lugar_celebracion");
+
+                    b.Property<long?>("MinistroId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("ministro_id");
+
+                    b.Property<string>("MinistroTexto")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("ministro_texto");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificado_en");
+
+                    b.Property<string>("ModificadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("modificado_por");
+
+                    b.Property<string>("MotivoAnulacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("motivo_anulacion");
+
+                    b.Property<string>("MotivoRevision")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("motivo_revision");
+
+                    b.Property<string>("NotasMarginales")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notas_marginales");
+
+                    b.Property<string>("Partida")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("partida");
+
+                    b.Property<string>("PartidaOrden")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("partida_orden")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<bool>("Revisar")
+                        .HasColumnType("boolean")
+                        .HasColumnName("revisar");
+
+                    b.PrimitiveCollection<List<string>>("Testigos")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("testigos");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<int>("fecha_matrimonio_clave_orden")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("integer")
+                        .HasColumnName("fecha_matrimonio_clave_orden")
+                        .HasComputedColumnSql("COALESCE(fecha_matrimonio_anio, 0) * 10000 + COALESCE(fecha_matrimonio_mes, 0) * 100 + COALESCE(fecha_matrimonio_dia, 0)", true);
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Esposa", "Parroquia.Dominio.Sacramentos.Matrimonio.Esposa#Contrayente", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("Apellidos")
+                                .IsRequired()
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposa_apellidos");
+
+                            b1.Property<short?>("Edad")
+                                .HasColumnType("smallint")
+                                .HasColumnName("esposa_edad");
+
+                            b1.Property<string>("FeligresDe")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposa_feligres_de");
+
+                            b1.Property<string>("Madre")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposa_madre");
+
+                            b1.Property<string>("Nombres")
+                                .IsRequired()
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposa_nombres");
+
+                            b1.Property<string>("OriginarioDe")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposa_originario_de");
+
+                            b1.Property<string>("Padre")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposa_padre");
+
+                            b1.Property<string>("Tratamiento")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposa_tratamiento");
+                        });
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Esposo", "Parroquia.Dominio.Sacramentos.Matrimonio.Esposo#Contrayente", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("Apellidos")
+                                .IsRequired()
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposo_apellidos");
+
+                            b1.Property<short?>("Edad")
+                                .HasColumnType("smallint")
+                                .HasColumnName("esposo_edad");
+
+                            b1.Property<string>("FeligresDe")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposo_feligres_de");
+
+                            b1.Property<string>("Madre")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposo_madre");
+
+                            b1.Property<string>("Nombres")
+                                .IsRequired()
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposo_nombres");
+
+                            b1.Property<string>("OriginarioDe")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposo_originario_de");
+
+                            b1.Property<string>("Padre")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposo_padre");
+
+                            b1.Property<string>("Tratamiento")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)")
+                                .HasColumnName("esposo_tratamiento");
+                        });
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "FechaMatrimonio", "Parroquia.Dominio.Sacramentos.Matrimonio.FechaMatrimonio#FechaParcial", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<short?>("Anio")
+                                .HasColumnType("smallint")
+                                .HasColumnName("fecha_matrimonio_anio");
+
+                            b1.Property<short?>("Dia")
+                                .HasColumnType("smallint")
+                                .HasColumnName("fecha_matrimonio_dia");
+
+                            b1.Property<short?>("Mes")
+                                .HasColumnType("smallint")
+                                .HasColumnName("fecha_matrimonio_mes");
+                        });
+
+                    b.HasKey("Id")
+                        .HasName("pk_matrimonio");
+
+                    b.HasIndex("Anulado")
+                        .HasDatabaseName("ix_matrimonio_anulado");
+
+                    b.HasIndex("BusquedaEsposa")
+                        .HasDatabaseName("ix_matrimonio_busqueda_esposa");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("BusquedaEsposa"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("BusquedaEsposa"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("BusquedaEsposo")
+                        .HasDatabaseName("ix_matrimonio_busqueda_esposo");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("BusquedaEsposo"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("BusquedaEsposo"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("BusquedaNormalizada")
+                        .HasDatabaseName("ix_matrimonio_busqueda_normalizada");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("BusquedaNormalizada"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("BusquedaNormalizada"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("MinistroId")
+                        .HasDatabaseName("ix_matrimonio_ministro_id");
+
+                    b.HasIndex("Revisar")
+                        .HasDatabaseName("ix_matrimonio_revisar");
+
+                    b.HasIndex("fecha_matrimonio_clave_orden")
+                        .HasDatabaseName("ix_matrimonio_fecha_matrimonio_clave_orden");
+
+                    b.HasIndex("LibroOrden", "FolioOrden", "PartidaOrden")
+                        .HasDatabaseName("ix_matrimonio_libro_orden_folio_orden_partida_orden");
+
+                    b.ToTable("matrimonio", (string)null);
+                });
+
             modelBuilder.Entity("Parroquia.Infraestructura.Constancias.ConstanciaEmitida", b =>
                 {
                     b.Property<long>("Id")
@@ -1388,6 +1678,17 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasForeignKey("MinistroId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_confirmacion_ministros_ministro_id");
+
+                    b.Navigation("Ministro");
+                });
+
+            modelBuilder.Entity("Parroquia.Dominio.Sacramentos.Matrimonio", b =>
+                {
+                    b.HasOne("Parroquia.Dominio.Catalogos.Ministro", "Ministro")
+                        .WithMany()
+                        .HasForeignKey("MinistroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_matrimonio_ministros_ministro_id");
 
                     b.Navigation("Ministro");
                 });

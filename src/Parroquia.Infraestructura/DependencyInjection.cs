@@ -47,6 +47,8 @@ public static class DependencyInjection
         services.AddModuloSacramental<ModuloBautismo>();
         services.AddScoped<ServicioConfirmacion>();
         services.AddModuloSacramental<ModuloConfirmacion>();
+        services.AddScoped<ServicioMatrimonio>();
+        services.AddModuloSacramental<ModuloMatrimonio>();
         services.AddScoped<ServicioComunion>();
         services.AddModuloSacramental<ModuloComunion>();
 

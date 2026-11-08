@@ -90,6 +90,28 @@ public class GeneradorPdfPruebas
         Encoding.Latin1.GetString(pdf).Should().Contain("/Count 1");
     }
 
+    private static DocumentoConstancia EjemploMatrimonio() => PlantillaMatrimonio.Render(
+        new DatosMatrimonio(
+            new DatosContrayente("don", "Carlos Genaro", "Alvarado de León", 29, "San Gabriel", "P. San Bartolome",
+                "Samuel Alvarado", "Estefana de León Pérez"),
+            new DatosContrayente("la Srita.", "Gloria Inés", "Ceballos Tupul", 22, "San Gabriel",
+                "parroquia San Bartolome", "Bonifacio Ceballos", "Concepcion Tupul"),
+            FechaParcial.Crear(2007, 4, 21, new DateOnly(2026, 11, 7)), "Iglesia de Mazatenango, Suchitepéquez",
+            ["Noe Lopez Garcia", "Alma Luna de Lopez"], "P. Andrés Martínez", null, "18", "5", "15", false),
+        Contexto);
+
+    [Fact]
+    public void Matrimonio_con_linea_de_firma_cabe_en_una_pagina_aun_con_notas_largas()
+    {
+        var generador = new GeneradorPdfConstancia();
+        var normal = generador.Generar(EjemploMatrimonio(), null);
+        var sinRaya = generador.Generar(EjemploMatrimonio() with { LineaFirma = false }, null);
+
+        Encoding.ASCII.GetString(normal, 0, 5).Should().Be("%PDF-");
+        Encoding.Latin1.GetString(normal).Should().Contain("/Count 1");
+        normal.Should().NotEqual(sinRaya); // la raya se dibuja solo cuando la constancia la pide
+    }
+
     [Fact]
     public void Muestra_visual_opcional_para_revisar_contra_el_ejemplo()
     {
@@ -99,7 +121,7 @@ public class GeneradorPdfPruebas
         Directory.CreateDirectory(carpeta);
         var generador = new GeneradorPdfConstancia();
         var logo = LogoDeReferencia();
-        foreach (var (nombre, documento) in new[] { ("comunion", Ejemplo()), ("bautismo", EjemploBautismo()) })
+        foreach (var (nombre, documento) in new[] { ("comunion", Ejemplo()), ("bautismo", EjemploBautismo()), ("matrimonio", EjemploMatrimonio()) })
         {
             File.WriteAllBytes(Path.Combine(carpeta, $"{nombre}.pdf"), generador.Generar(documento, logo));
             generador.Construir(documento, logo).GenerateImages(

@@ -55,15 +55,16 @@ Reglas de captura: `Nombres` y `Apellidos` obligatorios salvo registro "Revisar"
 **`Confirmacion`** — **Implementada en M5** con campos mínimos (tabla `confirmacion`; fecha `fecha_confirmacion_*`).
 `Nombres`, `Apellidos`, `FechaConfirmacion` (FechaParcial; obligatoria al menos el año), `Padrinos` (lista de texto 0..n, máx. 10, orden del libro; `text[]`, auditada unida con "; "), `Ministro?` *(opcional: obispo; catálogo o texto libre; no se imprime)*, `NotasMarginales?` *(no se imprimen)*. Duplicados: igual libro+folio+partida, o igual persona + fecha. *(Opcionales a confirmar en M0, aún sin fotos del libro: `Padre`, `Madre`, `ParroquiaBautismo`; se agregarían con una migración.)*
 
-**`Matrimonio`**
-`FechaMatrimonio` (FechaParcial), `LugarCelebracion` (default "Iglesia de Mazatenango, Suchitepéquez"), `Testigos` (colección 0..n, ejemplo: 2), `Ministro` ("Firma:"), `NotasMarginales`, más dos contrayentes (owned type `Contrayente`, columnas con prefijo `Esposo_` / `Esposa_`):
-`TratamientoId` (catálogo: "don", "la Srita.", etc.), `Nombres`, `Apellidos`, `Edad` (smallint?), `OriginarioDe`, `FeligresDe`, `Padre?`, `Madre?`, `Legitimidad` 🟡 (el texto usa "hijo/a legítimo/a de"; ver `06`).
+**`Matrimonio`** — **Implementado en M6** (tabla `matrimonio`; fecha `fecha_matrimonio_*`; contrayentes `esposo_*` / `esposa_*`).
+`FechaMatrimonio` (FechaParcial; obligatoria al menos el año), `LugarCelebracion` (default "Iglesia de Mazatenango, Suchitepéquez"; si se deja vacío se guarda el default), `Testigos` (lista de texto 0..n, máx. 10, en el orden del libro; `text[]`, auditada unida con "; "; como `Padrinos` de Bautismo), `Ministro` ("Firma:"; catálogo o texto libre), `NotasMarginales` (si vacío → "Sin anotaciones"), más dos contrayentes `Esposo` y `Esposa`.
+**`Contrayente` es un *complex type*** (no owned: así el interceptor de auditoría lo recorre y registra cada campo como `Esposo.Nombres`, `Esposa.Edad`…; siempre existe, con valores vacíos): `Tratamiento` (texto tomado del catálogo `Tratamiento` y guardado **como texto**, no `TratamientoId`: un complex type no admite FK y el historial queda legible; por defecto "don" / "la Srita." si existen), `Nombres`, `Apellidos` (ambos obligatorios salvo registro "Revisar" con motivo), `Edad` (smallint?, 12–120 si se informa), `OriginarioDe?`, `FeligresDe?`, `Padre?`, `Madre?`. La **legitimidad** no es campo: la constancia dice siempre "hijo legítimo de:" / "hija legítima de:" mientras siga abierta la pregunta de `06`.
+Derivadas (`.NoAuditar()`): `BusquedaEsposo` y `BusquedaEsposa` (nombres + apellidos normalizados de cada uno, con índice trigram GIN) y `BusquedaNormalizada` (ambas juntas). La búsqueda por texto encuentra el registro si **todas** las palabras están en el esposo **o todas** en la esposa (no se mezclan), y la búsqueda global aporta **una fila por contrayente que coincide**. Duplicados: igual libro+folio+partida, o iguales esposo **y** esposa + fecha de matrimonio. Listado ordenado por apellidos y nombres del esposo.
 
 ## 4. Índices y restricciones
 - Índice **no único** `(Libro, Folio, Partida)` por tabla + advertencia de duplicado en servicio (no bloqueo: pueden existir varias partidas por folio y libros reiniciados).
 - GIN trigram sobre `BusquedaNormalizada` (extensión `pg_trgm`; `unaccent` ya no hace falta porque la normalización se hace en C#).
 - Índice sobre `ClaveOrden` de la fecha principal y `Anulado`.
-- `Matrimonio`: búsqueda indexada por **ambos** contrayentes (columnas normalizadas `Esposo_Busqueda`, `Esposa_Busqueda`).
+- `Matrimonio`: búsqueda indexada por **ambos** contrayentes (columnas normalizadas `busqueda_esposo`, `busqueda_esposa`, GIN trigram).
 - Anulados excluidos por defecto en listados y búsquedas (filtro global EF), visibles al Administrador.
 
 ## 5. Búsqueda global

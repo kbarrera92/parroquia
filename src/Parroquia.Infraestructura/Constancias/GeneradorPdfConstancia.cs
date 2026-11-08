@@ -126,6 +126,8 @@ public sealed class GeneradorPdfConstancia
     {
         c.PaddingTop(d.Firmante.EspacioAntes).AlignRight().Column(col =>
         {
+            // Raya para la firma manual (solo las constancias que la traen en el ejemplo, p. ej. Matrimonio).
+            if (d.LineaFirma) col.Item().MinWidth(210).PaddingBottom(3).LineHorizontal(0.8f);
             col.Item().AlignCenter().Text(d.Firmante.ATexto()).Bold();
             col.Item().AlignCenter().Text(d.TituloFirmante).Bold();
         });
