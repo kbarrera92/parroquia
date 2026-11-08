@@ -10,23 +10,17 @@ namespace Parroquia.Infraestructura.Historial;
 /// <param name="Hasta">Día inclusive, hora de Guatemala.</param>
 public sealed record FiltroHistorial(string? Usuario = null, string? Entidad = null, DateOnly? Desde = null, DateOnly? Hasta = null);
 
-public sealed record PaginaResultado<T>(IReadOnlyList<T> Items, int Total, int PaginaActual, int TamanoPagina)
-{
-    public int TotalPaginas => Math.Max(1, (int)Math.Ceiling(Total / (double)TamanoPagina));
-}
-
 /// <summary>Consulta (solo lectura) de <see cref="Auditoria"/> y <see cref="BitacoraAcceso"/>, más reciente primero.</summary>
 public sealed class ServicioHistorial(ParroquiaDbContext db)
 {
-    public const int TamanoPorDefecto = 25;
-    private const int TamanoMaximo = 200;
+    public const int TamanoPorDefecto = Paginacion.TamanoPorDefecto;
 
     public Task<PaginaResultado<Auditoria>> AuditoriaAsync(
         FiltroHistorial filtro, int pagina, int tamano = TamanoPorDefecto, CancellationToken ct = default)
     {
         var q = db.Auditorias.AsNoTracking().AsQueryable();
         q = Filtrar(q, filtro, a => a.UsuarioNombre, a => a.Entidad, a => a.Fecha);
-        return PaginarAsync(q.OrderByDescending(a => a.Fecha).ThenByDescending(a => a.Id), pagina, tamano, ct);
+        return q.OrderByDescending(a => a.Fecha).ThenByDescending(a => a.Id).PaginarAsync(pagina, tamano, ct);
     }
 
     public Task<PaginaResultado<BitacoraAcceso>> BitacoraAsync(
@@ -34,7 +28,7 @@ public sealed class ServicioHistorial(ParroquiaDbContext db)
     {
         var q = db.BitacoraAccesos.AsNoTracking().AsQueryable();
         q = Filtrar(q, filtro, b => b.UsuarioNombre, b => b.Entidad, b => b.Fecha);
-        return PaginarAsync(q.OrderByDescending(b => b.Fecha).ThenByDescending(b => b.Id), pagina, tamano, ct);
+        return q.OrderByDescending(b => b.Fecha).ThenByDescending(b => b.Id).PaginarAsync(pagina, tamano, ct);
     }
 
     private static IQueryable<T> Filtrar<T>(
@@ -90,16 +84,4 @@ public sealed class ServicioHistorial(ParroquiaDbContext db)
 
     private static string EscaparLike(string s) =>
         s.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
-
-    private static async Task<PaginaResultado<T>> PaginarAsync<T>(
-        IQueryable<T> q, int pagina, int tamano, CancellationToken ct)
-    {
-        tamano = Math.Clamp(tamano, 1, TamanoMaximo);
-        var total = await q.CountAsync(ct);
-        var totalPaginas = Math.Max(1, (int)Math.Ceiling(total / (double)tamano));
-        var actual = Math.Clamp(pagina, 1, totalPaginas);
-
-        var items = await q.Skip((actual - 1) * tamano).Take(tamano).ToListAsync(ct);
-        return new PaginaResultado<T>(items, total, actual, tamano);
-    }
 }

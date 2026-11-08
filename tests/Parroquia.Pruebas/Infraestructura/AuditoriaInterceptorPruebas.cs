@@ -10,6 +10,9 @@ namespace Parroquia.Pruebas.Infraestructura;
 public class EntidadPrueba : EntidadAuditable, IAnulable
 {
     public string Nombre { get; set; } = "";
+
+    /// <summary>Columna derivada (como BusquedaNormalizada): se guarda pero no ensucia el historial.</summary>
+    public string? Derivado { get; set; }
     public FechaParcial Fecha { get; set; } = FechaParcial.Vacia;
     public bool Anulado { get; set; }
     public string? MotivoAnulacion { get; set; }
@@ -25,6 +28,7 @@ public sealed class ContextoPrueba(DbContextOptions<ContextoPrueba> options) : D
         {
             e.ToTable("entidad_prueba");
             e.MapearFechaParcial(x => x.Fecha, "fecha");
+            e.Property(x => x.Derivado).NoAuditar();
         });
         ConfiguracionAuditable.Aplicar(builder);
     }
@@ -167,6 +171,42 @@ public class AuditoriaInterceptorPruebas(BaseDatosAuditoriaFixture bd) : IClassF
         h.Select(a => a.Accion).Should().Equal(
             AccionAuditoria.Alta, AccionAuditoria.Anulacion, AccionAuditoria.RevertirAnulacion);
         Cambios(h[1]).GetProperty("MotivoAnulacion").GetProperty("nuevo").GetString().Should().Be("Duplicado");
+    }
+
+    [Fact]
+    public async Task Columnas_marcadas_NoAuditar_se_guardan_pero_no_aparecen_en_el_historial()
+    {
+        await using var ctx = Ctx();
+        var e = new EntidadPrueba { Nombre = "Ana", Derivado = "ana" };
+        ctx.Add(e);
+        await ctx.SaveChangesAsync();
+
+        e.Nombre = "Ana María";
+        e.Derivado = "ana maria";
+        await ctx.SaveChangesAsync();
+
+        await using var lectura = Ctx();
+        (await lectura.Entidades.SingleAsync(x => x.Id == e.Id)).Derivado.Should().Be("ana maria");
+        var h = await HistorialAsync(lectura, e.Id);
+        h.Should().HaveCount(2);
+        Cambios(h[0]).EnumerateObject().Select(p => p.Name).Should().NotContain("Derivado");
+        Cambios(h[1]).EnumerateObject().Select(p => p.Name).Should().Equal("Nombre");
+    }
+
+    [Fact]
+    public async Task Un_cambio_solo_en_columna_NoAuditar_se_guarda_sin_crear_auditoria()
+    {
+        await using var ctx = Ctx();
+        var e = new EntidadPrueba { Nombre = "Ana", Derivado = "a" };
+        ctx.Add(e);
+        await ctx.SaveChangesAsync();
+
+        e.Derivado = "b";
+        await ctx.SaveChangesAsync();
+
+        await using var lectura = Ctx();
+        (await lectura.Entidades.SingleAsync(x => x.Id == e.Id)).Derivado.Should().Be("b");
+        (await HistorialAsync(lectura, e.Id)).Should().ContainSingle();
     }
 
     [Fact]

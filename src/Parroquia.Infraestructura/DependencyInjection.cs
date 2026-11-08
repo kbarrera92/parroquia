@@ -9,6 +9,7 @@ using Parroquia.Infraestructura.Configuracion;
 using Parroquia.Infraestructura.Historial;
 using Parroquia.Infraestructura.Identidad;
 using Parroquia.Infraestructura.Persistencia;
+using Parroquia.Infraestructura.Sacramentos;
 
 namespace Parroquia.Infraestructura;
 
@@ -30,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<ServicioParroco>();
         services.AddScoped<ServicioConfiguracionParroquia>();
         services.AddScoped<ServicioHistorial>();
+        services.AddScoped<ServicioComunion>();
 
         services.AddDbContext<ParroquiaDbContext>((sp, o) => o
             .UseNpgsql(cadena, npgsql => npgsql.MigrationsHistoryTable("migraciones_historial"))

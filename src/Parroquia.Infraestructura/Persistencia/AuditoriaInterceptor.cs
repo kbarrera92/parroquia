@@ -62,7 +62,8 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
                     var cambios = CambiosDeModificacion(entrada);
                     if (cambios.Count == 0)
                     {
-                        entrada.State = EntityState.Unchanged;
+                        // Solo cambió una columna derivada (NoAuditar): se guarda tal cual, sin auditoría ni ModificadoPor.
+                        if (!CambioDerivado(entrada)) entrada.State = EntityState.Unchanged;
                         break;
                     }
 
@@ -104,7 +105,14 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
     private static bool Auditable(PropertyEntry p) =>
         !p.Metadata.IsShadowProperty()
         && p.Metadata.ValueGenerated == ValueGenerated.Never
-        && !CamposIgnorados.Contains(p.Metadata.Name);
+        && !CamposIgnorados.Contains(p.Metadata.Name)
+        && p.Metadata.FindAnnotation(ConfiguracionAuditable.AnotacionNoAuditar) is null;
+
+    private static bool CambioDerivado(EntityEntry<IAuditable> entrada) =>
+        entrada.Properties.Any(p =>
+            p.IsModified
+            && p.Metadata.FindAnnotation(ConfiguracionAuditable.AnotacionNoAuditar) is not null
+            && !Iguales(p.OriginalValue, p.CurrentValue));
 
     private static Dictionary<string, Cambio> CambiosDeAlta(EntityEntry<IAuditable> entrada)
     {

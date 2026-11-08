@@ -10,6 +10,13 @@ public static class ConfiguracionAuditable
 {
     public const string SecuenciaId = "secuencia_id";
 
+    /// <summary>Anotación EF de las columnas derivadas (órdenes naturales, búsqueda normalizada) que no van al historial.</summary>
+    public const string AnotacionNoAuditar = "Parroquia:NoAuditar";
+
+    /// <summary>La propiedad se guarda pero no se escribe en <see cref="Auditoria"/>: es un dato calculado, no un dato del libro.</summary>
+    public static PropertyBuilder<T> NoAuditar<T>(this PropertyBuilder<T> propiedad) =>
+        propiedad.HasAnnotation(AnotacionNoAuditar, true);
+
     public static void Aplicar(ModelBuilder builder)
     {
         builder.Entity<Auditoria>(e =>

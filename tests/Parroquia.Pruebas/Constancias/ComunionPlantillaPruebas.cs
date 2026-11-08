@@ -1,5 +1,5 @@
 using Parroquia.Aplicacion.Constancias;
-using Parroquia.Aplicacion.Sacramentos.Comunion;
+using Parroquia.Aplicacion.Sacramentos;
 using Parroquia.Dominio.Comun;
 
 namespace Parroquia.Pruebas.Constancias;

@@ -1,7 +1,8 @@
 using Parroquia.Aplicacion.Constancias;
 using Parroquia.Dominio.Comun;
 
-namespace Parroquia.Aplicacion.Sacramentos.Comunion;
+// Namespace plano por capa (la carpeta separa los módulos): un namespace ".Comunion" chocaría con la entidad Comunion.
+namespace Parroquia.Aplicacion.Sacramentos;
 
 /// <summary>Datos del registro que usa la constancia de Comunión.</summary>
 public sealed record DatosComunion(
