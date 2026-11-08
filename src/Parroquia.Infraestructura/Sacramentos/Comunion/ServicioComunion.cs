@@ -34,6 +34,9 @@ public sealed class ServicioComunion(ParroquiaDbContext db, TimeProvider reloj)
 {
     public const int MaxDuplicadosMostrados = 5;
 
+    /// <summary>Nombre con el que figura en Auditoria y BitacoraAcceso.</summary>
+    public const string NombreEntidad = nameof(Comunion);
+
     public async Task<ResultadoGuardado> GuardarAsync(
         DatosComunionFormulario d, long? id = null, uint? version = null,
         bool confirmarDuplicado = false, CancellationToken ct = default)

@@ -5,6 +5,7 @@
     var autenticado = User.Identity?.IsAuthenticated == true;
     async Task<bool> Puede(string permiso) => autenticado && (await Autorizacion.AuthorizeAsync(User, permiso)).Succeeded;
 
+    var verLibros = await Puede(Permisos.RegistrosBuscar);
     var verCatalogos = await Puede(Permisos.CatalogosGestionar);
     var verConfiguracion = await Puede(Permisos.Configuracion);
     var verHistorial = await Puede(Permisos.AuditoriaVer);
@@ -28,6 +29,10 @@
                 {
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" asp-page="/Index">Búsqueda</a></li>
+                        @if (verLibros)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-page="/Comunion/Index">Comuniones</a></li>
+                        }
                         @if (verAdministracion)
                         {
                             <li class="nav-item dropdown">

@@ -23,6 +23,13 @@ public sealed class ServicioHistorial(ParroquiaDbContext db)
         return q.OrderByDescending(a => a.Fecha).ThenByDescending(a => a.Id).PaginarAsync(pagina, tamano, ct);
     }
 
+    /// <summary>Todos los cambios de un registro (alta, ediciones, anulaciones), el más reciente primero.</summary>
+    public Task<List<Auditoria>> DeRegistroAsync(string entidad, long id, CancellationToken ct = default) =>
+        db.Auditorias.AsNoTracking()
+            .Where(a => a.Entidad == entidad && a.EntidadId == id)
+            .OrderByDescending(a => a.Fecha).ThenByDescending(a => a.Id)
+            .ToListAsync(ct);
+
     public Task<PaginaResultado<BitacoraAcceso>> BitacoraAsync(
         FiltroHistorial filtro, int pagina, int tamano = TamanoPorDefecto, CancellationToken ct = default)
     {

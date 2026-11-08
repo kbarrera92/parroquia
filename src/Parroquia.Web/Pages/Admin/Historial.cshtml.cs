@@ -1,22 +1,13 @@
 using System.Globalization;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Parroquia.Aplicacion.Comun;
 using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura.Historial;
-using Parroquia.Infraestructura.Persistencia;
+using Parroquia.Web.Presentacion;
 
 namespace Parroquia.Web.Pages.Admin;
-
-public record CambioVista(string Campo, string Anterior, string Nuevo);
-
-public record FilaAuditoria(string Fecha, string Usuario, string Entidad, long EntidadId, string Accion,
-    IReadOnlyList<CambioVista> Cambios);
-
-public record FilaBitacora(string Fecha, string Usuario, string Evento, string? Entidad, long? EntidadId,
-    string? Detalle, string? Ip);
 
 [Authorize(Policy = Permisos.AuditoriaVer)]
 public class HistorialModel(ServicioHistorial servicio) : PageModel
@@ -48,15 +39,13 @@ public class HistorialModel(ServicioHistorial servicio) : PageModel
         if (EsBitacora)
         {
             var r = await servicio.BitacoraAsync(filtro, pagina);
-            FilasBitacora = [.. r.Items.Select(b => new FilaBitacora(
-                Formato(b.Fecha), b.UsuarioNombre, EtiquetaEvento(b.Evento), b.Entidad, b.EntidadId, b.Detalle, b.Ip))];
+            FilasBitacora = [.. r.Items.Select(HistorialPresentacion.Fila)];
             Resumir(r);
         }
         else
         {
             var r = await servicio.AuditoriaAsync(filtro, pagina);
-            FilasAuditoria = [.. r.Items.Select(a => new FilaAuditoria(
-                Formato(a.Fecha), a.UsuarioNombre, a.Entidad, a.EntidadId, EtiquetaAccion(a.Accion), LeerCambios(a.CambiosJson)))];
+            FilasAuditoria = [.. r.Items.Select(HistorialPresentacion.Fila)];
             Resumir(r);
         }
     }
@@ -76,57 +65,5 @@ public class HistorialModel(ServicioHistorial servicio) : PageModel
 
         Aviso = $"Se ignoró la fecha {etiqueta} porque no es válida.";
         return null;
-    }
-
-    private static string Formato(DateTimeOffset f) =>
-        HoraGuatemala.Local(f).ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
-
-    private static string EtiquetaAccion(AccionAuditoria a) => a switch
-    {
-        AccionAuditoria.Alta => "Alta",
-        AccionAuditoria.Modificacion => "Modificación",
-        AccionAuditoria.Anulacion => "Anulación",
-        AccionAuditoria.RevertirAnulacion => "Reversión de anulación",
-        _ => a.ToString(),
-    };
-
-    private static string EtiquetaEvento(EventoAcceso e) => e switch
-    {
-        EventoAcceso.InicioSesion => "Inicio de sesión",
-        EventoAcceso.InicioSesionFallido => "Inicio de sesión fallido",
-        EventoAcceso.CierreSesion => "Cierre de sesión",
-        EventoAcceso.CuentaBloqueada => "Cuenta bloqueada",
-        EventoAcceso.VerRegistro => "Ver registro",
-        EventoAcceso.ImprimirConstancia => "Imprimir constancia",
-        _ => e.ToString(),
-    };
-
-    private static IReadOnlyList<CambioVista> LeerCambios(string json)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.ValueKind != JsonValueKind.Object) return [];
-
-            return [.. doc.RootElement.EnumerateObject().Select(c => new CambioVista(
-                c.Name, Texto(c.Value, "anterior"), Texto(c.Value, "nuevo")))];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
-    }
-
-    private static string Texto(JsonElement cambio, string propiedad)
-    {
-        if (cambio.ValueKind != JsonValueKind.Object || !cambio.TryGetProperty(propiedad, out var v)) return "—";
-        return v.ValueKind switch
-        {
-            JsonValueKind.Null or JsonValueKind.Undefined => "—",
-            JsonValueKind.True => "Sí",
-            JsonValueKind.False => "No",
-            JsonValueKind.String => v.GetString() is { Length: > 0 } s ? s : "—",
-            _ => v.GetRawText(),
-        };
     }
 }
