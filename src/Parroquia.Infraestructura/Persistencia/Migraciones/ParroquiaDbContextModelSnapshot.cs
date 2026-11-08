@@ -276,6 +276,62 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Parroquia.Infraestructura.Persistencia.Auditoria", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("accion");
+
+                    b.Property<string>("CambiosJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("cambios_json");
+
+                    b.Property<string>("Entidad")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entidad");
+
+                    b.Property<long>("EntidadId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("entidad_id");
+
+                    b.Property<DateTimeOffset>("Fecha")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha");
+
+                    b.Property<string>("UsuarioId")
+                        .HasColumnType("text")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<string>("UsuarioNombre")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("usuario_nombre");
+
+                    b.HasKey("Id")
+                        .HasName("pk_auditorias");
+
+                    b.HasIndex("Fecha")
+                        .HasDatabaseName("ix_auditorias_fecha");
+
+                    b.HasIndex("Entidad", "EntidadId")
+                        .HasDatabaseName("ix_auditorias_entidad_entidad_id");
+
+                    b.ToTable("auditorias", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)

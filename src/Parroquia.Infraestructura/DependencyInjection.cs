@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura.Identidad;
 using Parroquia.Infraestructura.Persistencia;
 
@@ -16,9 +18,15 @@ public static class DependencyInjection
         var cadena = config.GetConnectionString(NombreCadenaConexion)
             ?? throw new InvalidOperationException($"Falta la cadena de conexión '{NombreCadenaConexion}'.");
 
-        services.AddDbContext<ParroquiaDbContext>(o => o
+        services.AddHttpContextAccessor();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<IUsuarioActual, UsuarioActualHttp>();
+        services.AddScoped<AuditoriaInterceptor>();
+
+        services.AddDbContext<ParroquiaDbContext>((sp, o) => o
             .UseNpgsql(cadena, npgsql => npgsql.MigrationsHistoryTable("migraciones_historial"))
-            .UseSnakeCaseNamingConvention());
+            .UseSnakeCaseNamingConvention()
+            .AddInterceptors(sp.GetRequiredService<AuditoriaInterceptor>()));
 
         services.AddIdentity<Usuario, IdentityRole>(o =>
             {
