@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura.Identidad;
 
 namespace Parroquia.Web.Pages.Cuenta;
 
 [AllowAnonymous]
-public class LoginModel(SignInManager<Usuario> signIn, UserManager<Usuario> usuarios) : PageModel
+public class LoginModel(SignInManager<Usuario> signIn, UserManager<Usuario> usuarios, IBitacoraAcceso bitacora) : PageModel
 {
     [BindProperty, Required(ErrorMessage = "Escriba su usuario.")]
     public string Usuario { get; set; } = "";
@@ -28,6 +29,7 @@ public class LoginModel(SignInManager<Usuario> signIn, UserManager<Usuario> usua
         var usuario = await usuarios.FindByNameAsync(Usuario);
         if (usuario is { Activo: false })
         {
+            await bitacora.RegistrarAsync(EventoAcceso.InicioSesionFallido, Usuario, usuario.Id, detalle: "Usuario desactivado");
             ModelState.AddModelError("", "Usuario o contraseña incorrectos.");
             return Page();
         }
@@ -35,7 +37,15 @@ public class LoginModel(SignInManager<Usuario> signIn, UserManager<Usuario> usua
         var resultado = await signIn.PasswordSignInAsync(Usuario, Password, isPersistent: false, lockoutOnFailure: true);
 
         if (resultado.Succeeded)
+        {
+            await bitacora.RegistrarAsync(EventoAcceso.InicioSesion, usuario?.UserName ?? Usuario, usuario?.Id);
             return LocalRedirect(Url.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/");
+        }
+
+        await bitacora.RegistrarAsync(
+            resultado.IsLockedOut ? EventoAcceso.CuentaBloqueada : EventoAcceso.InicioSesionFallido,
+            Usuario, usuario?.Id,
+            detalle: usuario is null ? "Usuario inexistente" : resultado.IsLockedOut ? "Cuenta bloqueada" : "Contraseña incorrecta");
 
         ModelState.AddModelError("", resultado.IsLockedOut
             ? "Cuenta bloqueada por intentos fallidos. Espere 15 minutos o avise al Administrador."

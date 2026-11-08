@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<IUsuarioActual, UsuarioActualHttp>();
         services.AddScoped<AuditoriaInterceptor>();
+        services.AddScoped<IBitacoraAcceso, ServicioBitacoraAcceso>();
 
         services.AddDbContext<ParroquiaDbContext>((sp, o) => o
             .UseNpgsql(cadena, npgsql => npgsql.MigrationsHistoryTable("migraciones_historial"))
