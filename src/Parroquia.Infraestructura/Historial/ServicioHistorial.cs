@@ -1,0 +1,105 @@
+using Microsoft.EntityFrameworkCore;
+using Parroquia.Aplicacion.Comun;
+using Parroquia.Infraestructura.Persistencia;
+
+namespace Parroquia.Infraestructura.Historial;
+
+/// <param name="Usuario">Contiene (sin distinguir mayúsculas).</param>
+/// <param name="Entidad">Coincidencia exacta del nombre de entidad.</param>
+/// <param name="Desde">Día inclusive, hora de Guatemala.</param>
+/// <param name="Hasta">Día inclusive, hora de Guatemala.</param>
+public sealed record FiltroHistorial(string? Usuario = null, string? Entidad = null, DateOnly? Desde = null, DateOnly? Hasta = null);
+
+public sealed record PaginaResultado<T>(IReadOnlyList<T> Items, int Total, int PaginaActual, int TamanoPagina)
+{
+    public int TotalPaginas => Math.Max(1, (int)Math.Ceiling(Total / (double)TamanoPagina));
+}
+
+/// <summary>Consulta (solo lectura) de <see cref="Auditoria"/> y <see cref="BitacoraAcceso"/>, más reciente primero.</summary>
+public sealed class ServicioHistorial(ParroquiaDbContext db)
+{
+    public const int TamanoPorDefecto = 25;
+    private const int TamanoMaximo = 200;
+
+    public Task<PaginaResultado<Auditoria>> AuditoriaAsync(
+        FiltroHistorial filtro, int pagina, int tamano = TamanoPorDefecto, CancellationToken ct = default)
+    {
+        var q = db.Auditorias.AsNoTracking().AsQueryable();
+        q = Filtrar(q, filtro, a => a.UsuarioNombre, a => a.Entidad, a => a.Fecha);
+        return PaginarAsync(q.OrderByDescending(a => a.Fecha).ThenByDescending(a => a.Id), pagina, tamano, ct);
+    }
+
+    public Task<PaginaResultado<BitacoraAcceso>> BitacoraAsync(
+        FiltroHistorial filtro, int pagina, int tamano = TamanoPorDefecto, CancellationToken ct = default)
+    {
+        var q = db.BitacoraAccesos.AsNoTracking().AsQueryable();
+        q = Filtrar(q, filtro, b => b.UsuarioNombre, b => b.Entidad, b => b.Fecha);
+        return PaginarAsync(q.OrderByDescending(b => b.Fecha).ThenByDescending(b => b.Id), pagina, tamano, ct);
+    }
+
+    private static IQueryable<T> Filtrar<T>(
+        IQueryable<T> q, FiltroHistorial f,
+        System.Linq.Expressions.Expression<Func<T, string>> usuario,
+        System.Linq.Expressions.Expression<Func<T, string?>> entidad,
+        System.Linq.Expressions.Expression<Func<T, DateTimeOffset>> fecha)
+    {
+        if (!string.IsNullOrWhiteSpace(f.Usuario))
+        {
+            var patron = $"%{EscaparLike(f.Usuario.Trim())}%";
+            q = q.Where(Combinar(usuario, u => EF.Functions.ILike(u, patron, "\\")));
+        }
+
+        if (!string.IsNullOrWhiteSpace(f.Entidad))
+        {
+            var e = f.Entidad.Trim();
+            q = q.Where(Combinar(entidad, x => x == e));
+        }
+
+        if (f.Desde is { } desde)
+        {
+            var inicio = HoraGuatemala.InicioDelDia(desde);
+            q = q.Where(Combinar(fecha, x => x >= inicio));
+        }
+
+        if (f.Hasta is { } hasta)
+        {
+            var finExclusivo = HoraGuatemala.InicioDelDia(hasta.AddDays(1));
+            q = q.Where(Combinar(fecha, x => x < finExclusivo));
+        }
+
+        return q;
+    }
+
+    /// <summary>selector(x) → predicado, como una sola expresión traducible a SQL.</summary>
+    private static System.Linq.Expressions.Expression<Func<T, bool>> Combinar<T, TProp>(
+        System.Linq.Expressions.Expression<Func<T, TProp>> selector,
+        System.Linq.Expressions.Expression<Func<TProp, bool>> predicado)
+    {
+        var p = selector.Parameters[0];
+        var cuerpo = new ReemplazarParametro(predicado.Parameters[0], selector.Body).Visit(predicado.Body)!;
+        return System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(cuerpo, p);
+    }
+
+    private sealed class ReemplazarParametro(
+        System.Linq.Expressions.ParameterExpression viejo, System.Linq.Expressions.Expression nuevo)
+        : System.Linq.Expressions.ExpressionVisitor
+    {
+        protected override System.Linq.Expressions.Expression VisitParameter(System.Linq.Expressions.ParameterExpression node) =>
+            node == viejo ? nuevo : base.VisitParameter(node);
+    }
+
+    private static string EscaparLike(string s) =>
+        s.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+
+    private static async Task<PaginaResultado<T>> PaginarAsync<T>(
+        IQueryable<T> q, int pagina, int tamano, CancellationToken ct)
+    {
+        tamano = Math.Clamp(tamano, 1, TamanoMaximo);
+        var total = await q.CountAsync(ct);
+        var totalPaginas = Math.Max(1, (int)Math.Ceiling(total / (double)tamano));
+        var actual = Math.Clamp(pagina, 1, totalPaginas);
+
+        var items = await q.Skip((actual - 1) * tamano).Take(tamano).ToListAsync(ct);
+        return new PaginaResultado<T>(items, total, actual, tamano);
+    }
+}

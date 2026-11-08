@@ -1,0 +1,125 @@
+@page
+@model Parroquia.Web.Pages.Admin.HistorialModel
+@{
+    ViewData["Title"] = "Historial";
+}
+
+<div class="mt-4">
+    <h1 class="h3">Historial y bitácora</h1>
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link @(Model.EsBitacora ? "" : "active")" asp-page="/Admin/Historial" asp-route-pestana="auditoria"
+               asp-route-usuario="@Model.Usuario" asp-route-entidad="@Model.Entidad"
+               asp-route-desde="@Model.Desde" asp-route-hasta="@Model.Hasta">Cambios de datos</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Model.EsBitacora ? "active" : "")" asp-page="/Admin/Historial" asp-route-pestana="bitacora"
+               asp-route-usuario="@Model.Usuario" asp-route-entidad="@Model.Entidad"
+               asp-route-desde="@Model.Desde" asp-route-hasta="@Model.Hasta">Accesos</a>
+        </li>
+    </ul>
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <input type="hidden" name="pestana" value="@Model.PestanaActual" />
+        <div class="col-md-3">
+            <label for="usuario" class="form-label">Usuario</label>
+            <input id="usuario" name="usuario" value="@Model.Usuario" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label for="entidad" class="form-label">Entidad</label>
+            <input id="entidad" name="entidad" value="@Model.Entidad" class="form-control" placeholder="Ministro…" />
+        </div>
+        <div class="col-md-2">
+            <label for="desde" class="form-label">Desde</label>
+            <input id="desde" name="desde" type="date" value="@Model.Desde" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label for="hasta" class="form-label">Hasta</label>
+            <input id="hasta" name="hasta" type="date" value="@Model.Hasta" class="form-control" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a asp-page="/Admin/Historial" asp-route-pestana="@Model.PestanaActual" class="btn btn-link">Limpiar</a>
+        </div>
+    </form>
+
+    @if (Model.Aviso is not null)
+    {
+        <div class="alert alert-warning" role="alert">@Model.Aviso</div>
+    }
+
+    <p class="text-muted">@Model.Total.ToString("N0") movimientos · hora de Guatemala</p>
+
+    @if (Model.EsBitacora)
+    {
+        <table class="table table-sm align-middle">
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Evento</th><th>Registro</th><th>Detalle</th><th>IP</th></tr></thead>
+            <tbody>
+            @foreach (var f in Model.FilasBitacora)
+            {
+                <tr>
+                    <td class="text-nowrap">@f.Fecha</td>
+                    <td>@f.Usuario</td>
+                    <td>@f.Evento</td>
+                    <td>@(f.Entidad is null ? "" : $"{f.Entidad} #{f.EntidadId}")</td>
+                    <td>@f.Detalle</td>
+                    <td>@f.Ip</td>
+                </tr>
+            }
+            @if (Model.FilasBitacora.Count == 0)
+            {
+                <tr><td colspan="6" class="text-muted">No hay movimientos con esos filtros.</td></tr>
+            }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <table class="table table-sm align-top">
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Entidad</th><th>Cambios</th></tr></thead>
+            <tbody>
+            @foreach (var f in Model.FilasAuditoria)
+            {
+                <tr>
+                    <td class="text-nowrap">@f.Fecha</td>
+                    <td>@f.Usuario</td>
+                    <td>@f.Accion</td>
+                    <td>@f.Entidad #@f.EntidadId</td>
+                    <td>
+                        @foreach (var c in f.Cambios)
+                        {
+                            <div><strong>@c.Campo:</strong> @c.Anterior → @c.Nuevo</div>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (Model.FilasAuditoria.Count == 0)
+            {
+                <tr><td colspan="5" class="text-muted">No hay movimientos con esos filtros.</td></tr>
+            }
+            </tbody>
+        </table>
+    }
+
+    @if (Model.TotalPaginas > 1)
+    {
+        <nav aria-label="Páginas">
+            <ul class="pagination">
+                <li class="page-item @(Model.PaginaActual <= 1 ? "disabled" : "")">
+                    <a class="page-link" asp-page="/Admin/Historial" asp-route-pestana="@Model.PestanaActual"
+                       asp-route-usuario="@Model.Usuario" asp-route-entidad="@Model.Entidad"
+                       asp-route-desde="@Model.Desde" asp-route-hasta="@Model.Hasta"
+                       asp-route-pagina="@(Model.PaginaActual - 1)">Anterior</a>
+                </li>
+                <li class="page-item disabled"><span class="page-link">Página @Model.PaginaActual de @Model.TotalPaginas</span></li>
+                <li class="page-item @(Model.PaginaActual >= Model.TotalPaginas ? "disabled" : "")">
+                    <a class="page-link" asp-page="/Admin/Historial" asp-route-pestana="@Model.PestanaActual"
+                       asp-route-usuario="@Model.Usuario" asp-route-entidad="@Model.Entidad"
+                       asp-route-desde="@Model.Desde" asp-route-hasta="@Model.Hasta"
+                       asp-route-pagina="@(Model.PaginaActual + 1)">Siguiente</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>

@@ -14,4 +14,10 @@ public static class HoraGuatemala
 
     public static DateOnly Hoy(TimeProvider reloj) =>
         DateOnly.FromDateTime(reloj.GetUtcNow().ToOffset(Desfase).DateTime);
+
+    /// <summary>La fecha-hora tal como se ve en un reloj de Guatemala.</summary>
+    public static DateTimeOffset Local(DateTimeOffset fecha) => fecha.ToOffset(Desfase);
+
+    /// <summary>Inicio (00:00, hora de Guatemala) del día indicado, como instante UTC (Npgsql solo escribe offset 0).</summary>
+    public static DateTimeOffset InicioDelDia(DateOnly dia) => new DateTimeOffset(dia.ToDateTime(TimeOnly.MinValue), Desfase).ToUniversalTime();
 }

@@ -1,4 +1,16 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Authorization
+@using Parroquia.Aplicacion.Seguridad
+@inject IAuthorizationService Autorizacion
+@{
+    var autenticado = User.Identity?.IsAuthenticated == true;
+    async Task<bool> Puede(string permiso) => autenticado && (await Autorizacion.AuthorizeAsync(User, permiso)).Succeeded;
+
+    var verCatalogos = await Puede(Permisos.CatalogosGestionar);
+    var verConfiguracion = await Puede(Permisos.Configuracion);
+    var verHistorial = await Puede(Permisos.AuditoriaVer);
+    var verAdministracion = verCatalogos || verConfiguracion || verHistorial;
+}
+<!DOCTYPE html>
 <html lang="es-GT">
 <head>
     <meta charset="utf-8" />
@@ -16,6 +28,29 @@
                 {
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" asp-page="/Index">Búsqueda</a></li>
+                        @if (verAdministracion)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
+                                <ul class="dropdown-menu">
+                                    @if (verConfiguracion)
+                                    {
+                                        <li><a class="dropdown-item" asp-page="/Admin/Configuracion">Configuración</a></li>
+                                        <li><a class="dropdown-item" asp-page="/Admin/Parrocos">Párroco</a></li>
+                                    }
+                                    @if (verCatalogos)
+                                    {
+                                        <li><a class="dropdown-item" asp-page="/Admin/Ministros">Ministros</a></li>
+                                        <li><a class="dropdown-item" asp-page="/Admin/Tratamientos">Tratamientos</a></li>
+                                    }
+                                    @if (verHistorial)
+                                    {
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li><a class="dropdown-item" asp-page="/Admin/Historial">Historial y bitácora</a></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
                     </ul>
                     <span class="navbar-text me-3">@User.Identity.Name</span>
                     <a class="btn btn-outline-light btn-sm" asp-page="/Cuenta/Logout">Cerrar sesión</a>
