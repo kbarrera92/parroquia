@@ -125,7 +125,7 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
     {
         var cambios = new Dictionary<string, Cambio>();
         foreach (var p in entrada.Properties.Where(p => Auditable(p) && p.IsModified))
-            if (!Equals(p.OriginalValue, p.CurrentValue))
+            if (!Iguales(p.OriginalValue, p.CurrentValue))
                 cambios[p.Metadata.Name] = new Cambio(Valor(p.OriginalValue), Valor(p.CurrentValue));
 
         foreach (var cp in entrada.ComplexProperties)
@@ -166,9 +166,13 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
         return unido.Length == 0 ? null : unido;
     }
 
+    private static bool Iguales(object? a, object? b) =>
+        a is byte[] x && b is byte[] y ? x.AsSpan().SequenceEqual(y) : Equals(a, b);
+
     private static object? Valor(object? v) => v switch
     {
         null => null,
+        byte[] bytes => $"[{bytes.Length} bytes]",
         bool or string or short or int or long => v,
         Enum e => e.ToString(),
         IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),

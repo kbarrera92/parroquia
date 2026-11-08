@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura.Catalogos;
+using Parroquia.Infraestructura.Configuracion;
 using Parroquia.Infraestructura.Persistencia;
 
 namespace Parroquia.Infraestructura.Identidad;
@@ -23,6 +24,7 @@ public static class SembradorIdentidad
         var db = sp.GetRequiredService<ParroquiaDbContext>();
         await db.Database.MigrateAsync(ct);
         await SembradorCatalogos.InicializarAsync(db, ct);
+        await SembradorConfiguracion.InicializarAsync(db, ct);
 
         var roles = sp.GetRequiredService<RoleManager<IdentityRole>>();
         await SincronizarRolesAsync(roles);

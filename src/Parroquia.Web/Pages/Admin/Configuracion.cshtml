@@ -1,0 +1,65 @@
+@page
+@model Parroquia.Web.Pages.Admin.ConfiguracionModel
+@{
+    ViewData["Title"] = "Configuración";
+}
+
+<div class="mt-4">
+    <h1 class="h3">Configuración de la parroquia</h1>
+    <p class="text-muted">Estos datos forman el membrete de todas las constancias.</p>
+
+    @if (Model.Mensaje is not null)
+    {
+        <div class="alert alert-success" role="status">@Model.Mensaje</div>
+    }
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    <form method="post" enctype="multipart/form-data" class="row g-3">
+        <div class="col-md-8">
+            <label asp-for="Datos.Nombre" class="form-label"></label>
+            <input asp-for="Datos.Nombre" class="form-control" maxlength="200" />
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Datos.Direccion" class="form-label"></label>
+            <input asp-for="Datos.Direccion" class="form-control" maxlength="200" />
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Datos.Municipio" class="form-label"></label>
+            <input asp-for="Datos.Municipio" class="form-control" maxlength="200" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Datos.Telefono" class="form-label"></label>
+            <input asp-for="Datos.Telefono" class="form-control" maxlength="50" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Datos.TextoLugarEmision" class="form-label"></label>
+            <input asp-for="Datos.TextoLugarEmision" class="form-control" maxlength="100" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Datos.CiudadAbreviada" class="form-label"></label>
+            <input asp-for="Datos.CiudadAbreviada" class="form-control" maxlength="100" />
+        </div>
+
+        <div class="col-12">
+            <h2 class="h5 mt-3">Logo</h2>
+            @if (Model.TieneLogo)
+            {
+                <img src="@Url.Page("/Admin/Configuracion", "Logo")" alt="Logo actual" class="mb-2 d-block" style="max-height: 120px" />
+                <div class="form-check mb-2">
+                    <input asp-for="QuitarLogo" class="form-check-input" />
+                    <label asp-for="QuitarLogo" class="form-check-label">Quitar el logo actual</label>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">Aún no hay logo.</p>
+            }
+            <label for="ArchivoLogo" class="form-label">Subir logo nuevo (PNG o JPEG, máximo 1 MB)</label>
+            <input type="file" id="ArchivoLogo" name="ArchivoLogo" accept="image/png,image/jpeg" class="form-control" />
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary btn-lg">Guardar</button>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,85 @@
+@page
+@model Parroquia.Web.Pages.Admin.ParrocosModel
+@{
+    ViewData["Title"] = "Párroco";
+}
+
+<div class="mt-4">
+    <h1 class="h3">Párroco que firma las constancias</h1>
+    <p class="text-muted">
+        Toda constancia, incluso la reimpresión de un registro antiguo, lleva al párroco vigente al momento de emitirla.
+    </p>
+
+    @if (Model.Mensaje is not null)
+    {
+        <div class="alert alert-success" role="status">@Model.Mensaje</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.Error</div>
+    }
+
+    <h2 class="h5">Vigente</h2>
+    @if (Model.Actual is { } actual)
+    {
+        <form method="post" asp-page-handler="Corregir" class="row g-2 align-items-end mb-4">
+            <div class="col-md-5">
+                <label for="corr-nombre" class="form-label">Nombre</label>
+                <input id="corr-nombre" name="nombre" value="@actual.Nombre" class="form-control" maxlength="150" />
+            </div>
+            <div class="col-md-3">
+                <label for="corr-titulo" class="form-label">Título</label>
+                <input id="corr-titulo" name="titulo" value="@actual.Titulo" class="form-control" maxlength="50" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">Corregir datos</button>
+            </div>
+            <div class="col-12 text-muted">Desde el @actual.VigenteDesde.ToString("d 'de' MMMM 'de' yyyy")</div>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-warning">No hay un párroco vigente. Registre uno abajo: las constancias lo necesitan para firmar.</div>
+    }
+
+    <h2 class="h5">Registrar un párroco nuevo</h2>
+    <p class="text-muted">El párroco vigente se cierra el día anterior a la fecha de inicio indicada.</p>
+    <form method="post" asp-page-handler="Nuevo" class="row g-2 align-items-end mb-4">
+        <div class="col-md-4">
+            <label for="nuevo-nombre" class="form-label">Nombre</label>
+            <input id="nuevo-nombre" name="nombre" class="form-control" maxlength="150" />
+        </div>
+        <div class="col-md-3">
+            <label for="nuevo-titulo" class="form-label">Título</label>
+            <input id="nuevo-titulo" name="titulo" value="Párroco" class="form-control" maxlength="50" />
+        </div>
+        <div class="col-md-3">
+            <label for="nuevo-desde" class="form-label">Párroco desde</label>
+            <input id="nuevo-desde" name="desde" type="date" max="@Model.HoyIso" class="form-control" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Registrar</button>
+        </div>
+    </form>
+
+    <h2 class="h5">Historial</h2>
+    <table class="table">
+        <thead><tr><th>Nombre</th><th>Título</th><th>Desde</th><th>Hasta</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var p in Model.Historial)
+        {
+            <tr>
+                <td>@p.Nombre</td>
+                <td>@p.Titulo</td>
+                <td>@p.VigenteDesde.ToString("dd/MM/yyyy")</td>
+                <td>@(p.VigenteHasta?.ToString("dd/MM/yyyy") ?? "—")</td>
+                <td>@(p.EsActual ? "Vigente" : "")</td>
+            </tr>
+        }
+        @if (Model.Historial.Count == 0)
+        {
+            <tr><td colspan="5" class="text-muted">Aún no se ha registrado ningún párroco.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
