@@ -836,6 +836,187 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     b.ToTable("comunion", (string)null);
                 });
 
+            modelBuilder.Entity("Parroquia.Dominio.Sacramentos.Confirmacion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "secuencia_id");
+
+                    b.Property<bool>("Anulado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("anulado");
+
+                    b.Property<string>("Apellidos")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("apellidos");
+
+                    b.Property<string>("BusquedaNormalizada")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("busqueda_normalizada")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("CreadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("creado_por");
+
+                    b.Property<string>("Folio")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("folio");
+
+                    b.Property<string>("FolioOrden")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("folio_orden")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<string>("Libro")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("libro");
+
+                    b.Property<string>("LibroOrden")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("libro_orden")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<long?>("MinistroId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("ministro_id");
+
+                    b.Property<string>("MinistroTexto")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("ministro_texto");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificado_en");
+
+                    b.Property<string>("ModificadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("modificado_por");
+
+                    b.Property<string>("MotivoAnulacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("motivo_anulacion");
+
+                    b.Property<string>("MotivoRevision")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("motivo_revision");
+
+                    b.Property<string>("Nombres")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nombres");
+
+                    b.Property<string>("NotasMarginales")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notas_marginales");
+
+                    b.PrimitiveCollection<List<string>>("Padrinos")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("padrinos");
+
+                    b.Property<string>("Partida")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("partida");
+
+                    b.Property<string>("PartidaOrden")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("partida_orden")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<bool>("Revisar")
+                        .HasColumnType("boolean")
+                        .HasColumnName("revisar");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<int>("fecha_confirmacion_clave_orden")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("integer")
+                        .HasColumnName("fecha_confirmacion_clave_orden")
+                        .HasComputedColumnSql("COALESCE(fecha_confirmacion_anio, 0) * 10000 + COALESCE(fecha_confirmacion_mes, 0) * 100 + COALESCE(fecha_confirmacion_dia, 0)", true);
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "FechaConfirmacion", "Parroquia.Dominio.Sacramentos.Confirmacion.FechaConfirmacion#FechaParcial", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<short?>("Anio")
+                                .HasColumnType("smallint")
+                                .HasColumnName("fecha_confirmacion_anio");
+
+                            b1.Property<short?>("Dia")
+                                .HasColumnType("smallint")
+                                .HasColumnName("fecha_confirmacion_dia");
+
+                            b1.Property<short?>("Mes")
+                                .HasColumnType("smallint")
+                                .HasColumnName("fecha_confirmacion_mes");
+                        });
+
+                    b.HasKey("Id")
+                        .HasName("pk_confirmacion");
+
+                    b.HasIndex("Anulado")
+                        .HasDatabaseName("ix_confirmacion_anulado");
+
+                    b.HasIndex("BusquedaNormalizada")
+                        .HasDatabaseName("ix_confirmacion_busqueda_normalizada");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("BusquedaNormalizada"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("BusquedaNormalizada"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("MinistroId")
+                        .HasDatabaseName("ix_confirmacion_ministro_id");
+
+                    b.HasIndex("Revisar")
+                        .HasDatabaseName("ix_confirmacion_revisar");
+
+                    b.HasIndex("fecha_confirmacion_clave_orden")
+                        .HasDatabaseName("ix_confirmacion_fecha_confirmacion_clave_orden");
+
+                    b.HasIndex("Apellidos", "Nombres")
+                        .HasDatabaseName("ix_confirmacion_apellidos_nombres");
+
+                    b.HasIndex("LibroOrden", "FolioOrden", "PartidaOrden")
+                        .HasDatabaseName("ix_confirmacion_libro_orden_folio_orden_partida_orden");
+
+                    b.ToTable("confirmacion", (string)null);
+                });
+
             modelBuilder.Entity("Parroquia.Infraestructura.Constancias.ConstanciaEmitida", b =>
                 {
                     b.Property<long>("Id")
@@ -1196,6 +1377,17 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasForeignKey("MinistroId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_comunion_ministros_ministro_id");
+
+                    b.Navigation("Ministro");
+                });
+
+            modelBuilder.Entity("Parroquia.Dominio.Sacramentos.Confirmacion", b =>
+                {
+                    b.HasOne("Parroquia.Dominio.Catalogos.Ministro", "Ministro")
+                        .WithMany()
+                        .HasForeignKey("MinistroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_confirmacion_ministros_ministro_id");
 
                     b.Navigation("Ministro");
                 });
