@@ -1,0 +1,149 @@
+@page "{id:long}"
+@model Parroquia.Web.Pages.Matrimonio.DetalleModel
+@using Parroquia.Infraestructura.Sacramentos
+@{
+    ViewData["Title"] = Model.NombreCompleto;
+    var r = Model.Registro;
+    string Texto(string? t) => string.IsNullOrWhiteSpace(t) ? "—" : t;
+}
+
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="h3 mb-1">@Model.NombreCompleto</h1>
+            <div>
+                @if (r.Revisar) { <span class="badge text-bg-warning">Revisar</span> }
+                @if (r.Anulado) { <span class="badge text-bg-secondary">Anulado</span> }
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            @if (Model.PuedeImprimir)
+            {
+                <a class="btn btn-primary" asp-page="/Constancias/Emitir" asp-route-clave="@Model.Clave" asp-route-id="@r.Id">
+                    @(Model.YaImpresa ? "Reimprimir constancia" : "Imprimir constancia")
+                </a>
+            }
+            @if (Model.PuedeEditar && !r.Anulado)
+            {
+                <a class="btn btn-outline-primary" asp-page="/Matrimonio/Editar" asp-route-id="@r.Id">Editar</a>
+            }
+            <a class="btn btn-outline-secondary" asp-page="/Matrimonio/Index">Volver al libro</a>
+        </div>
+    </div>
+
+    @if (Model.Mensaje is not null)
+    {
+        <div class="alert alert-success" role="status">@Model.Mensaje</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.Error</div>
+    }
+    @if (r.Anulado)
+    {
+        <div class="alert alert-secondary" role="status"><strong>Registro anulado.</strong> Motivo: @r.MotivoAnulacion</div>
+    }
+    @if (r.Revisar)
+    {
+        <div class="alert alert-warning" role="status">
+            <strong>Pendiente de revisar.</strong> @(string.IsNullOrWhiteSpace(r.MotivoRevision) ? "Sin motivo indicado." : r.MotivoRevision)
+        </div>
+    }
+
+    <div class="row g-4 mb-2">
+        @foreach (var (titulo, c) in new[] { ("Esposo", r.Esposo), ("Esposa", r.Esposa) })
+        {
+            <div class="col-md-6">
+                <h2 class="h5">@titulo</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Tratamiento</dt><dd class="col-sm-8">@Texto(c.Tratamiento)</dd>
+                    <dt class="col-sm-4">Nombres</dt><dd class="col-sm-8">@Texto(c.Nombres)</dd>
+                    <dt class="col-sm-4">Apellidos</dt><dd class="col-sm-8">@Texto(c.Apellidos)</dd>
+                    <dt class="col-sm-4">Edad</dt><dd class="col-sm-8">@(c.Edad is { } e ? $"{e} años" : "—")</dd>
+                    <dt class="col-sm-4">Originario de</dt><dd class="col-sm-8">@Texto(c.OriginarioDe)</dd>
+                    <dt class="col-sm-4">Feligrés de</dt><dd class="col-sm-8">@Texto(c.FeligresDe)</dd>
+                    <dt class="col-sm-4">Padre</dt><dd class="col-sm-8">@Texto(c.Padre)</dd>
+                    <dt class="col-sm-4">Madre</dt><dd class="col-sm-8">@Texto(c.Madre)</dd>
+                </dl>
+            </div>
+        }
+    </div>
+
+    <dl class="row">
+        <dt class="col-sm-3">Fecha del matrimonio</dt><dd class="col-sm-9">@Texto(r.FechaMatrimonio)</dd>
+        <dt class="col-sm-3">Lugar de celebración</dt><dd class="col-sm-9">@Texto(r.LugarCelebracion)</dd>
+        <dt class="col-sm-3">Testigos</dt>
+        <dd class="col-sm-9">
+            @if (r.Testigos.Count == 0)
+            {
+                <text>—</text>
+            }
+            else
+            {
+                <ol class="mb-0 ps-3">
+                    @foreach (var t in r.Testigos)
+                    {
+                        <li>@t</li>
+                    }
+                </ol>
+            }
+        </dd>
+        <dt class="col-sm-3">Libro</dt><dd class="col-sm-9">@r.Libro</dd>
+        <dt class="col-sm-3">Folio</dt><dd class="col-sm-9">@r.Folio</dd>
+        <dt class="col-sm-3">Partida</dt><dd class="col-sm-9">@r.Partida</dd>
+        <dt class="col-sm-3">Ministro (firma)</dt><dd class="col-sm-9">@Texto(r.Ministro)</dd>
+        <dt class="col-sm-3">Notas marginales</dt><dd class="col-sm-9" style="white-space: pre-line">@Texto(r.NotasMarginales)</dd>
+        <dt class="col-sm-3">Capturado</dt><dd class="col-sm-9">@Model.Creado</dd>
+        @if (Model.Modificado is not null)
+        {
+            <dt class="col-sm-3">Última modificación</dt><dd class="col-sm-9">@Model.Modificado</dd>
+        }
+    </dl>
+
+    @if (Model.PuedeAnular && !r.Anulado)
+    {
+        <details class="mb-4">
+            <summary class="text-danger">Anular este registro…</summary>
+            <form method="post" asp-page-handler="Anular" asp-route-id="@r.Id" class="row g-2 align-items-end mt-1">
+                <div class="col-md-6">
+                    <label for="motivo" class="form-label">Motivo de la anulación</label>
+                    <input id="motivo" name="motivo" class="form-control" maxlength="500" required />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-danger">Anular</button>
+                </div>
+                <div class="col-12 form-text">Los registros no se borran: quedan anulados con su motivo y solo el Administrador puede revertirlo.</div>
+            </form>
+        </details>
+    }
+    @if (Model.PuedeRevertir && r.Anulado)
+    {
+        <form method="post" asp-page-handler="Revertir" asp-route-id="@r.Id" class="mb-4">
+            <button type="submit" class="btn btn-outline-danger">Revertir anulación</button>
+        </form>
+    }
+
+    <h2 class="h5">Constancias impresas</h2>
+    <table class="table table-sm mb-4">
+        <thead><tr><th>Impresa</th><th>Por</th><th>Fecha en la constancia</th><th>Firmó</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var e in Model.Emitidas)
+        {
+            <tr>
+                <td class="text-nowrap">@DetalleModel.FormatoEmision(e.EmitidaEn)</td>
+                <td>@e.EmitidaPor</td>
+                <td>@e.FechaImpresa.ToString("dd/MM/yyyy")@(e.FechaAjustadaPor is null ? "" : $" (ajustada por {e.FechaAjustadaPor})")</td>
+                <td>@e.Firmante</td>
+                <td>@if (e.ConAdvertencias) { <span class="badge text-bg-warning">Con avisos</span> }</td>
+            </tr>
+        }
+        @if (Model.Emitidas.Count == 0)
+        {
+            <tr><td colspan="5" class="text-muted">Aún no se ha impreso ninguna constancia de este registro.</td></tr>
+        }
+        </tbody>
+    </table>
+
+    <h2 class="h5">Historial de cambios</h2>
+    <partial name="_HistorialRegistro" model="Model.Movimientos" />
+</div>

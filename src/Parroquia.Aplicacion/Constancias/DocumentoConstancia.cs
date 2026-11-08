@@ -42,13 +42,19 @@ public sealed record DocumentoConstancia(
     IReadOnlyList<Parrafo> Cuerpo,
     Parrafo Cierre,
     Parrafo Firmante,
-    string TituloFirmante)
+    string TituloFirmante,
+    bool LineaFirma = false)
 {
+    /// <summary>Texto plano de la raya de firma (solo si <see cref="LineaFirma"/>).</summary>
+    public const string RayaFirma = "______________________";
+
     /// <summary>Una línea por párrafo; sin logo ni estilos. Es el texto que verifica la prueba golden.</summary>
     public string ATextoPlano() => string.Join("\n",
         Membrete.Concat([Titulo])
             .Concat(Cuerpo.Select(p => p.ATexto()))
-            .Concat([Cierre.ATexto(), Firmante.ATexto(), TituloFirmante]));
+            .Concat([Cierre.ATexto()])
+            .Concat(LineaFirma ? [RayaFirma] : [])
+            .Concat([Firmante.ATexto(), TituloFirmante]));
 }
 
 /// <summary>Datos de emisión que no pertenecen al registro: membrete, firmante y fecha. Se arma fuera de la plantilla.</summary>

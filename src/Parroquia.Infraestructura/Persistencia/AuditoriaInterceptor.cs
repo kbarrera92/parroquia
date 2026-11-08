@@ -123,6 +123,15 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
 
         foreach (var cp in entrada.ComplexProperties)
         {
+            if (cp.Metadata.ClrType != typeof(FechaParcial))
+            {
+                // Complex type de varios campos (p. ej. Contrayente): un cambio por campo, "Esposo.Nombres".
+                foreach (var hoja in cp.Properties)
+                    if (Valor(hoja.CurrentValue) is { } valor)
+                        cambios[$"{cp.Metadata.Name}.{hoja.Metadata.Name}"] = new Cambio(null, valor);
+                continue;
+            }
+
             var actual = Leer(cp, original: false);
             if (actual is not null) cambios[cp.Metadata.Name] = new Cambio(null, actual);
         }
@@ -138,6 +147,15 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
 
         foreach (var cp in entrada.ComplexProperties)
         {
+            if (cp.Metadata.ClrType != typeof(FechaParcial))
+            {
+                foreach (var hoja in cp.Properties)
+                    if (!Iguales(hoja.OriginalValue, hoja.CurrentValue))
+                        cambios[$"{cp.Metadata.Name}.{hoja.Metadata.Name}"] =
+                            new Cambio(Valor(hoja.OriginalValue), Valor(hoja.CurrentValue));
+                continue;
+            }
+
             var anterior = Leer(cp, original: true);
             var nuevo = Leer(cp, original: false);
             if (!Equals(anterior, nuevo))
@@ -146,7 +164,7 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
         return cambios;
     }
 
-    /// <summary>Texto de una propiedad compleja; null si está vacía. FechaParcial se imprime como en el libro.</summary>
+    /// <summary>Texto de una <see cref="FechaParcial"/> como se imprime en el libro; null si está vacía.</summary>
     private static string? Leer(ComplexPropertyEntry cp, bool original)
     {
         object? Hoja(string nombre)
@@ -155,23 +173,13 @@ public sealed class AuditoriaInterceptor(IUsuarioActual usuario, TimeProvider re
             return original ? p.OriginalValue : p.CurrentValue;
         }
 
-        if (cp.Metadata.ClrType == typeof(FechaParcial))
+        var texto = new FechaParcial
         {
-            var texto = new FechaParcial
-            {
-                Anio = (short?)Hoja(nameof(FechaParcial.Anio)),
-                Mes = (short?)Hoja(nameof(FechaParcial.Mes)),
-                Dia = (short?)Hoja(nameof(FechaParcial.Dia)),
-            }.ATexto();
-            return texto.Length == 0 ? null : texto;
-        }
-
-        var partes = cp.Properties
-            .Select(p => original ? p.OriginalValue : p.CurrentValue)
-            .Where(v => v is not null)
-            .Select(v => Convert.ToString(v, CultureInfo.InvariantCulture));
-        var unido = string.Join(" ", partes);
-        return unido.Length == 0 ? null : unido;
+            Anio = (short?)Hoja(nameof(FechaParcial.Anio)),
+            Mes = (short?)Hoja(nameof(FechaParcial.Mes)),
+            Dia = (short?)Hoja(nameof(FechaParcial.Dia)),
+        }.ATexto();
+        return texto.Length == 0 ? null : texto;
     }
 
     private static bool Iguales(object? a, object? b) => (a, b) switch

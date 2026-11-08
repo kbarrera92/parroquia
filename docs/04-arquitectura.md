@@ -17,7 +17,7 @@ El acceso va por EF Core; el resto del código no depende del motor salvo la bú
 
 ## ADR-04 Acceso a datos: EF Core + migraciones
 - Migraciones versionadas en el repo; cada despliegue aplica migraciones.
-- *Complex types* para `FechaParcial` (con columna generada `*_clave_orden`) y *owned type* para `Contrayente`. Ids por secuencia HiLo en entidades auditables.
+- *Complex types* para `FechaParcial` (con columna generada `*_clave_orden`) y para `Contrayente` (Matrimonio; **no** owned: un owned type es otra entrada del ChangeTracker y el interceptor, que solo revisa entidades `IAuditable`, no vería sus cambios). El interceptor audita un complex type de varios campos **campo por campo** con clave `"{Propiedad}.{Campo}"` (p. ej. `Esposo.Nombres`) y `FechaParcial` como texto de libro. Ids por secuencia HiLo en entidades auditables.
 - **Interceptor `SaveChanges`** genera `Auditoria` y rellena `CreadoPor/ModificadoPor` desde el usuario actual. Ningún código de negocio escribe auditoría a mano. Solo audita cambios reales de valor; `Anulado` false→true es `Anulacion` y true→false `RevertirAnulacion`; el borrado físico lanza excepción.
 - **Colecciones de texto** (padrinos de Bautismo): `List<string>` mapeada a `text[]`. Asignar siempre una lista nueva al editar. El interceptor las compara por contenido y en orden (null = vacía) y las audita unidas con "; " (vacía = sin valor).
 - Concurrencia optimista (`xmin` / `rowversion`).

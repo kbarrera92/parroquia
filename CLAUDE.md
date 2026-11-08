@@ -71,6 +71,7 @@ Patrón: **Comunión** (copiar y adaptar; `X` = el sacramento). Carpeta por mód
 8. **Pruebas**: servicio con `ServidorPostgresFixture` (`ServicioComunionPruebas`), web con `AppFixture` (`ComunionWebPruebas`, `ConstanciaWebPruebas`) y datos sintéticos únicos por prueba (la base web se comparte).
 9. Si el libro trae más campos que la constancia, agregarlos como opcionales y reflejarlos en `docs/02`.
 10. **Colecciones** (padrinos, testigos): `List<string>` → `text[]` (patrón: **Bautismo**). Formulario: filas `name="Input.X"` repetido + parcial `_FilaX` y handler `OnGetFilaXAsync` para htmx; baja con `data-quitar-fila` (`wwwroot/js/filas-dinamicas.js`). Constancia: filas "rótulo: valor" con `Parrafo.Fila` y listas con `FormatoConstancia.UnirLista`.
+11. **Persona doble o varios campos por parte** (patrón: **Matrimonio**): un *complex type* (`Contrayente`, columnas `esposo_*`/`esposa_*`), nunca owned (la auditoría solo ve entidades `IAuditable`; el interceptor registra cada campo como `Esposo.Nombres`). Una columna `Busqueda*` derivada por persona (`.NoAuditar()`, GIN trigram) además de `BusquedaNormalizada`; `TextoBusqueda()` las recalcula. El módulo devuelve **una fila por persona que coincide** en `BuscarAsync`. Texto de catálogo (tratamiento) se guarda como texto. Un párrafo con partes subrayadas/negritas = `Parrafo` con varios `Segmento`; `DocumentoConstancia.LineaFirma` dibuja la raya sobre el firmante.
 
 ## Al terminar una tarea
 Resume qué cambió, qué pruebas corriste y qué decisiones de `docs/06` quedaron afectadas.

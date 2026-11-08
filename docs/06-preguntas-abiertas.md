@@ -2,7 +2,7 @@
 
 Última actualización: 8-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
 
-## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5)
+## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6)
 | # | Tema | Decisión |
 |---|---|---|
 | 1 | Servidor | PC de oficina, Windows 10/11, dedicada, encendida 24/7 |
@@ -32,6 +32,9 @@
 | 25 | "Nació" en la constancia de Bautismo (M4) | Con tilde (el papel dice "Nacio"); corrección consciente, ya en el golden |
 | 26 | Nacimiento vs. bautismo (M4) | Opcional; no puede ser posterior al bautismo, comparando solo hasta la precisión común |
 | 27 | Campos de Confirmación (M5) | Mínimos (nombres, apellidos, fecha, padrinos 0..10, libro, folio, partida, ministro/obispo, notas) hasta tener fotos del libro real (M0 [B]); `Padre`, `Madre` y `ParroquiaBautismo` quedan pendientes |
+| 28 | Contrayentes de Matrimonio (M6) | *Complex type* `Contrayente` (columnas `esposo_*` / `esposa_*`), no owned: la auditoría lo registra campo por campo (`Esposo.Nombres`). Cambio mínimo en el interceptor; ver `04` ADR-04 |
+| 29 | Tratamiento del contrayente (M6) | Se guarda el **texto** del catálogo (select con los activos; por defecto "don" / "la Srita."), no `TratamientoId`: un complex type no admite FK y el historial queda legible |
+| 30 | Legitimidad y raya de firma (M6) | Mientras la pregunta de legitimidad siga abierta, "hijo/a legítimo/a de:" es texto fijo, sin campo. La constancia de Matrimonio lleva raya sobre la firma (`DocumentoConstancia.LineaFirma`, opcional; las otras no) |
 
 ## 🟡 Pendientes
 
@@ -42,7 +45,7 @@
 - **Licencia de QuestPDF (antes de M8):** el párroco debe confirmar que la parroquia cumple la licencia Community (organización de beneficio público, o ingresos anuales < 1 M USD; no aplica a entidades del sector público). Detalle en `04`, ADR-06. Si no cumpliera, hay que adquirir otra licencia o cambiar de motor.
 - **Fecha "de" vs "del"**: confirmar con el párroco que no le molesta el cambio respecto al papel actual (decisión 20).
 - **"Ref:" en matrimonio**: qué es (correlativo, dato libre, se elimina). *El usuario lo averiguará.* Mientras tanto la línea queda en blanco.
-- Matrimonio: ¿"hijo/a **legítimo/a** de" se mantiene siempre o hay hijos naturales? ¿Se necesita un campo de legitimidad?
+- Matrimonio: ¿"hijo/a **legítimo/a** de" se mantiene siempre o hay hijos naturales? ¿Se necesita un campo de legitimidad? *(M6 lo imprime como texto fijo; si cambia, columna nueva con migración.)*
 - Matrimonio: la fecha de cierre usa formato dd/MM/yyyy; las otras constancias usan fecha larga. ¿Unificar?
 - Valores iniciales del catálogo de **tratamientos** y de **ministros** (lista de sacerdotes actuales y anteriores).
 
