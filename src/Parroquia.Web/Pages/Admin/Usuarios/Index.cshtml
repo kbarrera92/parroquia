@@ -1,0 +1,109 @@
+@page
+@model Parroquia.Web.Pages.Admin.Usuarios.IndexModel
+@using Parroquia.Aplicacion.Seguridad
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h1 class="h3 mb-0">Usuarios</h1>
+        <a class="btn btn-primary" asp-page="Editar">Nuevo usuario</a>
+    </div>
+    <p class="text-muted">
+        Cada persona usa su propio usuario. Si alguien olvida su contraseña, restablézcala: se genera una temporal
+        que debe cambiar al entrar. Los usuarios no se borran: se desactivan.
+    </p>
+
+    @if (Model.Mensaje is not null)
+    {
+        <div class="alert alert-success" role="status">@Model.Mensaje</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.Error</div>
+    }
+    @if (Model.Temporal is not null)
+    {
+        <div class="alert alert-warning" role="alert">
+            <p class="mb-1">Contraseña temporal de <strong>@Model.UsuarioTemporal</strong>:</p>
+            <p class="mb-2"><code class="fs-4 user-select-all">@Model.Temporal</code></p>
+            <p class="mb-0 small">
+                Anótela y entréguela en persona. <strong>No se volverá a mostrar</strong>: si se pierde, restablezca la contraseña de nuevo.
+                El usuario deberá cambiarla al entrar.
+            </p>
+        </div>
+    }
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-auto">
+            <label for="rol" class="form-label">Rol</label>
+            <select id="rol" name="Rol" class="form-select">
+                <option value="">Todos</option>
+                @foreach (var rol in Roles.Todos)
+                {
+                    <option value="@rol" selected="@(Model.Rol == rol)">@rol</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <label for="estado" class="form-label">Estado</label>
+            <select id="estado" name="Estado" class="form-select">
+                <option value="">Todos</option>
+                <option value="activos" selected="@(Model.Estado == "activos")">Activos</option>
+                <option value="inactivos" selected="@(Model.Estado == "inactivos")">Desactivados</option>
+            </select>
+        </div>
+        <div class="col-auto"><button type="submit" class="btn btn-outline-secondary">Filtrar</button></div>
+    </form>
+
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último inicio</th><th></th></tr>
+        </thead>
+        <tbody>
+        @foreach (var f in Model.Filas)
+        {
+            var esYo = f.Id == Model.IdActual;
+            <tr class="@(f.Activo ? "" : "text-muted")">
+                <td>@f.Usuario @if (esYo) { <span class="badge bg-secondary">usted</span> }</td>
+                <td>@f.NombreCompleto</td>
+                <td>@f.Rol</td>
+                <td>
+                    @if (!f.Activo) { <span class="badge bg-secondary">Desactivado</span> }
+                    else if (f.Bloqueado) { <span class="badge bg-danger">Bloqueado</span> }
+                    else { <span class="badge bg-success">Activo</span> }
+                    @if (f.DebeCambiarPassword) { <span class="badge bg-warning text-dark">Contraseña temporal</span> }
+                </td>
+                <td>@(f.UltimoInicio is { } u ? Parroquia.Aplicacion.Comun.HoraGuatemala.Local(u).ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                <td class="text-end">
+                    <div class="d-flex gap-1 justify-content-end flex-wrap">
+                        <a class="btn btn-sm btn-outline-primary" asp-page="Editar" asp-route-id="@f.Id">Editar</a>
+                        @if (f.Bloqueado)
+                        {
+                            <form method="post" asp-page-handler="Desbloquear" asp-route-id="@f.Id">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Desbloquear</button>
+                            </form>
+                        }
+                        @if (!esYo)
+                        {
+                            <form method="post" asp-page-handler="Restablecer" asp-route-id="@f.Id"
+                                  data-confirmar="¿Restablecer la contraseña de @f.Usuario? La actual dejará de funcionar y se cerrarán sus sesiones.">
+                                <button type="submit" class="btn btn-sm btn-outline-warning">Restablecer contraseña</button>
+                            </form>
+                            <form method="post" asp-page-handler="Estado" asp-route-id="@f.Id" asp-route-activo="@(!f.Activo)"
+                                  data-confirmar="@(f.Activo ? $"¿Desactivar a {f.Usuario}? No podrá iniciar sesión." : $"¿Activar a {f.Usuario}?")">
+                                <button type="submit" class="btn btn-sm @(f.Activo ? "btn-outline-danger" : "btn-outline-success")">@(f.Activo ? "Desactivar" : "Activar")</button>
+                            </form>
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    @if (Model.Filas.Count == 0)
+    {
+        <p class="text-muted">No hay usuarios con ese filtro.</p>
+    }
+</div>
