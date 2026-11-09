@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura.Identidad;
 
 namespace Parroquia.Web.Pages.Cuenta;
 
 [AllowAnonymous]
+[EnableRateLimiting("login")]
 public class LoginModel(SignInManager<Usuario> signIn, UserManager<Usuario> usuarios, IBitacoraAcceso bitacora) : PageModel
 {
     [BindProperty, Required(ErrorMessage = "Escriba su usuario.")]
