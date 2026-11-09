@@ -41,6 +41,44 @@ public class BusquedaGlobalWebPruebas(AppFixture app)
     }
 
     [Fact]
+    public async Task Filtros_de_anio_y_sacramento_acotan_los_resultados()
+    {
+        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var u = Unico();
+        await CrearComunionAsync(c, "Ana", "Filtrada" + u); // comunión 2004
+
+        (await HtmlAsync(c, $"/?texto=filtrada{u}&anioDesde=2000&anioHasta=2010")).Should().Contain("Filtrada" + u);
+        (await HtmlAsync(c, $"/?texto=filtrada{u}&anioDesde=2005")).Should().Contain("No se encontró a nadie");
+        (await HtmlAsync(c, $"/?texto=filtrada{u}&sacramento=comunion")).Should().Contain("Filtrada" + u);
+        (await HtmlAsync(c, $"/?texto=filtrada{u}&sacramento=matrimonio")).Should().Contain("No se encontró a nadie");
+        (await HtmlAsync(c, $"/?texto=filtrada{u}&anioDesde=2010&anioHasta=2000")).Should().Contain("no puede ser mayor");
+    }
+
+    [Fact]
+    public async Task Filtro_de_libro_acota_los_resultados()
+    {
+        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var u = Unico();
+        await CrearComunionAsync(c, "Ana", "Libroso" + u); // libro "L" + otro único
+
+        (await HtmlAsync(c, $"/?texto=libroso{u}&libro=NoExiste{Unico()}")).Should().Contain("No se encontró a nadie");
+    }
+
+    [Fact]
+    public async Task Boton_imprimir_solo_para_quien_puede_imprimir()
+    {
+        var capturista = await app.ClienteConRolAsync(Roles.Capturista);
+        var u = Unico();
+        var id = await CrearComunionAsync(capturista, "Ana", "Imprimible" + u);
+        var ruta = $"href=\"/Constancias/comunion/{id}\"";
+
+        (await HtmlAsync(capturista, $"/?texto=imprimible{u}")).Should().NotContain(ruta);
+
+        var secretaria = await app.ClienteConRolAsync(Roles.Secretaria);
+        (await HtmlAsync(secretaria, $"/?texto=imprimible{u}")).Should().Contain(ruta);
+    }
+
+    [Fact]
     public async Task Inicio_sin_texto_o_con_texto_corto_no_busca_y_orienta()
     {
         var c = await app.ClienteConRolAsync(Roles.Secretaria);

@@ -11,20 +11,24 @@ else if (!r.TextoValido)
 {
     <p class="text-muted">Escriba al menos @Parroquia.Aplicacion.Sacramentos.BusquedaGlobal.MinimoCaracteres letras del nombre o del apellido.</p>
 }
+else if (r.Error is not null)
+{
+    <div class="alert alert-danger" role="alert">@r.Error</div>
+}
 else
 {
     @foreach (var m in r.Modulos.Where(m => m.HayMas))
     {
         <div class="alert alert-warning" role="status">
             Hay @m.Total.ToString("N0") coincidencias en <strong>@m.Nombre</strong> y se muestran @m.Mostrados.
-            Escriba más datos o <a href="@Url.Content("~" + m.RutaListado)?texto=@Uri.EscapeDataString(Model.Texto ?? "")">abra el libro completo</a>.
+            Escriba más datos o <a href="@Url.Content("~" + m.RutaListado + Model.ConsultaLibro(Model.Texto))">abra el libro completo</a>.
         </div>
     }
 
     <p class="text-muted">@r.Items.Count.ToString("N0") resultados</p>
     <table class="table table-sm align-middle">
         <thead>
-            <tr><th>Apellidos</th><th>Nombres</th><th>Sacramento</th><th>Fecha</th><th>Libro</th><th>Folio</th><th>Partida</th><th></th></tr>
+            <tr><th>Apellidos</th><th>Nombres</th><th>Sacramento</th><th>Fecha</th><th>Libro</th><th>Folio</th><th>Partida</th><th></th><th></th></tr>
         </thead>
         <tbody>
         @foreach (var f in r.Items)
@@ -38,11 +42,18 @@ else
                 <td>@f.Folio</td>
                 <td>@f.Partida</td>
                 <td>@if (f.Revisar) { <span class="badge text-bg-warning">Revisar</span> }</td>
+                <td class="text-nowrap">
+                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Content("~" + f.RutaDetalle)">Ver</a>
+                    @if (Model.PuedeImprimir && !f.Anulado)
+                    {
+                        <a class="btn btn-sm btn-outline-primary" href="@Url.Content("~/Constancias/" + f.Clave + "/" + f.Id)">Imprimir</a>
+                    }
+                </td>
             </tr>
         }
         @if (r.Items.Count == 0)
         {
-            <tr><td colspan="8" class="text-muted">No se encontró a nadie con ese nombre en los libros.</td></tr>
+            <tr><td colspan="10" class="text-muted">No se encontró a nadie con ese nombre en los libros.</td></tr>
         }
         </tbody>
     </table>

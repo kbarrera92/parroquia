@@ -3,12 +3,15 @@ using Parroquia.Aplicacion.Constancias;
 namespace Parroquia.Aplicacion.Sacramentos;
 
 /// <param name="Texto">Lo que escribió el usuario; cada módulo lo normaliza con <c>NormalizadorBusqueda</c>.</param>
-public sealed record ConsultaBusqueda(string? Texto, bool IncluirAnulados = false);
+public sealed record ConsultaBusqueda(
+    string? Texto, bool IncluirAnulados = false,
+    string? Libro = null, string? Folio = null, short? AnioDesde = null, short? AnioHasta = null);
 
 /// <summary>Una persona en un libro. Matrimonio aportará dos filas (una por contrayente) apuntando al mismo registro.</summary>
 public sealed record ResultadoBusquedaRegistro(
     string Clave, string Sacramento, long Id, string Nombres, string Apellidos, string Fecha,
-    string Libro, string Folio, string Partida, bool Revisar, bool Anulado, string RutaDetalle);
+    string Libro, string Folio, string Partida, bool Revisar, bool Anulado, string RutaDetalle,
+    string Persona = "");
 
 public sealed record ResultadosModulo(IReadOnlyList<ResultadoBusquedaRegistro> Items, int Total);
 
@@ -37,6 +40,15 @@ public interface IModuloSacramental
     string RutaListado { get; }
 
     string RutaDetalle(long id);
+
+    /// <summary>
+    /// Personas que un registro puede aportar a un vínculo "misma persona": <c>[""]</c> salvo Matrimonio
+    /// (<c>["esposo","esposa"]</c>).
+    /// </summary>
+    IReadOnlyList<string> Personas => [""];
+
+    /// <summary>Una fila por persona de cada id pedido (los anulados no salen). Para mostrar vínculos.</summary>
+    Task<IReadOnlyList<ResultadoBusquedaRegistro>> ResumenesAsync(IReadOnlyCollection<long> ids, CancellationToken ct = default);
 
     /// <summary>Busca por nombres y apellidos (parcial, sin tildes). Devuelve hasta <paramref name="maximo"/> filas y el total.</summary>
     Task<ResultadosModulo> BuscarAsync(ConsultaBusqueda consulta, int maximo, CancellationToken ct = default);

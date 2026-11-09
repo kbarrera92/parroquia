@@ -1307,6 +1307,96 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     b.ToTable("matrimonio", (string)null);
                 });
 
+            modelBuilder.Entity("Parroquia.Dominio.Vinculos.Vinculo", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "secuencia_id");
+
+                    b.Property<bool>("Anulado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("anulado");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("CreadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("creado_por");
+
+                    b.Property<long>("IdDestino")
+                        .HasColumnType("bigint")
+                        .HasColumnName("id_destino");
+
+                    b.Property<long>("IdOrigen")
+                        .HasColumnType("bigint")
+                        .HasColumnName("id_origen");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificado_en");
+
+                    b.Property<string>("ModificadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("modificado_por");
+
+                    b.Property<string>("MotivoAnulacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("motivo_anulacion");
+
+                    b.Property<string>("PersonaDestino")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("persona_destino");
+
+                    b.Property<string>("PersonaOrigen")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("persona_origen");
+
+                    b.Property<string>("TipoDestino")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tipo_destino");
+
+                    b.Property<string>("TipoOrigen")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tipo_origen");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_vinculo");
+
+                    b.HasIndex("TipoDestino", "IdDestino")
+                        .HasDatabaseName("ix_vinculo_tipo_destino_id_destino");
+
+                    b.HasIndex("TipoOrigen", "IdOrigen")
+                        .HasDatabaseName("ix_vinculo_tipo_origen_id_origen");
+
+                    b.HasIndex("TipoOrigen", "IdOrigen", "PersonaOrigen", "TipoDestino", "IdDestino", "PersonaDestino")
+                        .IsUnique()
+                        .HasDatabaseName("ix_vinculo_tipo_origen_id_origen_persona_origen_tipo_destino_i");
+
+                    b.ToTable("vinculo", (string)null);
+                });
+
             modelBuilder.Entity("Parroquia.Infraestructura.Constancias.ConstanciaEmitida", b =>
                 {
                     b.Property<long>("Id")

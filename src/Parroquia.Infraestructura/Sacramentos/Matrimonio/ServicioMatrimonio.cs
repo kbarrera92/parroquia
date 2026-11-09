@@ -338,6 +338,14 @@ public sealed class ServicioMatrimonio(ParroquiaDbContext db, TimeProvider reloj
         return ([.. registros.Select(m => Fila(m, tokens))], total);
     }
 
+    /// <summary>Filas de los ids pedidos (anulados excluidos por el filtro global); ambos contrayentes marcados como coincidentes.</summary>
+    public async Task<IReadOnlyList<FilaMatrimonio>> ResumenesAsync(IReadOnlyCollection<long> ids, CancellationToken ct = default)
+    {
+        var lista = ids.ToArray();
+        var registros = await db.Matrimonios.AsNoTracking().Where(m => lista.Contains(m.Id)).ToListAsync(ct);
+        return [.. registros.Select(m => Fila(m, []) with { CoincideEsposo = true, CoincideEsposa = true })];
+    }
+
     private IQueryable<Matrimonio> Filtrar(FiltroMatrimonio f, string[] tokens)
     {
         var q = db.Matrimonios.AsNoTracking().AsQueryable();

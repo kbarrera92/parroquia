@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Parroquia.Dominio.Catalogos;
 using Parroquia.Dominio.Configuracion;
 using Parroquia.Dominio.Sacramentos;
+using Parroquia.Dominio.Vinculos;
+using Parroquia.Infraestructura.Vinculos;
 using Parroquia.Infraestructura.Constancias;
 using Parroquia.Infraestructura.Identidad;
 using Parroquia.Infraestructura.Sacramentos;
@@ -23,6 +25,7 @@ public class ParroquiaDbContext(DbContextOptions<ParroquiaDbContext> options)
     public DbSet<Confirmacion> Confirmaciones => Set<Confirmacion>();
     public DbSet<Matrimonio> Matrimonios => Set<Matrimonio>();
     public DbSet<ConstanciaEmitida> ConstanciasEmitidas => Set<ConstanciaEmitida>();
+    public DbSet<Vinculo> Vinculos => Set<Vinculo>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -79,6 +82,7 @@ public class ParroquiaDbContext(DbContextOptions<ParroquiaDbContext> options)
         builder.ApplyConfiguration(new ConfiguracionBautismo());
         builder.ApplyConfiguration(new ConfiguracionConfirmacion());
         builder.ApplyConfiguration(new ConfiguracionMatrimonio());
+        builder.ApplyConfiguration(new ConfiguracionVinculo());
 
         ConfiguracionAuditable.Aplicar(builder); // siempre al final
     }

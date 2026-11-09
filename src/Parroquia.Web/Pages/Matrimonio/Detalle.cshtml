@@ -123,6 +123,9 @@
         </form>
     }
 
+    <div hx-get="@Url.Page("/Vinculos/Index", new { clave = Model.Clave, id = r.Id, persona = "esposo" })" hx-trigger="load" hx-swap="outerHTML"></div>
+    <div hx-get="@Url.Page("/Vinculos/Index", new { clave = Model.Clave, id = r.Id, persona = "esposa" })" hx-trigger="load" hx-swap="outerHTML"></div>
+
     <h2 class="h5">Constancias impresas</h2>
     <table class="table table-sm mb-4">
         <thead><tr><th>Impresa</th><th>Por</th><th>Fecha en la constancia</th><th>Firmó</th><th></th></tr></thead>
