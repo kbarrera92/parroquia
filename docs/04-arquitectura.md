@@ -111,6 +111,9 @@ Serilog a archivo con rotación; errores sin datos personales en los logs; pági
 ## Rendimiento de la búsqueda global (medido en M7)
 `PARROQUIA_MEDIR=1` ejecuta `BusquedaRendimientoPruebas`: 200 000 filas sintéticas (50 000 por libro, índices ya creados, `ANALYZE`), `BusquedaGlobal` real (4 módulos + EF, sin HTTP), 1 calentamiento + 20 repeticiones, PostgreSQL 17 en Docker (equipo de desarrollo). Resultado (ms): apellido raro + nombre p50 125 / p95 167; solo apellido raro 146 / 233; apellido común (~1,7 % por libro) 160 / 191; dos palabras comunes 24 / 32; nombre común + años 58 / 68; token de 2 letras (sin trigram) 114 / 144; apellido común + sacramento + libro 5 / 6; apellido común + folio 31 / 62. Todo p95 < 250 ms (RF-06: < 1 s). Hay que repetirla en el servidor real en M8.
 
+## Rendimiento de los listados de cada libro (medido tras M8)
+`PARROQUIA_MEDIR=1` ejecuta también `Listados_con_50000_filas_por_libro_…`: 50 000 filas por libro, `BuscarAsync` sin texto (COUNT + ORDER BY + OFFSET/LIMIT 25), 1 calentamiento + 20 repeticiones. Comunión/Bautismo/Confirmación (índice `(apellidos, nombres)`): pág. 1 p50 15–20 ms, pág. 1000 ~95–105 ms, con libro o años 6 ms. Matrimonio **sin** índice de orden: pág. 1 p50 79 ms (Seq Scan + Sort), pág. 1000 292 ms. Con el índice `(esposo_apellidos, esposo_nombres)` (migración `IndiceOrdenMatrimonio`): pág. 1 p50 6,5 ms (Index Scan + Incremental Sort), pág. 1000 122 ms, años 6,6 ms. Las páginas muy avanzadas siguen costando por `OFFSET`. Repetir en el servidor real en M8.
+
 ## Pruebas
 xUnit (v2) + AwesomeAssertions (fork Apache-2.0 de FluentAssertions, cuya v8 es de licencia comercial); Testcontainers (PostgreSQL) para pruebas de integración; pruebas golden de constancias; pruebas de auditoría y de fechas parciales; un conjunto pequeño de pruebas de interfaz (Playwright) solo para el flujo crítico captura→buscar→imprimir.
 

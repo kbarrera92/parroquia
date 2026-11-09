@@ -65,6 +65,7 @@ Derivadas (`.NoAuditar()`): `BusquedaEsposo` y `BusquedaEsposa` (nombres + apell
 - GIN trigram sobre `BusquedaNormalizada` (extensión `pg_trgm`; `unaccent` ya no hace falta porque la normalización se hace en C#).
 - Índice sobre `ClaveOrden` de la fecha principal y `Anulado`.
 - `Matrimonio`: búsqueda indexada por **ambos** contrayentes (columnas normalizadas `busqueda_esposo`, `busqueda_esposa`, GIN trigram).
+- `Matrimonio`: índice `(esposo_apellidos, esposo_nombres)` para el orden del listado (como el `(Apellidos, Nombres)` de los otros libros). EF no admite `HasIndex` sobre un complex type: se crea con SQL en la migración `IndiceOrdenMatrimonio` y no figura en el modelo.
 - Anulados excluidos por defecto en listados y búsquedas (filtro global EF), visibles al Administrador.
 
 ## 5. Búsqueda global

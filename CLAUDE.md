@@ -76,7 +76,7 @@ Patrón: **Comunión** (copiar y adaptar; `X` = el sacramento). Carpeta por mód
 
 ## Búsqueda global y vínculos (M7)
 `BusquedaGlobal.BuscarAsync(FiltroGlobal)` (texto ≥2 letras obligatorio; sacramento, años, libro, folio solo acotan) pasa los filtros por `ConsultaBusqueda` a cada módulo. Vínculos "misma persona": `Dominio/Vinculos/Vinculo` + `ServicioVinculos` (Infraestructura/Vinculos); UI genérica `/Vinculos/{clave}/{id}/{persona?}` (fragmento htmx). **Al agregar un módulo**: implementar `ResumenesAsync` (y `Personas` si tiene más de una persona) y añadir en su `Detalle.cshtml` un `<div hx-get="@Url.Page("/Vinculos/Index", new { clave = Model.Clave, id = r.Id })" hx-trigger="load" hx-swap="outerHTML"></div>` (una por persona).
-Medición: `$env:PARROQUIA_MEDIR = "1"; dotnet test --filter "FullyQualifiedName~BusquedaRendimiento" --logger "console;verbosity=detailed"` (200 000 filas, tarda ~1 min; sin la variable se omite).
+Medición: `$env:PARROQUIA_MEDIR = "1"; dotnet test --filter "FullyQualifiedName~BusquedaRendimiento" --logger "console;verbosity=detailed"` (200 000 filas, tarda ~1 min; sin la variable se omite). El mismo filtro corre también la medición de los listados de cada libro (`Listados_con_50000…`).
 
 ## Al terminar una tarea
 Resume qué cambió, qué pruebas corriste y qué decisiones de `docs/06` quedaron afectadas.
