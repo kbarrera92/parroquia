@@ -18,6 +18,9 @@ public class BusquedaGlobalPruebas
         public string RutaListado => $"/{clave}";
         public string RutaDetalle(long id) => $"/{clave}/Detalle/{id}";
 
+        public Task<IReadOnlyList<ResultadoBusquedaRegistro>> ResumenesAsync(IReadOnlyCollection<long> ids, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<ResultadoBusquedaRegistro>>([.. registros.Where(r => ids.Contains(r.Id))]);
+
         public Task<ConstanciaPreparada?> PrepararConstanciaAsync(long id, ContextoConstancia contexto, CancellationToken ct = default) =>
             Task.FromResult<ConstanciaPreparada?>(null);
 
@@ -100,6 +103,61 @@ public class BusquedaGlobalPruebas
         r.TextoValido.Should().BeTrue();
         a.UltimaConsulta!.Texto.Should().Be("  Hidalgo  Arévalo ");
         a.UltimaConsulta.IncluirAnulados.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Filtro_de_sacramento_consulta_solo_ese_modulo()
+    {
+        var a = new ModuloFalso("a", 1, Fila("a", 1, "A", "Uno"));
+        var b = new ModuloFalso("b", 2, Fila("b", 2, "B", "Uno"));
+
+        var r = await new BusquedaGlobal([a, b]).BuscarAsync(new FiltroGlobal("uno", Sacramento: "b"), 10);
+
+        a.Llamadas.Should().Be(0);
+        b.Llamadas.Should().Be(1);
+        r.Items.Select(x => x.Clave).Should().Equal("b");
+        r.Modulos.Should().ContainSingle().Which.Clave.Should().Be("b");
+    }
+
+    [Fact]
+    public async Task Los_filtros_llegan_al_modulo()
+    {
+        var a = new ModuloFalso("a", 1);
+
+        await new BusquedaGlobal([a]).BuscarAsync(
+            new FiltroGlobal("uno", Libro: "80", Folio: "12", AnioDesde: 1990, AnioHasta: 2000), 10);
+
+        a.UltimaConsulta!.Libro.Should().Be("80");
+        a.UltimaConsulta.Folio.Should().Be("12");
+        a.UltimaConsulta.AnioDesde.Should().Be(1990);
+        a.UltimaConsulta.AnioHasta.Should().Be(2000);
+    }
+
+    [Theory]
+    [InlineData(2000, 1990)]
+    [InlineData(1400, null)]
+    [InlineData(null, 3000)]
+    public async Task Anios_invalidos_no_consultan_y_explican(int? desde, int? hasta)
+    {
+        var a = new ModuloFalso("a", 1, Fila("a", 1, "A", "Uno"));
+
+        var r = await new BusquedaGlobal([a]).BuscarAsync(
+            new FiltroGlobal("uno", AnioDesde: (short?)desde, AnioHasta: (short?)hasta), 10);
+
+        a.Llamadas.Should().Be(0);
+        r.Items.Should().BeEmpty();
+        r.Error.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task Sacramento_desconocido_devuelve_vacio_sin_consultar()
+    {
+        var a = new ModuloFalso("a", 1, Fila("a", 1, "A", "Uno"));
+
+        var r = await new BusquedaGlobal([a]).BuscarAsync(new FiltroGlobal("uno", Sacramento: "zzz"), 10);
+
+        a.Llamadas.Should().Be(0);
+        r.Items.Should().BeEmpty();
     }
 
     [Fact]

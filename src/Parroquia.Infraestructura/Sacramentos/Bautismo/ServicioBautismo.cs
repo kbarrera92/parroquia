@@ -274,6 +274,15 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
         }
     }
 
+    /// <summary>Filas de los ids pedidos (los anulados no salen por el filtro global). Para mostrar vínculos.</summary>
+    public async Task<IReadOnlyList<FilaBautismo>> ResumenesAsync(IReadOnlyCollection<long> ids, CancellationToken ct = default)
+    {
+        var lista = ids.ToArray();
+        var registros = await db.Bautismos.AsNoTracking().Where(b => lista.Contains(b.Id)).ToListAsync(ct);
+        return [.. registros.Select(b => new FilaBautismo(
+            b.Id, b.Nombres, b.Apellidos, b.FechaBautismo.ATexto(), b.Libro, b.Folio, b.Partida, b.Revisar, b.Anulado))];
+    }
+
     /// <summary>Búsqueda parcial sin tildes ni mayúsculas; ordenada por apellidos, nombres y luego libro/folio/partida.</summary>
     public async Task<PaginaResultado<FilaBautismo>> BuscarAsync(
         FiltroBautismo f, int pagina, int tamano = Paginacion.TamanoPorDefecto, CancellationToken ct = default)

@@ -67,7 +67,7 @@ tests/
 ```
 Un sacramento es una **carpeta** en cada capa (no un proyecto aparte) y los **namespaces son planos por capa** (`Parroquia.Dominio.Sacramentos`, …): un namespace `…Sacramentos.Comunion` chocaría con la entidad `Comunion`.
 
-Cada módulo implementa `IModuloSacramental` (clave, nombre, entidad, rutas, búsqueda y preparación de la constancia con su plantilla) y se registra con `AddModuloSacramental<T>()`. Menú "Libros", búsqueda de Inicio (`BusquedaGlobal`, que une resultados por apellidos y nombres) y página de impresión iteran sobre los módulos registrados. Pasos para agregar uno: `CLAUDE.md`.
+Cada módulo implementa `IModuloSacramental` (clave, nombre, entidad, rutas, búsqueda, `Personas` (`[""]`; Matrimonio `["esposo","esposa"]`), `ResumenesAsync(ids)` para mostrar vínculos y preparación de la constancia con su plantilla) y se registra con `AddModuloSacramental<T>()`. Menú "Libros", búsqueda de Inicio (`BusquedaGlobal`, que une resultados por apellidos y nombres) y página de impresión iteran sobre los módulos registrados. Pasos para agregar uno: `CLAUDE.md`.
 
 ## ADR-08 Servidor local: PC de oficina con Windows 10/11, dedicada, 24/7 ✅
 - La app corre como **servicio de Windows** (Kestrel + `UseWindowsService`), arranque automático. **PostgreSQL** instalado de forma nativa como servicio de Windows. **Sin Docker en producción** (Docker/Testcontainers solo en el equipo de desarrollo).
@@ -86,6 +86,9 @@ Cada módulo implementa `IModuloSacramental` (clave, nombre, entidad, rutas, bú
 
 ## ADR-10 Observabilidad mínima
 Serilog a archivo con rotación; errores sin datos personales en los logs; página de estado simple para el Administrador (versión, último respaldo, tamaño de BD).
+
+## Rendimiento de la búsqueda global (medido en M7)
+`PARROQUIA_MEDIR=1` ejecuta `BusquedaRendimientoPruebas`: 200 000 filas sintéticas (50 000 por libro, índices ya creados, `ANALYZE`), `BusquedaGlobal` real (4 módulos + EF, sin HTTP), 1 calentamiento + 20 repeticiones, PostgreSQL 17 en Docker (equipo de desarrollo). Resultado (ms): apellido raro + nombre p50 125 / p95 167; solo apellido raro 146 / 233; apellido común (~1,7 % por libro) 160 / 191; dos palabras comunes 24 / 32; nombre común + años 58 / 68; token de 2 letras (sin trigram) 114 / 144; apellido común + sacramento + libro 5 / 6; apellido común + folio 31 / 62. Todo p95 < 250 ms (RF-06: < 1 s). Hay que repetirla en el servidor real en M8.
 
 ## Pruebas
 xUnit (v2) + AwesomeAssertions (fork Apache-2.0 de FluentAssertions, cuya v8 es de licencia comercial); Testcontainers (PostgreSQL) para pruebas de integración; pruebas golden de constancias; pruebas de auditoría y de fechas parciales; un conjunto pequeño de pruebas de interfaz (Playwright) solo para el flujo crítico captura→buscar→imprimir.

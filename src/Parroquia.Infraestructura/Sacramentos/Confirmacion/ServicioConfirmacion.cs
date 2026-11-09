@@ -240,6 +240,15 @@ public sealed class ServicioConfirmacion(ParroquiaDbContext db, TimeProvider rel
         }
     }
 
+    /// <summary>Filas de los ids pedidos (los anulados no salen por el filtro global). Para mostrar vínculos.</summary>
+    public async Task<IReadOnlyList<FilaConfirmacion>> ResumenesAsync(IReadOnlyCollection<long> ids, CancellationToken ct = default)
+    {
+        var lista = ids.ToArray();
+        var registros = await db.Confirmaciones.AsNoTracking().Where(c => lista.Contains(c.Id)).ToListAsync(ct);
+        return [.. registros.Select(c => new FilaConfirmacion(
+            c.Id, c.Nombres, c.Apellidos, c.FechaConfirmacion.ATexto(), c.Libro, c.Folio, c.Partida, c.Revisar, c.Anulado))];
+    }
+
     /// <summary>Búsqueda parcial sin tildes ni mayúsculas; ordenada por apellidos, nombres y luego libro/folio/partida.</summary>
     public async Task<PaginaResultado<FilaConfirmacion>> BuscarAsync(
         FiltroConfirmacion f, int pagina, int tamano = Paginacion.TamanoPorDefecto, CancellationToken ct = default)

@@ -1,0 +1,41 @@
+@model Parroquia.Web.Pages.Vinculos.IndexModel
+@using Parroquia.Web.Pages.Vinculos
+
+@if (Model.Error is not null)
+{
+    <div class="alert alert-danger py-1" role="alert">@Model.Error</div>
+}
+else if (string.IsNullOrWhiteSpace(Model.Texto))
+{
+    <p class="text-muted">Escriba al menos @Parroquia.Aplicacion.Sacramentos.BusquedaGlobal.MinimoCaracteres letras.</p>
+}
+else if (Model.Candidatos.Count == 0)
+{
+    <p class="text-muted">No se encontró a nadie más con ese nombre.</p>
+}
+else
+{
+    <table class="table table-sm align-middle">
+        <tbody>
+        @foreach (var c in Model.Candidatos)
+        {
+            <tr>
+                <td>@($"{c.Nombres} {c.Apellidos}".Trim())</td>
+                <td>@c.Sacramento@IndexModel.Etiqueta(c.Persona)</td>
+                <td>@c.Fecha</td>
+                <td>Libro @c.Libro, folio @c.Folio, partida @c.Partida</td>
+                <td class="text-end">
+                    <form method="post" action="@Model.Ruta("Vincular")"
+                          hx-post="@Model.Ruta("Vincular")" hx-target="#@Model.IdSeccion" hx-swap="outerHTML">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="tipo" value="@c.Clave" />
+                        <input type="hidden" name="idDestino" value="@c.Id" />
+                        <input type="hidden" name="personaDestino" value="@c.Persona" />
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Es la misma persona</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

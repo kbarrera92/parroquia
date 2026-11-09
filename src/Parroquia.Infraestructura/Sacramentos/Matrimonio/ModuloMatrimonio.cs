@@ -18,20 +18,39 @@ public sealed class ModuloMatrimonio(ServicioMatrimonio servicio) : IModuloSacra
     public async Task<ResultadosModulo> BuscarAsync(ConsultaBusqueda consulta, int maximo, CancellationToken ct = default)
     {
         var (filas, total) = await servicio.BuscarPersonasAsync(
-            new FiltroMatrimonio(Texto: consulta.Texto, IncluirAnulados: consulta.IncluirAnulados), maximo, ct);
+            new FiltroMatrimonio(
+                Texto: consulta.Texto, Libro: consulta.Libro, Folio: consulta.Folio,
+                AnioDesde: consulta.AnioDesde, AnioHasta: consulta.AnioHasta, IncluirAnulados: consulta.IncluirAnulados), maximo, ct);
 
         var items = new List<ResultadoBusquedaRegistro>();
         foreach (var f in filas)
         {
-            if (f.CoincideEsposo) items.Add(Resultado(f, f.EsposoNombres, f.EsposoApellidos));
-            if (f.CoincideEsposa) items.Add(Resultado(f, f.EsposaNombres, f.EsposaApellidos));
+            if (f.CoincideEsposo) items.Add(Resultado(f, f.EsposoNombres, f.EsposoApellidos, Esposo));
+            if (f.CoincideEsposa) items.Add(Resultado(f, f.EsposaNombres, f.EsposaApellidos, Esposa));
         }
         return new ResultadosModulo(items, total);
     }
 
-    private ResultadoBusquedaRegistro Resultado(FilaMatrimonio f, string nombres, string apellidos) => new(
+    public const string Esposo = "esposo";
+    public const string Esposa = "esposa";
+
+    public IReadOnlyList<string> Personas => [Esposo, Esposa];
+
+    public async Task<IReadOnlyList<ResultadoBusquedaRegistro>> ResumenesAsync(
+        IReadOnlyCollection<long> ids, CancellationToken ct = default)
+    {
+        var items = new List<ResultadoBusquedaRegistro>();
+        foreach (var f in await servicio.ResumenesAsync(ids, ct))
+        {
+            items.Add(Resultado(f, f.EsposoNombres, f.EsposoApellidos, Esposo));
+            items.Add(Resultado(f, f.EsposaNombres, f.EsposaApellidos, Esposa));
+        }
+        return items;
+    }
+
+    private ResultadoBusquedaRegistro Resultado(FilaMatrimonio f, string nombres, string apellidos, string persona) => new(
         Clave, Nombre, f.Id, nombres, apellidos, f.Fecha, f.Libro, f.Folio, f.Partida,
-        f.Revisar, f.Anulado, RutaDetalle(f.Id));
+        f.Revisar, f.Anulado, RutaDetalle(f.Id), persona);
 
     public async Task<ConstanciaPreparada?> PrepararConstanciaAsync(
         long id, ContextoConstancia contexto, CancellationToken ct = default)

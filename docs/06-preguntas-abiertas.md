@@ -2,7 +2,7 @@
 
 Última actualización: 8-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
 
-## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6)
+## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7)
 | # | Tema | Decisión |
 |---|---|---|
 | 1 | Servidor | PC de oficina, Windows 10/11, dedicada, encendida 24/7 |
@@ -35,6 +35,9 @@
 | 28 | Contrayentes de Matrimonio (M6) | *Complex type* `Contrayente` (columnas `esposo_*` / `esposa_*`), no owned: la auditoría lo registra campo por campo (`Esposo.Nombres`). Cambio mínimo en el interceptor; ver `04` ADR-04 |
 | 29 | Tratamiento del contrayente (M6) | Se guarda el **texto** del catálogo (select con los activos; por defecto "don" / "la Srita."), no `TratamientoId`: un complex type no admite FK y el historial queda legible |
 | 30 | Legitimidad y raya de firma (M6) | Mientras la pregunta de legitimidad siga abierta, "hijo/a legítimo/a de:" es texto fijo, sin campo. La constancia de Matrimonio lleva raya sobre la firma (`DocumentoConstancia.LineaFirma`, opcional; las otras no) |
+| 31 | Vínculo y persona (M7) | El vínculo guarda **qué persona** del registro ("" / `esposo` / `esposa`): Bautismo(él)↔Matrimonio↔Bautismo(ella) no los declara la misma persona |
+| 32 | Cadena de vínculos (M7) | El detalle muestra **toda la cadena** (directos + "por medio de"); desvincular solo quita enlaces directos |
+| 33 | Desvincular y permiso (M7) | Desvincular **anula** (auditado, sin borrado físico); volver a vincular reactiva la fila. Permiso `Registros.Editar`, sin permiso nuevo |
 
 ## 🟡 Pendientes
 

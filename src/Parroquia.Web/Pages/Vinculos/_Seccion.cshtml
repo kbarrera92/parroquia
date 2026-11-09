@@ -1,0 +1,69 @@
+@model Parroquia.Web.Pages.Vinculos.IndexModel
+@using Parroquia.Web.Pages.Vinculos
+
+<section id="@Model.IdSeccion" class="mb-4" aria-label="Misma persona en otros libros">
+    <h2 class="h5">Misma persona en otros libros@(Model.EtiquetaPersona.Length == 0 ? "" : $" — {Model.EtiquetaPersona}")</h2>
+
+    @if (Model.Mensaje is not null)
+    {
+        <div class="alert alert-success py-1" role="status">@Model.Mensaje</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger py-1" role="alert">@Model.Error</div>
+    }
+
+    @if (Model.Cadena.Count == 0)
+    {
+        <p class="text-muted">No hay registros vinculados.</p>
+    }
+    else
+    {
+        <table class="table table-sm align-middle">
+            <thead><tr><th>Nombre</th><th>Libro</th><th>Fecha</th><th>Ubicación</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var p in Model.Cadena)
+            {
+                var r = p.Resumen;
+                <tr>
+                    <td>
+                        <a href="@Url.Content("~" + r.RutaDetalle)">@($"{r.Nombres} {r.Apellidos}".Trim())</a>
+                        @if (p.PorMedioDe is not null)
+                        {
+                            <div class="small text-muted">por medio de @p.PorMedioDe</div>
+                        }
+                    </td>
+                    <td>@r.Sacramento@IndexModel.Etiqueta(r.Persona)</td>
+                    <td>@r.Fecha</td>
+                    <td>Libro @r.Libro, folio @r.Folio, partida @r.Partida</td>
+                    <td class="text-end">
+                        @if (Model.PuedeEditar && p.VinculoId is { } vinculoId)
+                        {
+                            <form method="post" action="@Model.Ruta("Desvincular")"
+                                  hx-post="@Model.Ruta("Desvincular")" hx-target="#@Model.IdSeccion" hx-swap="outerHTML"
+                                  hx-confirm="¿Quitar el vínculo? Los registros no se borran.">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="vinculoId" value="@vinculoId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Desvincular</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+
+    @if (Model.PuedeEditar)
+    {
+        <details>
+            <summary>Vincular con otro registro…</summary>
+            <div class="mt-2">
+                <label for="@(Model.IdSeccion)-texto" class="form-label">Buscar a la misma persona por nombre o apellido</label>
+                <input id="@(Model.IdSeccion)-texto" name="texto" class="form-control" autocomplete="off"
+                       hx-get="@Model.Ruta("Buscar")" hx-trigger="input delay:300ms" hx-target="#@(Model.IdSeccion)-candidatos" />
+                <div id="@(Model.IdSeccion)-candidatos" class="mt-2" aria-live="polite"></div>
+            </div>
+        </details>
+    }
+</section>
