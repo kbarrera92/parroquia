@@ -45,7 +45,7 @@ Todo lo que cualquier rol haga (ver, crear, editar, anular, imprimir, iniciar se
 
 **RF-09 Historial.** Todo alta/modificación/anulación guarda usuario, fecha-hora y valores anterior/nuevo por campo. Consultable por registro. Los registros **no se borran físicamente**: el Capturista (o Administrador) los anula con motivo, y la anulación se puede revertir solo por Administrador.
 
-**RF-10 Usuarios.** Inicio de sesión individual, contraseñas con hash, bloqueo por intentos fallidos, cierre por inactividad, cambio de contraseña. Administrador crea/desactiva usuarios.
+**RF-10 Usuarios.** Inicio de sesión individual, contraseñas con hash, bloqueo por intentos fallidos, cierre por inactividad, cambio de contraseña. Administrador crea, edita (nombre y rol; un rol por usuario), desactiva, desbloquea y restablece la contraseña de los usuarios (pantalla *Administración → Usuarios*). **No hay recuperación por correo** (sin internet): el Administrador genera una contraseña temporal que se muestra una sola vez y que el usuario debe cambiar al entrar. Política de contraseñas y demás controles: `04` ADR-05.
 
 **RF-11 Configuración y catálogos.** Nombre de parroquia, dirección, teléfono, logo, párroco vigente (con historial de vigencia), texto fijo del membrete. Catálogo de **ministros** (sacerdotes; el campo permite elegir de la lista o escribir otro nombre) y de **tratamientos** de contrayentes.
 
