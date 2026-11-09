@@ -72,8 +72,12 @@ public static class DependencyInjection
                 o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 o.Lockout.AllowedForNewUsers = true;
                 o.User.RequireUniqueEmail = false;
+                // "Confirmada" = activa (ConfirmacionUsuarioActivo): un usuario desactivado no inicia sesión.
+                o.SignIn.RequireConfirmedAccount = true;
             })
             .AddEntityFrameworkStores<ParroquiaDbContext>()
+            .AddClaimsPrincipalFactory<FabricaClaimsUsuario>()
+            .AddUserConfirmation<ConfirmacionUsuarioActivo>()
             .AddErrorDescriber<DescriptorErroresIdentidad>()
             .AddPasswordValidator<ValidadorContrasenaComun>()
             .AddDefaultTokenProviders();
@@ -81,6 +85,10 @@ public static class DependencyInjection
         // PBKDF2-HMAC-SHA512 (formato v3 de Identity) con 210 000 iteraciones (OWASP Password Storage);
         // las contraseñas antiguas se re-hashean solas al iniciar sesión.
         services.Configure<PasswordHasherOptions>(o => o.IterationCount = 210_000);
+
+        // Revalida el sello de seguridad cada minuto: cambiar contraseña, rol o estado cierra las sesiones abiertas.
+        services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.FromMinutes(1));
+        services.AddScoped<ServicioUsuarios>();
 
         return services;
     }

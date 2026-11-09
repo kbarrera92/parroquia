@@ -8,6 +8,13 @@ public enum EventoAcceso
     CuentaBloqueada,
     VerRegistro,
     ImprimirConstancia,
+    UsuarioCreado,
+    UsuarioModificado,
+    UsuarioActivado,
+    UsuarioDesactivado,
+    PasswordRestablecida,
+    PasswordCambiada,
+    CuentaDesbloqueada,
 }
 
 /// <summary>

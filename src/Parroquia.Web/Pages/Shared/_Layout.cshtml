@@ -67,7 +67,7 @@
                             </li>
                         }
                     </ul>
-                    <span class="navbar-text me-3">@User.Identity.Name</span>
+                    <a class="navbar-text me-3 text-decoration-none" asp-page="/Cuenta/CambiarPassword" title="Cambiar contraseña">@User.Identity.Name</a>
                     <a class="btn btn-outline-light btn-sm" asp-page="/Cuenta/Logout">Cerrar sesión</a>
                 }
             </div>

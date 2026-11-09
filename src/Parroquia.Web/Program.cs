@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Localization;
 using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura;
 using Parroquia.Infraestructura.Identidad;
+using Parroquia.Web.Filtros;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,7 +36,8 @@ builder.Services.AddAuthorization(o =>
     o.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
 });
 
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages()
+    .AddMvcOptions(o => o.Filters.Add<FiltroCambioObligatorio>());
 
 var cultura = new CultureInfo("es-GT");
 builder.Services.Configure<RequestLocalizationOptions>(o =>
