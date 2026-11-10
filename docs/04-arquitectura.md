@@ -108,6 +108,14 @@ Cada módulo implementa `IModuloSacramental` (clave, nombre, entidad, rutas, bú
 ## ADR-10 Observabilidad mínima
 Serilog a archivo con rotación; errores sin datos personales en los logs; página de estado simple para el Administrador (versión, último respaldo, tamaño de BD).
 
+## ADR-11 Numeración de asientos nuevos (libro digital) ✅
+Los sacramentos que se celebran desde ahora nacen en el sistema y necesitan libro, folio y partida propios, sin repetidos ni huecos aunque dos capturistas guarden a la vez.
+- **Libro digital** (`LibroDigital`, ver `02`): lo abre el Administrador en *Administración → Libros digitales*, continuando la numeración del último libro físico (número, folio y partida iniciales, partidas por folio, folios por libro, cómo se numera la partida: correlativa, reinicia por libro o reinicia por folio). Se llena → se cierra y abre el siguiente solo.
+- **Concurrencia:** `ServicioNumeracion.AsignarAsync` exige una transacción abierta y lee el libro con `SELECT … FOR UPDATE` (hay que pedir `xmin` explícito: `SELECT *, xmin`); el bloqueo dura hasta el commit del registro, que se guarda en la **misma** transacción. Antes de releer se sueltan las instancias de `LibroDigital` ya rastreadas por el contexto (EF no las refrescaría). Cada `ServicioX` crea su `ServicioNumeracion` con el mismo `DbContext` (sin cambiar constructores ni acoplar módulos): se identifican por `Clave`.
+- **Alta:** `DatosXFormulario.AsientoNuevo` → se ignoran los Libro/Folio/Partida digitados; sin libro abierto el guardado falla con un mensaje claro y no consume número. Los avisos de duplicados (persona + fecha) corren **antes** de numerar. En la página, pestañas «Transcribir de un libro físico» (predeterminada) / «Asiento nuevo (numera el sistema)» con `?modo=sistema`.
+- **Reglas:** un asiento del sistema no cambia su libro/folio/partida (el servicio lo rechaza); no se puede transcribir en el número de un libro digital; anular no libera el número.
+- Pendiente (ver `06`): acta/hoja impresa de cada partida para encuadernar, si la diócesis lo exige.
+
 ## Rendimiento de la búsqueda global (medido en M7)
 `PARROQUIA_MEDIR=1` ejecuta `BusquedaRendimientoPruebas`: 200 000 filas sintéticas (50 000 por libro, índices ya creados, `ANALYZE`), `BusquedaGlobal` real (4 módulos + EF, sin HTTP), 1 calentamiento + 20 repeticiones, PostgreSQL 17 en Docker (equipo de desarrollo). Resultado (ms): apellido raro + nombre p50 125 / p95 167; solo apellido raro 146 / 233; apellido común (~1,7 % por libro) 160 / 191; dos palabras comunes 24 / 32; nombre común + años 58 / 68; token de 2 letras (sin trigram) 114 / 144; apellido común + sacramento + libro 5 / 6; apellido común + folio 31 / 62. Todo p95 < 250 ms (RF-06: < 1 s). Hay que repetirla en el servidor real en M8.
 

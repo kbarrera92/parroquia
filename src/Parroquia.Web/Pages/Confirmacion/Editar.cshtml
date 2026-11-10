@@ -55,21 +55,66 @@
     <form method="post" id="formulario" class="row g-3">
         <input asp-for="Input.Version" type="hidden" />
 
-        <div class="col-md-2">
-            <label asp-for="Input.Libro" class="form-label">Libro</label>
-            <input asp-for="Input.Libro" class="form-control" maxlength="30" autofocus="@(!focoNombres)" autocomplete="off" />
-            <span asp-validation-for="Input.Libro" class="text-danger"></span>
-        </div>
-        <div class="col-md-2">
-            <label asp-for="Input.Folio" class="form-label">Folio</label>
-            <input asp-for="Input.Folio" class="form-control" maxlength="30" autocomplete="off" />
-            <span asp-validation-for="Input.Folio" class="text-danger"></span>
-        </div>
-        <div class="col-md-2">
-            <label asp-for="Input.Partida" class="form-label">Partida</label>
-            <input asp-for="Input.Partida" class="form-control" maxlength="30" autocomplete="off" />
-            <span asp-validation-for="Input.Partida" class="text-danger"></span>
-        </div>
+        @if (Model.EsNuevo)
+        {
+            <div class="col-12">
+                <input asp-for="Input.AsientoNuevo" type="hidden" />
+                <ul class="nav nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link @(Model.Input.AsientoNuevo ? "" : "active")" asp-page="Editar">Transcribir de un libro físico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(Model.Input.AsientoNuevo ? "active" : "")" asp-page="Editar" asp-route-modo="sistema">Asiento nuevo (numera el sistema)</a>
+                    </li>
+                </ul>
+                <span asp-validation-for="Input.AsientoNuevo" class="text-danger"></span>
+            </div>
+        }
+
+        @if (Model.EsNuevo && Model.Input.AsientoNuevo)
+        {
+            <div class="col-12">
+                @if (Model.Proximo is { } p)
+                {
+                    <div class="alert alert-info mb-0" role="status">
+                        El sistema asignará el libro, folio y partida al guardar. Próximo número (orientativo):
+                        libro <strong>@p.Libro</strong>, folio <strong>@p.Folio</strong>, partida <strong>@p.Partida</strong>.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning mb-0" role="alert">
+                        No hay un libro digital abierto para Confirmación. Pida al Administrador que lo abra
+                        (Administración → Libros digitales).
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            var soloLectura = Model.AsientoDelSistema;
+            <div class="col-md-2">
+                <label asp-for="Input.Libro" class="form-label">Libro</label>
+                <input asp-for="Input.Libro" class="form-control" maxlength="30" autofocus="@(!focoNombres && !soloLectura)" autocomplete="off" readonly="@soloLectura" />
+                <span asp-validation-for="Input.Libro" class="text-danger"></span>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Input.Folio" class="form-label">Folio</label>
+                <input asp-for="Input.Folio" class="form-control" maxlength="30" autocomplete="off" readonly="@soloLectura" />
+                <span asp-validation-for="Input.Folio" class="text-danger"></span>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Input.Partida" class="form-label">Partida</label>
+                <input asp-for="Input.Partida" class="form-control" maxlength="30" autocomplete="off" readonly="@soloLectura" />
+                <span asp-validation-for="Input.Partida" class="text-danger"></span>
+            </div>
+            @if (soloLectura)
+            {
+                <div class="col-md-6 align-self-end form-text">
+                    Asiento numerado por el sistema: libro, folio y partida no se cambian. Si hay un error, anule el registro y asiente de nuevo.
+                </div>
+            }
+        }
         <div class="col-12"></div>
 
         <div class="col-md-5">

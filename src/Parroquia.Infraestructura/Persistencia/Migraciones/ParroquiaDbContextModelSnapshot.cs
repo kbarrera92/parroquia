@@ -441,6 +441,120 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     b.ToTable("parrocos", (string)null);
                 });
 
+            modelBuilder.Entity("Parroquia.Dominio.Numeracion.LibroDigital", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "secuencia_id");
+
+                    b.Property<bool>("Abierto")
+                        .HasColumnType("boolean")
+                        .HasColumnName("abierto");
+
+                    b.Property<DateTimeOffset>("AbiertoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("abierto_en");
+
+                    b.Property<DateTimeOffset?>("CerradoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cerrado_en");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("CreadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("creado_por");
+
+                    b.Property<int>("Entregados")
+                        .HasColumnType("integer")
+                        .HasColumnName("entregados")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<int>("FolioActual")
+                        .HasColumnType("integer")
+                        .HasColumnName("folio_actual")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<int>("FolioInicial")
+                        .HasColumnType("integer")
+                        .HasColumnName("folio_inicial");
+
+                    b.Property<int>("FoliosPorLibro")
+                        .HasColumnType("integer")
+                        .HasColumnName("folios_por_libro");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificado_en");
+
+                    b.Property<string>("ModificadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("modificado_por");
+
+                    b.Property<string>("ModoPartida")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("modo_partida");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("numero");
+
+                    b.Property<int>("PartidaInicial")
+                        .HasColumnType("integer")
+                        .HasColumnName("partida_inicial");
+
+                    b.Property<int>("PartidasEnFolio")
+                        .HasColumnType("integer")
+                        .HasColumnName("partidas_en_folio")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<int>("PartidasPorFolio")
+                        .HasColumnType("integer")
+                        .HasColumnName("partidas_por_folio");
+
+                    b.Property<string>("TipoSacramento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tipo_sacramento");
+
+                    b.Property<int>("UltimaPartida")
+                        .HasColumnType("integer")
+                        .HasColumnName("ultima_partida")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_libro_digital");
+
+                    b.HasIndex("TipoSacramento")
+                        .IsUnique()
+                        .HasDatabaseName("ix_libro_digital_tipo_sacramento")
+                        .HasFilter("abierto");
+
+                    b.HasIndex("TipoSacramento", "Numero")
+                        .IsUnique()
+                        .HasDatabaseName("ix_libro_digital_tipo_sacramento_numero");
+
+                    b.ToTable("libro_digital", (string)null);
+                });
+
             modelBuilder.Entity("Parroquia.Dominio.Sacramentos.Bautismo", b =>
                 {
                     b.Property<long>("Id")
@@ -494,6 +608,10 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("libro");
+
+                    b.Property<long?>("LibroDigitalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("libro_digital_id");
 
                     b.Property<string>("LibroOrden")
                         .IsRequired()
@@ -642,6 +760,9 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("BusquedaNormalizada"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("BusquedaNormalizada"), new[] { "gin_trgm_ops" });
 
+                    b.HasIndex("LibroDigitalId")
+                        .HasDatabaseName("ix_bautismo_libro_digital_id");
+
                     b.HasIndex("MinistroId")
                         .HasDatabaseName("ix_bautismo_ministro_id");
 
@@ -713,6 +834,10 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("libro");
+
+                    b.Property<long?>("LibroDigitalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("libro_digital_id");
 
                     b.Property<string>("LibroOrden")
                         .IsRequired()
@@ -818,6 +943,9 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("BusquedaNormalizada"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("BusquedaNormalizada"), new[] { "gin_trgm_ops" });
 
+                    b.HasIndex("LibroDigitalId")
+                        .HasDatabaseName("ix_comunion_libro_digital_id");
+
                     b.HasIndex("MinistroId")
                         .HasDatabaseName("ix_comunion_ministro_id");
 
@@ -889,6 +1017,10 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("libro");
+
+                    b.Property<long?>("LibroDigitalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("libro_digital_id");
 
                     b.Property<string>("LibroOrden")
                         .IsRequired()
@@ -999,6 +1131,9 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("BusquedaNormalizada"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("BusquedaNormalizada"), new[] { "gin_trgm_ops" });
 
+                    b.HasIndex("LibroDigitalId")
+                        .HasDatabaseName("ix_confirmacion_libro_digital_id");
+
                     b.HasIndex("MinistroId")
                         .HasDatabaseName("ix_confirmacion_ministro_id");
 
@@ -1078,6 +1213,10 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("libro");
+
+                    b.Property<long?>("LibroDigitalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("libro_digital_id");
 
                     b.Property<string>("LibroOrden")
                         .IsRequired()
@@ -1291,6 +1430,9 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("BusquedaNormalizada"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("BusquedaNormalizada"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("LibroDigitalId")
+                        .HasDatabaseName("ix_matrimonio_libro_digital_id");
 
                     b.HasIndex("MinistroId")
                         .HasDatabaseName("ix_matrimonio_ministro_id");
@@ -1751,6 +1893,12 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
 
             modelBuilder.Entity("Parroquia.Dominio.Sacramentos.Bautismo", b =>
                 {
+                    b.HasOne("Parroquia.Dominio.Numeracion.LibroDigital", null)
+                        .WithMany()
+                        .HasForeignKey("LibroDigitalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_bautismo_libro_digital_libro_digital_id");
+
                     b.HasOne("Parroquia.Dominio.Catalogos.Ministro", "Ministro")
                         .WithMany()
                         .HasForeignKey("MinistroId")
@@ -1762,6 +1910,12 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
 
             modelBuilder.Entity("Parroquia.Dominio.Sacramentos.Comunion", b =>
                 {
+                    b.HasOne("Parroquia.Dominio.Numeracion.LibroDigital", null)
+                        .WithMany()
+                        .HasForeignKey("LibroDigitalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_comunion_libro_digital_libro_digital_id");
+
                     b.HasOne("Parroquia.Dominio.Catalogos.Ministro", "Ministro")
                         .WithMany()
                         .HasForeignKey("MinistroId")
@@ -1773,6 +1927,12 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
 
             modelBuilder.Entity("Parroquia.Dominio.Sacramentos.Confirmacion", b =>
                 {
+                    b.HasOne("Parroquia.Dominio.Numeracion.LibroDigital", null)
+                        .WithMany()
+                        .HasForeignKey("LibroDigitalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_confirmacion_libro_digital_libro_digital_id");
+
                     b.HasOne("Parroquia.Dominio.Catalogos.Ministro", "Ministro")
                         .WithMany()
                         .HasForeignKey("MinistroId")
@@ -1784,6 +1944,12 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
 
             modelBuilder.Entity("Parroquia.Dominio.Sacramentos.Matrimonio", b =>
                 {
+                    b.HasOne("Parroquia.Dominio.Numeracion.LibroDigital", null)
+                        .WithMany()
+                        .HasForeignKey("LibroDigitalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_matrimonio_libro_digital_libro_digital_id");
+
                     b.HasOne("Parroquia.Dominio.Catalogos.Ministro", "Ministro")
                         .WithMany()
                         .HasForeignKey("MinistroId")

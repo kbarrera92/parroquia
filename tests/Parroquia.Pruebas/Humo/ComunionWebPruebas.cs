@@ -295,4 +295,67 @@ public class ComunionWebPruebas(AppFixture app)
 
         (await HtmlAsync(c, "/")).Should().Contain("/Comunion");
     }
+
+    // ---- Asientos nuevos numerados por el sistema (libro digital; la base se comparte, se deja cerrado al terminar) ----
+
+    private const string PaginaLibros = "/Admin/LibrosDigitales";
+
+    private async Task CerrarLibroDigitalAsync(HttpClient admin) =>
+        await AppFixture.PostFormAsync(admin, PaginaLibros, $"{PaginaLibros}?handler=Cerrar", new() { ["clave"] = "comunion" });
+
+    private static Task<HttpResponseMessage> AbrirLibroDigitalAsync(HttpClient admin, string numero) =>
+        AppFixture.PostFormAsync(admin, PaginaLibros, $"{PaginaLibros}?handler=Abrir", new()
+        {
+            ["clave"] = "comunion", ["numero"] = numero, ["folioInicial"] = "1", ["partidaInicial"] = "1",
+            ["partidasPorFolio"] = "5", ["foliosPorLibro"] = "20", ["modoPartida"] = "Correlativa", ["partidasYaEnFolio"] = "0",
+        });
+
+    [Fact]
+    public async Task Asiento_nuevo_sin_libro_digital_muestra_el_aviso()
+    {
+        var admin = await app.ClienteAdminAsync();
+        await CerrarLibroDigitalAsync(admin);
+        var c = await app.ClienteConRolAsync(Roles.Capturista);
+
+        var html = await HtmlAsync(c, "/Comunion/Editar?modo=sistema");
+        html.Should().Contain("No hay un libro digital abierto").And.NotContain("name=\"Input.Libro\"");
+
+        var campos = Campos("", "", "", apellidos: "Zeta" + Unico());
+        campos["Input.AsientoNuevo"] = "true";
+        var r = await CrearRespuestaAsync(c, campos);
+
+        r.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await r.Content.ReadAsStringAsync()).Should().Contain("libro digital abierto");
+    }
+
+    [Fact]
+    public async Task Capturista_asienta_un_sacramento_nuevo_y_el_sistema_le_da_el_numero()
+    {
+        var admin = await app.ClienteAdminAsync();
+        await CerrarLibroDigitalAsync(admin);
+        var numero = "D" + Unico();
+        (await AbrirLibroDigitalAsync(admin, numero)).StatusCode.Should().Be(HttpStatusCode.Redirect);
+        try
+        {
+            var c = await app.ClienteConRolAsync(Roles.Capturista);
+            var form = await HtmlAsync(c, "/Comunion/Editar?modo=sistema");
+            form.Should().Contain("Próximo número").And.Contain(numero);
+
+            var campos = Campos("999", "999", "999", apellidos: "Zeta" + Unico());
+            campos["Input.AsientoNuevo"] = "true";
+            var id = await CrearAsync(c, campos);
+
+            var detalle = await HtmlAsync(c, $"/Comunion/Detalle/{id}");
+            detalle.Should().Contain("Asiento numerado por el sistema")
+                .And.Contain($"libro {numero}, folio 1, partida 1");
+            detalle.Should().Contain("Asiento del sistema");
+
+            var edicion = await HtmlAsync(c, $"/Comunion/Editar/{id}");
+            edicion.Should().Contain("readonly");
+        }
+        finally
+        {
+            await CerrarLibroDigitalAsync(admin);
+        }
+    }
 }

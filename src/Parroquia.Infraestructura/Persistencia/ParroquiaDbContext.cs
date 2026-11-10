@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Parroquia.Dominio.Catalogos;
 using Parroquia.Dominio.Configuracion;
+using Parroquia.Dominio.Numeracion;
 using Parroquia.Dominio.Sacramentos;
 using Parroquia.Dominio.Vinculos;
+using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Vinculos;
 using Parroquia.Infraestructura.Constancias;
 using Parroquia.Infraestructura.Identidad;
@@ -26,6 +28,7 @@ public class ParroquiaDbContext(DbContextOptions<ParroquiaDbContext> options)
     public DbSet<Matrimonio> Matrimonios => Set<Matrimonio>();
     public DbSet<ConstanciaEmitida> ConstanciasEmitidas => Set<ConstanciaEmitida>();
     public DbSet<Vinculo> Vinculos => Set<Vinculo>();
+    public DbSet<LibroDigital> LibrosDigitales => Set<LibroDigital>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -82,6 +85,7 @@ public class ParroquiaDbContext(DbContextOptions<ParroquiaDbContext> options)
             e.HasIndex(c => c.EmitidaEn);
         });
 
+        builder.ApplyConfiguration(new ConfiguracionLibroDigital());
         builder.ApplyConfiguration(new ConfiguracionComunion());
         builder.ApplyConfiguration(new ConfiguracionBautismo());
         builder.ApplyConfiguration(new ConfiguracionConfirmacion());

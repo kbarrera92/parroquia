@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Parroquia.Dominio.Numeracion;
 using Parroquia.Dominio.Sacramentos;
 using Parroquia.Infraestructura.Persistencia;
 
@@ -26,6 +27,8 @@ public static class ConfiguracionRegistroSacramental
         e.Property(x => x.MinistroTexto).HasMaxLength(ValidadorRegistro.MaxNombre);
 
         e.HasOne(x => x.Ministro).WithMany().HasForeignKey(x => x.MinistroId).OnDelete(DeleteBehavior.Restrict);
+        e.HasOne<LibroDigital>().WithMany().HasForeignKey(x => x.LibroDigitalId).OnDelete(DeleteBehavior.Restrict);
+        e.Ignore(x => x.EsAsientoDelSistema);
 
         // Duplicados (advertencia, no bloqueo) y listado en orden natural.
         e.HasIndex(x => new { x.LibroOrden, x.FolioOrden, x.PartidaOrden });
