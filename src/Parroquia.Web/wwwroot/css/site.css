@@ -1,13 +1,613 @@
+/* ==========================================================================
+   Tema oscuro sobrio — Sistema Parroquial (reglas en docs/07-ui.md)
+
+   - Un solo tema, oscuro: <html data-bs-theme="dark"> en Pages/Shared/_Layout.cshtml.
+   - Bootstrap 5.3 local (sin CDN). Aquí solo se redefinen sus variables --bs-*
+     a partir de la paleta propia --p-*; las vistas usan clases de Bootstrap,
+     nunca colores literales.
+   - Base: negro del logo (grafito azulado) + acento azul acero.
+   ========================================================================== */
+
+/* 1. Paleta de marca ---------------------------------------------------------- */
+:root {
+  --p-bg: #0f1419;            /* fondo de página */
+  --p-bg-rgb: 15, 20, 25;
+  --p-surface: #161c23;       /* navbar, cabecera de tabla, tarjetas */
+  --p-surface-2: #1e2630;     /* campos de formulario, menús */
+  --p-border: #334050;        /* separadores decorativos */
+  --p-border-strong: #6a7f94; /* borde de controles (≥ 3:1 sobre fondo y sobre campo) */
+  --p-text: #e6ebf0;
+  --p-text-strong: #f2f6fa;
+  --p-muted: #9aa7b4;         /* texto atenuado, ayudas, cabeceras */
+
+  --p-accent: #6fa8dc;        /* acción principal, enlaces, foco */
+  --p-accent-rgb: 111, 168, 220;
+  --p-accent-hover: #8cbbe6;
+  --p-accent-active: #5a93c7;
+  --p-accent-ink: #0b1520;    /* texto sobre el acento */
+
+  --p-secondary-rgb: 71, 85, 102; /* insignia «anulado» y similares (texto blanco encima) */
+}
+
+/* 2. Paleta de estados ---------------------------------------------------------- */
+:root {
+  --p-danger: #f07a72;
+  --p-danger-rgb: 240, 122, 114;
+  --p-danger-tint: #f5a39d;
+  --p-success: #6cc08a;
+  --p-success-rgb: 108, 192, 138;
+  --p-success-tint: #9ad6af;
+  --p-warning: #e8964a;
+  --p-warning-rgb: 232, 150, 74;
+  --p-warning-tint: #f2b77f;
+  --p-info: #7db8d9;
+  --p-info-rgb: 125, 184, 217;
+  --p-info-tint: #a6d0e8;
+
+  --p-ink: #14110c; /* texto sobre fondos de estado (aviso, información, peligro) */
+}
+
+/* 3. Mapeo a las variables de Bootstrap ------------------------------------------ */
+[data-bs-theme="dark"] {
+  --bs-body-bg: var(--p-bg);
+  --bs-body-bg-rgb: var(--p-bg-rgb);
+  --bs-body-color: var(--p-text);
+  --bs-emphasis-color: var(--p-text-strong);
+  --bs-heading-color: var(--p-text-strong);
+  --bs-secondary-color: var(--p-muted);
+  --bs-tertiary-color: var(--p-muted);
+  --bs-secondary-bg: var(--p-surface-2);
+  --bs-tertiary-bg: var(--p-surface);
+  --bs-border-color: var(--p-border);
+  --bs-border-color-translucent: var(--p-border);
+
+  --bs-link-color: var(--p-accent);
+  --bs-link-color-rgb: var(--p-accent-rgb);
+  --bs-link-hover-color: var(--p-accent-hover);
+  --bs-link-hover-color-rgb: var(--p-accent-rgb);
+
+  --bs-primary: var(--p-accent);
+  --bs-primary-rgb: var(--p-accent-rgb);
+  --bs-secondary-rgb: var(--p-secondary-rgb);
+  --bs-danger: var(--p-danger);
+  --bs-danger-rgb: var(--p-danger-rgb);
+  --bs-success: var(--p-success);
+  --bs-success-rgb: var(--p-success-rgb);
+  --bs-warning: var(--p-warning);
+  --bs-warning-rgb: var(--p-warning-rgb);
+  --bs-info: var(--p-info);
+  --bs-info-rgb: var(--p-info-rgb);
+
+  --bs-danger-text-emphasis: var(--p-danger-tint);
+  --bs-success-text-emphasis: var(--p-success-tint);
+  --bs-warning-text-emphasis: var(--p-warning-tint);
+  --bs-info-text-emphasis: var(--p-info-tint);
+  --bs-danger-bg-subtle: rgba(var(--p-danger-rgb), .14);
+  --bs-success-bg-subtle: rgba(var(--p-success-rgb), .14);
+  --bs-warning-bg-subtle: rgba(var(--p-warning-rgb), .14);
+  --bs-info-bg-subtle: rgba(var(--p-info-rgb), .14);
+  --bs-danger-border-subtle: rgba(var(--p-danger-rgb), .45);
+  --bs-success-border-subtle: rgba(var(--p-success-rgb), .45);
+  --bs-warning-border-subtle: rgba(var(--p-warning-rgb), .45);
+  --bs-info-border-subtle: rgba(var(--p-info-rgb), .45);
+
+  --bs-focus-ring-color: rgba(var(--p-accent-rgb), .45);
+  --bs-highlight-bg: rgba(var(--p-accent-rgb), .25);
+  --bs-highlight-color: var(--p-text-strong);
+}
+
+/* 4. Tipografía ----------------------------------------------------------------- */
 html {
   font-size: 18px; /* texto grande y legible (docs/01 RNF Usabilidad) */
 }
 
 body {
+  /* Fuente del sistema: sin fuentes web (el sistema funciona sin internet). */
+  --bs-body-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --bs-body-line-height: 1.5;
   margin-bottom: 2rem;
 }
 
-/* Vista previa de la constancia: aproximación de la hoja carta (el PDF usa el mismo modelo de documento). */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-weight: 600;
+  letter-spacing: -.005em;
+}
+
+kbd {
+  background-color: var(--p-surface-2);
+  color: var(--p-text);
+  border: 1px solid var(--p-border-strong);
+  border-bottom-width: 2px;
+  border-radius: .3rem;
+  padding: .08em .45em;
+  font-size: .8em;
+  font-weight: 500;
+}
+
+/* 5. Espaciados y radios ---------------------------------------------------------- */
+[data-bs-theme="dark"] {
+  --bs-border-radius: .4rem;
+  --bs-border-radius-sm: .3rem;
+  --bs-border-radius-lg: .6rem;
+}
+
+.form-control,
+.form-select {
+  padding: .6rem .85rem; /* alto ≈ 50 px: objetivo cómodo para captura continua */
+}
+
+.btn {
+  --bs-btn-padding-y: .55rem;
+  --bs-btn-padding-x: 1.1rem;
+  --bs-btn-font-weight: 500;
+}
+
+.btn-sm {
+  --bs-btn-padding-y: .3rem; /* solo en tablas y barras de acciones, no en captura */
+  --bs-btn-padding-x: .7rem;
+}
+
+/* 6. Foco visible (la captura es por teclado: nunca se oculta) --------------------- */
+:focus-visible {
+  outline: 3px solid var(--p-accent);
+  outline-offset: 2px;
+}
+
+.btn:focus-visible,
+.btn-check:focus-visible + .btn {
+  outline: 3px solid var(--p-accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--p-surface-2);
+  color: var(--p-text);
+  border-color: var(--p-accent);
+  box-shadow: 0 0 0 3px rgba(var(--p-accent-rgb), .4);
+}
+
+.form-check-input:focus {
+  border-color: var(--p-accent);
+  box-shadow: 0 0 0 3px rgba(var(--p-accent-rgb), .4);
+}
+
+/* 7. Formularios ------------------------------------------------------------------- */
+.form-label {
+  font-weight: 500;
+  margin-bottom: .3rem;
+}
+
+.form-control,
+.form-select {
+  background-color: var(--p-surface-2);
+  border-color: var(--p-border-strong);
+  color: var(--p-text);
+}
+
+.form-control::placeholder {
+  color: var(--p-muted);
+  opacity: .8;
+}
+
+/* Solo lectura (asiento del sistema) y deshabilitado: plano y con borde punteado. */
+.form-control[readonly],
+.form-control:disabled,
+.form-select:disabled {
+  background-color: var(--p-bg);
+  border-style: dashed;
+  color: var(--p-muted);
+  opacity: 1;
+}
+
+.form-text {
+  color: var(--p-muted);
+}
+
+.form-check-input {
+  background-color: var(--p-surface-2);
+  border-color: var(--p-border-strong);
+}
+
+.form-check-input:checked {
+  background-color: var(--p-accent);
+  border-color: var(--p-accent);
+}
+
+/* La marca del check va oscura para contrastar con el acento (data: permitido por la CSP). */
+.form-check-input:checked[type="checkbox"] {
+  --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%230b1520' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+}
+
+.form-check-input:checked[type="radio"] {
+  --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%230b1520'/%3e%3c/svg%3e");
+}
+
+/* El autocompletado del navegador no debe pintar el campo de blanco. */
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--p-text);
+  caret-color: var(--p-text);
+  box-shadow: 0 0 0 1000px var(--p-surface-2) inset;
+}
+
+/* 8. Validación (clases que ya emiten los tag helpers de ASP.NET) -------------------- */
+.form-control.input-validation-error,
+.form-select.input-validation-error {
+  border-color: var(--p-danger);
+  box-shadow: 0 0 0 1px var(--p-danger);
+}
+
+.form-control.input-validation-error:focus,
+.form-select.input-validation-error:focus {
+  box-shadow: 0 0 0 3px rgba(var(--p-danger-rgb), .4);
+}
+
+.field-validation-error {
+  display: block;
+  margin-top: .25rem;
+  font-size: .9rem;
+}
+
+.validation-summary-errors ul {
+  margin-bottom: .75rem;
+}
+
+/* 9. Botones ------------------------------------------------------------------------ */
+.btn-primary {
+  --bs-btn-color: var(--p-accent-ink);
+  --bs-btn-bg: var(--p-accent);
+  --bs-btn-border-color: var(--p-accent);
+  --bs-btn-hover-color: var(--p-accent-ink);
+  --bs-btn-hover-bg: var(--p-accent-hover);
+  --bs-btn-hover-border-color: var(--p-accent-hover);
+  --bs-btn-active-color: var(--p-accent-ink);
+  --bs-btn-active-bg: var(--p-accent-active);
+  --bs-btn-active-border-color: var(--p-accent-active);
+  --bs-btn-disabled-color: var(--p-accent-ink);
+  --bs-btn-disabled-bg: var(--p-accent);
+  --bs-btn-disabled-border-color: var(--p-accent);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--p-accent);
+  --bs-btn-border-color: var(--p-accent);
+  --bs-btn-hover-color: var(--p-accent-ink);
+  --bs-btn-hover-bg: var(--p-accent);
+  --bs-btn-hover-border-color: var(--p-accent);
+  --bs-btn-active-color: var(--p-accent-ink);
+  --bs-btn-active-bg: var(--p-accent-active);
+  --bs-btn-active-border-color: var(--p-accent-active);
+  --bs-btn-disabled-color: var(--p-accent);
+  --bs-btn-disabled-border-color: var(--p-accent);
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--p-text);
+  --bs-btn-border-color: var(--p-border-strong);
+  --bs-btn-hover-color: var(--p-text-strong);
+  --bs-btn-hover-bg: var(--p-surface-2);
+  --bs-btn-hover-border-color: var(--p-text);
+  --bs-btn-active-color: var(--p-text-strong);
+  --bs-btn-active-bg: var(--p-surface-2);
+  --bs-btn-active-border-color: var(--p-text);
+  --bs-btn-disabled-color: var(--p-muted);
+  --bs-btn-disabled-border-color: var(--p-border);
+}
+
+.btn-outline-light {
+  --bs-btn-color: var(--p-text);
+  --bs-btn-border-color: var(--p-border-strong);
+  --bs-btn-hover-color: var(--p-text-strong);
+  --bs-btn-hover-bg: var(--p-surface-2);
+  --bs-btn-hover-border-color: var(--p-text);
+  --bs-btn-active-color: var(--p-text-strong);
+  --bs-btn-active-bg: var(--p-surface-2);
+  --bs-btn-active-border-color: var(--p-text);
+}
+
+.btn-outline-danger {
+  --bs-btn-color: var(--p-danger);
+  --bs-btn-border-color: var(--p-danger);
+  --bs-btn-hover-color: var(--p-ink);
+  --bs-btn-hover-bg: var(--p-danger);
+  --bs-btn-hover-border-color: var(--p-danger);
+  --bs-btn-active-color: var(--p-ink);
+  --bs-btn-active-bg: var(--p-danger);
+  --bs-btn-active-border-color: var(--p-danger);
+  --bs-btn-disabled-color: var(--p-danger);
+  --bs-btn-disabled-border-color: var(--p-danger);
+}
+
+.btn-danger {
+  --bs-btn-color: var(--p-ink);
+  --bs-btn-bg: var(--p-danger);
+  --bs-btn-border-color: var(--p-danger);
+  --bs-btn-hover-color: var(--p-ink);
+  --bs-btn-hover-bg: var(--p-danger-tint);
+  --bs-btn-hover-border-color: var(--p-danger-tint);
+  --bs-btn-active-color: var(--p-ink);
+  --bs-btn-active-bg: var(--p-danger-tint);
+  --bs-btn-active-border-color: var(--p-danger-tint);
+}
+
+.btn-warning {
+  --bs-btn-color: var(--p-ink);
+  --bs-btn-bg: var(--p-warning);
+  --bs-btn-border-color: var(--p-warning);
+  --bs-btn-hover-color: var(--p-ink);
+  --bs-btn-hover-bg: var(--p-warning-tint);
+  --bs-btn-hover-border-color: var(--p-warning-tint);
+  --bs-btn-active-color: var(--p-ink);
+  --bs-btn-active-bg: var(--p-warning-tint);
+  --bs-btn-active-border-color: var(--p-warning-tint);
+}
+
+.btn-link {
+  --bs-btn-color: var(--p-accent);
+  --bs-btn-hover-color: var(--p-accent-hover);
+  --bs-btn-active-color: var(--p-accent-hover);
+  --bs-btn-disabled-color: var(--p-muted);
+}
+
+/* 10. Alertas (el estado no depende solo del color: borde izquierdo + texto) --------- */
+.alert {
+  --bs-alert-border-radius: var(--bs-border-radius);
+  border-left-width: 4px;
+}
+
+.alert-success { border-left-color: var(--p-success); }
+.alert-danger  { border-left-color: var(--p-danger); }
+.alert-warning { border-left-color: var(--p-warning); }
+.alert-info    { border-left-color: var(--p-info); }
+
+/* Registro anulado: neutro, sin color de estado. */
+.alert-secondary {
+  --bs-alert-color: var(--p-text);
+  --bs-alert-bg: var(--p-surface-2);
+  --bs-alert-border-color: var(--p-border);
+  border-left-color: var(--p-border-strong);
+}
+
+.alert-warning .alert-link,
+.alert-danger .alert-link {
+  color: inherit;
+}
+
+.alert-link {
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* 11. Tablas -------------------------------------------------------------------------- */
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--p-text);
+  --bs-table-border-color: var(--p-border);
+  --bs-table-striped-bg: rgba(255, 255, 255, .03);
+  --bs-table-striped-color: var(--p-text);
+  --bs-table-hover-bg: rgba(var(--p-accent-rgb), .08);
+  --bs-table-hover-color: var(--p-text-strong);
+}
+
+.table > thead {
+  --bs-table-bg: var(--p-surface);
+  --bs-table-color: var(--p-muted);
+  border-bottom: 1px solid var(--p-border-strong);
+}
+
+.table > thead th {
+  font-weight: 600;
+}
+
+/* 12. Navegación y contenedores ------------------------------------------------------- */
+.navbar.bg-dark {
+  background-color: var(--p-surface) !important; /* la utilidad bg-dark de Bootstrap lleva !important */
+  border-bottom: 1px solid var(--p-border);
+}
+
+.navbar.navbar-dark {
+  --bs-navbar-color: var(--p-muted);
+  --bs-navbar-hover-color: var(--p-text-strong);
+  --bs-navbar-active-color: var(--p-text-strong);
+  --bs-navbar-brand-color: var(--p-text-strong);
+  --bs-navbar-brand-hover-color: var(--p-accent);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+.navbar {
+  --bs-navbar-padding-y: .6rem;
+}
+
+.navbar .nav-link {
+  padding-inline: .85rem;
+  border-bottom: 2px solid transparent;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active,
+.navbar .nav-link[aria-current="page"],
+.navbar .nav-link.show {
+  border-bottom-color: var(--p-accent);
+}
+
+.navbar .navbar-text {
+  color: var(--p-muted);
+}
+
+.navbar .navbar-text:hover {
+  color: var(--p-accent);
+}
+
+.navbar .btn {
+  align-self: center;
+}
+
+.dropdown-menu {
+  --bs-dropdown-padding-y: .4rem;
+  --bs-dropdown-border-radius: var(--bs-border-radius-lg);
+  --bs-dropdown-item-padding-y: .45rem;
+  --bs-dropdown-item-padding-x: .9rem;
+  box-shadow: 0 .6rem 1.4rem rgba(0, 0, 0, .45);
+  --bs-dropdown-bg: var(--p-surface-2);
+  --bs-dropdown-border-color: var(--p-border);
+  --bs-dropdown-color: var(--p-text);
+  --bs-dropdown-link-color: var(--p-text);
+  --bs-dropdown-link-hover-color: var(--p-text-strong);
+  --bs-dropdown-link-hover-bg: rgba(var(--p-accent-rgb), .14);
+  --bs-dropdown-link-active-color: var(--p-accent-ink);
+  --bs-dropdown-link-active-bg: var(--p-accent);
+  --bs-dropdown-divider-bg: var(--p-border);
+}
+
+.dropdown-item {
+  border-radius: var(--bs-border-radius-sm);
+  margin-inline: .35rem;
+  width: auto;
+}
+
+.dropdown-item:focus-visible {
+  background-color: rgba(var(--p-accent-rgb), .14);
+  color: var(--p-text-strong);
+  outline: 3px solid var(--p-accent);
+  outline-offset: -3px;
+}
+
+.nav-pills {
+  --bs-nav-link-color: var(--p-text);
+  --bs-nav-link-hover-color: var(--p-accent-hover);
+  --bs-nav-pills-link-active-color: var(--p-accent-ink);
+  --bs-nav-pills-link-active-bg: var(--p-accent);
+}
+
+.nav-tabs {
+  --bs-nav-link-color: var(--p-muted);
+  --bs-nav-link-hover-color: var(--p-text-strong);
+  --bs-nav-tabs-border-color: var(--p-border);
+  --bs-nav-tabs-link-hover-border-color: var(--p-border) var(--p-border) var(--p-border);
+  --bs-nav-tabs-link-active-color: var(--p-text-strong);
+  --bs-nav-tabs-link-active-bg: var(--p-bg);
+  --bs-nav-tabs-link-active-border-color: var(--p-border) var(--p-border) var(--p-bg);
+}
+
+.pagination {
+  gap: .35rem;
+  --bs-pagination-border-radius: var(--bs-border-radius);
+  --bs-pagination-color: var(--p-accent);
+  --bs-pagination-bg: var(--p-surface);
+  --bs-pagination-border-color: var(--p-border);
+  --bs-pagination-hover-color: var(--p-accent-hover);
+  --bs-pagination-hover-bg: var(--p-surface-2);
+  --bs-pagination-hover-border-color: var(--p-border-strong);
+  --bs-pagination-focus-color: var(--p-accent-hover);
+  --bs-pagination-focus-bg: var(--p-surface-2);
+  --bs-pagination-active-color: var(--p-accent-ink);
+  --bs-pagination-active-bg: var(--p-accent);
+  --bs-pagination-active-border-color: var(--p-accent);
+  --bs-pagination-disabled-color: var(--p-muted);
+  --bs-pagination-disabled-bg: var(--p-surface);
+  --bs-pagination-disabled-border-color: var(--p-border);
+}
+
+.pagination .page-link {
+  border-radius: var(--bs-border-radius);
+}
+
+.pagination .page-item:not(.disabled) .page-link:focus-visible {
+  outline: 3px solid var(--p-accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* «Página X de Y» es informativo: se lee como texto, no como botón deshabilitado. */
+.pagination .page-item.disabled > span.page-link {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--p-text);
+}
+
+.card {
+  --bs-card-bg: var(--p-surface);
+  --bs-card-border-color: var(--p-border);
+  --bs-card-cap-bg: var(--p-surface-2);
+}
+
+/* Tarjeta de acceso (Login): superficie elevada y centrada. */
+.tarjeta-acceso {
+  border-radius: var(--bs-border-radius-lg);
+  box-shadow: 0 .8rem 2rem rgba(0, 0, 0, .4);
+}
+
+/* details/summary (filtros, anular, vincular): se ven como control, con foco. */
+summary {
+  cursor: pointer;
+  font-weight: 500;
+  padding: .3rem 0;
+  border-radius: var(--bs-border-radius-sm);
+}
+
+summary:hover {
+  color: var(--p-accent-hover);
+}
+
+details[open] > summary {
+  margin-bottom: .5rem;
+}
+
+.badge {
+  font-weight: 600;
+}
+
+/* Los colores de estado son claros: el texto encima va oscuro (Bootstrap pone blanco). */
+.badge.bg-danger,
+.badge.bg-success,
+.badge.bg-warning,
+.badge.bg-info {
+  --bs-badge-color: var(--p-ink);
+}
+
+.badge.bg-primary {
+  --bs-badge-color: var(--p-accent-ink);
+}
+
+.text-bg-danger,
+.text-bg-success {
+  color: var(--p-ink) !important;
+}
+
+.text-bg-primary {
+  color: var(--p-accent-ink) !important;
+}
+
+.btn-success {
+  --bs-btn-color: var(--p-ink);
+  --bs-btn-bg: var(--p-success);
+  --bs-btn-border-color: var(--p-success);
+  --bs-btn-hover-color: var(--p-ink);
+  --bs-btn-hover-bg: var(--p-success-tint);
+  --bs-btn-hover-border-color: var(--p-success-tint);
+  --bs-btn-active-color: var(--p-ink);
+  --bs-btn-active-bg: var(--p-success-tint);
+  --bs-btn-active-border-color: var(--p-success-tint);
+}
+
+/* 13. Excepción: la vista previa de la constancia es papel blanco ----------------------
+   Aproximación de la hoja carta (el PDF usa el mismo modelo de documento). Se
+   redeclaran los tokens claros para que border-dark, hr y el logo (JPEG sobre
+   blanco) se vean como en el papel, aunque el resto de la interfaz sea oscura. */
 .constancia-hoja {
   max-width: 8.5in;
   font-size: 0.95rem;
+  color-scheme: light;
+  color: #212529;
+  --bs-body-color: #212529;
+  --bs-body-bg: #fff;
+  --bs-emphasis-color: #000;
+  --bs-border-color: #dee2e6;
 }

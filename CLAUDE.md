@@ -13,6 +13,7 @@ Aplicación web en servidor **local** (red interna) para digitalizar libros sacr
 - @docs/04-arquitectura.md — stack y decisiones técnicas
 - @docs/05-plan-implementacion.md — hitos y prompts
 - @docs/06-preguntas-abiertas.md — lo no decidido. **Si una tarea depende de una pregunta abierta, pregunta; no asumas.**
+- @docs/07-ui.md — tema oscuro, tokens y reglas de interfaz
 
 ## Stack
 C# / .NET (LTS vigente), ASP.NET Core **Razor Pages + htmx**, EF Core + **PostgreSQL** (Npgsql), ASP.NET Core Identity, QuestPDF (licencia Community; fuentes Liberation incrustadas), xUnit + Testcontainers, Serilog. Producción: **Windows 10/11** dedicado 24/7, app como servicio de Windows, sin Docker. Roles: **Capturista** (crea/edita/anula), **Secretaria** (imprime), **Administrador** (todo).
@@ -80,6 +81,9 @@ Los sacramentos de ahora nacen en el sistema: `LibroDigital` (Dominio/Numeracion
 ## Búsqueda global y vínculos (M7)
 `BusquedaGlobal.BuscarAsync(FiltroGlobal)` (texto ≥2 letras obligatorio; sacramento, años, libro, folio solo acotan) pasa los filtros por `ConsultaBusqueda` a cada módulo. Vínculos "misma persona": `Dominio/Vinculos/Vinculo` + `ServicioVinculos` (Infraestructura/Vinculos); UI genérica `/Vinculos/{clave}/{id}/{persona?}` (fragmento htmx). **Al agregar un módulo**: implementar `ResumenesAsync` (y `Personas` si tiene más de una persona) y añadir en su `Detalle.cshtml` un `<div hx-get="@Url.Page("/Vinculos/Index", new { clave = Model.Clave, id = r.Id })" hx-trigger="load" hx-swap="outerHTML"></div>` (una por persona).
 Medición: `$env:PARROQUIA_MEDIR = "1"; dotnet test --filter "FullyQualifiedName~BusquedaRendimiento" --logger "console;verbosity=detailed"` (200 000 filas, tarda ~1 min; sin la variable se omite). El mismo filtro corre también la medición de los listados de cada libro (`Listados_con_50000…`).
+
+## UI
+Tema **oscuro único** (`data-bs-theme="dark"` en `_Layout`) con Bootstrap 5.3 local; paleta y mapeo `--bs-*` solo en `wwwroot/css/site.css` (tokens `--p-*`): **no poner colores sueltos ni `style` en las vistas**, usar clases de Bootstrap. Base 18 px, fuente del sistema, sin CDN. Foco visible siempre (nunca `outline: none` sin reemplazo); el orden de Tab es el del DOM. Estados: `alert-success/danger/warning/info`; insignias `text-bg-warning` = Revisar, `text-bg-secondary` = Anulado. La vista previa de la constancia (`.constancia-hoja`) sigue en papel blanco. Reglas completas y contrastes: `docs/07-ui.md`.
 
 ## Al terminar una tarea
 Resume qué cambió, qué pruebas corriste y qué decisiones de `docs/06` quedaron afectadas.
