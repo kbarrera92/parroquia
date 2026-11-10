@@ -156,7 +156,7 @@
             <span asp-validation-for="Input.Padrinos" class="text-danger d-block"></span>
         </div>
         <div class="col-md-6">
-            <label asp-for="Input.Ministro" class="form-label">Ministro / obispo (opcional, no se imprime)</label>
+            <label asp-for="Input.Ministro" class="form-label">Ministro / obispo (opcional)</label>
             <input asp-for="Input.Ministro" class="form-control" maxlength="150" list="lista-ministros" autocomplete="off" />
             <datalist id="lista-ministros">
                 @foreach (var m in Model.Ministros)
@@ -164,7 +164,7 @@
                     <option value="@m"></option>
                 }
             </datalist>
-            <div class="form-text">Elija de la lista o escriba otro nombre.</div>
+            <div class="form-text">Elija de la lista o escriba otro nombre. No se imprime en la constancia.</div>
             <span asp-validation-for="Input.Ministro" class="text-danger"></span>
         </div>
 

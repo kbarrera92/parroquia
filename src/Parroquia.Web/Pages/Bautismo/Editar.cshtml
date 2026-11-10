@@ -143,8 +143,9 @@
             <span asp-validation-for="Input.FechaNacimiento" class="text-danger"></span>
         </div>
         <div class="col-md-4">
-            <label asp-for="Input.LugarNacimiento" class="form-label">Lugar de nacimiento (opcional, no se imprime)</label>
+            <label asp-for="Input.LugarNacimiento" class="form-label">Lugar de nacimiento (opcional)</label>
             <input asp-for="Input.LugarNacimiento" class="form-control" maxlength="150" autocomplete="off" />
+            <div class="form-text">No se imprime en la constancia.</div>
             <span asp-validation-for="Input.LugarNacimiento" class="text-danger"></span>
         </div>
 
