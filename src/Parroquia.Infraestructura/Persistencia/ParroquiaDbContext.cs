@@ -31,7 +31,11 @@ public class ParroquiaDbContext(DbContextOptions<ParroquiaDbContext> options)
     {
         base.OnModelCreating(builder);
         builder.HasPostgresExtension("pg_trgm"); // búsqueda parcial indexada (LIKE '%x%')
-        builder.Entity<Usuario>().Property(u => u.NombreCompleto).HasMaxLength(200);
+        builder.Entity<Usuario>(e =>
+        {
+            e.Property(u => u.NombreCompleto).HasMaxLength(200);
+            e.Property(u => u.CreadoEn).HasDefaultValueSql("now()");
+        });
 
         builder.Entity<BitacoraAcceso>(e =>
         {

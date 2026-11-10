@@ -2,7 +2,7 @@
 
 Última actualización: 8-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
 
-## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7)
+## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8)
 | # | Tema | Decisión |
 |---|---|---|
 | 1 | Servidor | PC de oficina, Windows 10/11, dedicada, encendida 24/7 |
@@ -38,6 +38,9 @@
 | 31 | Vínculo y persona (M7) | El vínculo guarda **qué persona** del registro ("" / `esposo` / `esposa`): Bautismo(él)↔Matrimonio↔Bautismo(ella) no los declara la misma persona |
 | 32 | Cadena de vínculos (M7) | El detalle muestra **toda la cadena** (directos + "por medio de"); desvincular solo quita enlaces directos |
 | 33 | Desvincular y permiso (M7) | Desvincular **anula** (auditado, sin borrado físico); volver a vincular reactiva la fila. Permiso `Registros.Editar`, sin permiso nuevo |
+| 34 | Política de contraseñas (M8) | Mínimo **12** caracteres, sin reglas de composición ni caducidad, con lista de contraseñas comunes; ver `04` ADR-05 |
+| 35 | Recuperación de contraseña (M8) | Sin correo: el Administrador restablece (temporal de un solo uso + cambio obligatorio). Emergencia con `PARROQUIA_ADMIN_RESTABLECER` en el servidor |
+| 36 | Usuarios (M8) | Un rol por usuario; desactivar en vez de borrar; cambios de usuarios en `BitacoraAcceso` (no en `Auditoria`); límite de 10 intentos de login por IP y minuto además del bloqueo por cuenta |
 
 ## 🟡 Pendientes
 

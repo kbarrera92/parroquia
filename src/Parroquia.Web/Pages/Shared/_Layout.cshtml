@@ -11,7 +11,8 @@
     var verCatalogos = await Puede(Permisos.CatalogosGestionar);
     var verConfiguracion = await Puede(Permisos.Configuracion);
     var verHistorial = await Puede(Permisos.AuditoriaVer);
-    var verAdministracion = verCatalogos || verConfiguracion || verHistorial;
+    var verUsuarios = await Puede(Permisos.UsuariosGestionar);
+    var verAdministracion = verCatalogos || verConfiguracion || verHistorial || verUsuarios;
 }
 <!DOCTYPE html>
 <html lang="es-GT">
@@ -58,6 +59,11 @@
                                         <li><a class="dropdown-item" asp-page="/Admin/Ministros">Ministros</a></li>
                                         <li><a class="dropdown-item" asp-page="/Admin/Tratamientos">Tratamientos</a></li>
                                     }
+                                    @if (verUsuarios)
+                                    {
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li><a class="dropdown-item" asp-page="/Admin/Usuarios/Index">Usuarios</a></li>
+                                    }
                                     @if (verHistorial)
                                     {
                                         <li><hr class="dropdown-divider" /></li>
@@ -67,7 +73,7 @@
                             </li>
                         }
                     </ul>
-                    <span class="navbar-text me-3">@User.Identity.Name</span>
+                    <a class="navbar-text me-3 text-decoration-none" asp-page="/Cuenta/CambiarPassword" title="Cambiar contraseña">@User.Identity.Name</a>
                     <a class="btn btn-outline-light btn-sm" asp-page="/Cuenta/Logout">Cerrar sesión</a>
                 }
             </div>
@@ -81,6 +87,7 @@
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/htmx/htmx.min.js"></script>
+    <script src="~/js/confirmar.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

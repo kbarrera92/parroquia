@@ -21,7 +21,7 @@ C# / .NET (LTS vigente), ASP.NET Core **Razor Pages + htmx**, EF Core + **Postgr
 Requiere Docker Desktop en marcha (PostgreSQL de desarrollo y Testcontainers). SDK fijado en `global.json` (.NET 10).
 ```powershell
 docker compose up -d db                                  # PostgreSQL de desarrollo (localhost:5432)
-$env:PARROQUIA_ADMIN_PASSWORD = "<contraseña-de-10+>"    # solo la 1.ª vez: crea el admin (usuario por defecto "admin"; cambiar con PARROQUIA_ADMIN_USUARIO)
+$env:PARROQUIA_ADMIN_PASSWORD = "<contraseña-de-12+>"    # solo la 1.ª vez: crea el admin (usuario por defecto "admin"; cambiar con PARROQUIA_ADMIN_USUARIO). Con PARROQUIA_ADMIN_RESTABLECER=1 restablece al admin existente (emergencia; quitar después)
 dotnet build
 dotnet run --project src/Parroquia.Web                   # aplica migraciones y siembra roles/admin al arrancar; URL en consola (https://localhost:7155)
 dotnet test                                              # unitarias + humo con Testcontainers (necesita Docker)
@@ -34,6 +34,7 @@ Cadena de conexión: `ConnectionStrings:Parroquia` (dev en `appsettings.Developm
 
 ## Seguridad (M1)
 Permisos = claims `permiso` en los roles, sincronizados con `MatrizPermisos` (Aplicacion/Seguridad) en cada arranque. Una política por permiso: usar `[Authorize(Policy = Permisos.X)]`, nunca nombres de rol. Todo requiere sesión salvo Login/AccesoDenegado/Error.
+**Usuarios y autenticación (M8):** política NIST/ASVS en `docs/04` ADR-05 (12+ caracteres, lista de comunes, sin composición; PBKDF2 210k; límite de login por IP; cookie `Secure` fuera de Development; sello revalidado cada minuto). `ServicioUsuarios` (Infraestructura/Identidad) hace el alta, edición, estado y restablecimiento y escribe la bitácora; las páginas `Admin/Usuarios` solo lo llaman. Contraseña temporal = `DebeCambiarPassword` (claim `debe_cambiar_password` + `FiltroCambioObligatorio`). **Sin scripts ni manejadores de eventos en línea** (CSP `script-src 'self'`): usar archivos en `wwwroot/js` (p. ej. `data-confirmar` en un `<form>`). Pruebas de servicio sin la app: `ServidorPostgresFixture` + `AddInfraestructura` (ver `ServicioUsuariosPruebas`); las web fijan `Seguridad__LoginPorMinuto=1000` en `AppFixture`.
 
 ## Núcleo transversal (M2)
 `FechaParcial`, `NormalizadorBusqueda`, `ClaveOrdenNatural` y `TextoLibro` viven en `Dominio/Comun`. Entidades que se editan: heredar `EntidadAuditable` (+ `IAnulable` si se anulan); `ConfiguracionAuditable.Aplicar` (ya invocado en `ParroquiaDbContext`) les da HiLo y `xmin`, y `MapearFechaParcial` mapea fechas. El interceptor escribe `Auditoria`; sesión/ver/imprimir van a `IBitacoraAcceso`. Tests de Postgres sin la app: `ServidorPostgresFixture` (una base nueva por prueba); con la app: `AppFixture` + `ClienteAdminAsync()`/`ClienteConRolAsync(rol)`.

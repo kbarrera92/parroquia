@@ -1,0 +1,60 @@
+@page
+@model Parroquia.Web.Pages.Admin.Usuarios.EditarModel
+@using Parroquia.Aplicacion.Seguridad
+@{
+    ViewData["Title"] = Model.EsNuevo ? "Nuevo usuario" : "Editar usuario";
+}
+
+<div class="row mt-4">
+    <div class="col-md-7">
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+        <form method="post">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Usuario" class="form-label">Usuario</label>
+                @if (Model.EsNuevo)
+                {
+                    <input asp-for="Usuario" class="form-control" autofocus autocomplete="off" maxlength="50" />
+                    <div class="form-text">De 3 a 50 caracteres: letras sin tilde, números, punto, guion o guion bajo. No se puede cambiar después.</div>
+                }
+                else
+                {
+                    <input asp-for="Usuario" class="form-control" readonly />
+                }
+            </div>
+            <div class="mb-3">
+                <label asp-for="NombreCompleto" class="form-label">Nombre completo</label>
+                <input asp-for="NombreCompleto" class="form-control" autocomplete="off" maxlength="200" autofocus="@(!Model.EsNuevo)" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Rol" class="form-label">Rol</label>
+                <select asp-for="Rol" class="form-select" disabled="@Model.EsUnoMismo">
+                    @foreach (var rol in Roles.Todos)
+                    {
+                        <option value="@rol" selected="@(Model.Rol == rol)">@rol</option>
+                    }
+                </select>
+                @if (Model.EsUnoMismo)
+                {
+                    <input type="hidden" asp-for="Rol" />
+                    <div class="form-text">No puede cambiar su propio rol.</div>
+                }
+                else
+                {
+                    <div class="form-text">
+                        Capturista: crea, edita y anula registros. Secretaria: busca e imprime constancias.
+                        Administrador: todo, incluidos usuarios y configuración.
+                    </div>
+                }
+            </div>
+            @if (Model.EsNuevo)
+            {
+                <p class="text-muted">Se generará una contraseña temporal que verá una sola vez al guardar.</p>
+            }
+            <button type="submit" class="btn btn-primary">@(Model.EsNuevo ? "Crear usuario" : "Guardar")</button>
+            <a class="btn btn-link" asp-page="Index">Cancelar</a>
+        </form>
+    </div>
+</div>

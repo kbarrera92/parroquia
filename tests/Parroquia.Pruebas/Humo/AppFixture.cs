@@ -30,6 +30,8 @@ public sealed class AppFixture : WebApplicationFactory<Program>, IAsyncLifetime
         Fijar(VariableConexion, _db.GetConnectionString());
         Fijar(SembradorIdentidad.VariableUsuario, UsuarioAdmin);
         Fijar(SembradorIdentidad.VariablePassword, PasswordAdmin);
+        // Muchas pruebas inician sesión desde la misma IP: el límite real (10/min) se prueba aparte con su propia configuración.
+        Fijar("Seguridad__LoginPorMinuto", "1000");
     }
 
     async Task IAsyncLifetime.DisposeAsync()

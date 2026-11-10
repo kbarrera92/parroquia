@@ -68,6 +68,8 @@ public class ConstanciaWebPruebas(AppFixture app)
         r.StatusCode.Should().Be(HttpStatusCode.OK);
         r.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
         r.Content.Headers.ContentDisposition!.DispositionType.Should().Be("inline");
+        r.Headers.Contains("Content-Security-Policy").Should().BeFalse();   // el visor de PDF del navegador no debe heredar la CSP de las páginas
+        r.Headers.GetValues("X-Content-Type-Options").Should().Equal("nosniff");
         var bytes = await r.Content.ReadAsByteArrayAsync();
         Encoding.ASCII.GetString(bytes, 0, 5).Should().Be("%PDF-");
 

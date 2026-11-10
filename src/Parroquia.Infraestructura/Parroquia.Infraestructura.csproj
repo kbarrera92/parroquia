@@ -25,4 +25,9 @@
     <EmbeddedResource Include="Constancias\Fuentes\*.ttf" LogicalName="Fuentes.%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Lista pública de contraseñas comunes (offline) para la política NIST 800-63B. -->
+    <EmbeddedResource Include="Identidad\contrasenas-comunes.txt" LogicalName="contrasenas-comunes.txt" />
+  </ItemGroup>
+
 </Project>

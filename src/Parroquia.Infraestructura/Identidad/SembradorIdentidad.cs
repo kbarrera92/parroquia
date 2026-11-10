@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura.Catalogos;
 using Parroquia.Infraestructura.Configuracion;
@@ -15,6 +16,9 @@ public static class SembradorIdentidad
 {
     public const string VariableUsuario = "PARROQUIA_ADMIN_USUARIO";
     public const string VariablePassword = "PARROQUIA_ADMIN_PASSWORD";
+
+    /// <summary>"1" o "true" (junto con <see cref="VariablePassword"/>): restablece al administrador al arrancar. Quitarla después.</summary>
+    public const string VariableRestablecer = "PARROQUIA_ADMIN_RESTABLECER";
 
     public static async Task InicializarAsync(IServiceProvider servicios, CancellationToken ct = default)
     {
@@ -32,6 +36,66 @@ public static class SembradorIdentidad
         var usuarios = sp.GetRequiredService<UserManager<Usuario>>();
         var config = sp.GetRequiredService<IConfiguration>();
         await CrearAdministradorAsync(usuarios, config);
+
+        if (RestablecerSolicitado(config))
+        {
+            var password = config[VariablePassword];
+            if (string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException($"{VariableRestablecer} requiere definir también {VariablePassword}.");
+
+            var nombre = config[VariableUsuario];
+            await RestablecerAdministradorAsync(servicios, string.IsNullOrWhiteSpace(nombre) ? "admin" : nombre, password, ct);
+            sp.GetService<ILoggerFactory>()?.CreateLogger(nameof(SembradorIdentidad)).LogWarning(
+                "Se restableció al administrador por {Variable}. Quite esa variable de entorno y reinicie el servicio.", VariableRestablecer);
+        }
+    }
+
+    public static bool RestablecerSolicitado(IConfiguration config) =>
+        config[VariableRestablecer] is { } v && (v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Recuperación de emergencia (requiere acceso al servidor): fija una contraseña nueva al administrador, lo activa,
+    /// lo desbloquea, cierra sus sesiones y le exige cambiarla. Si el usuario no existe lo crea como Administrador.
+    /// Respeta la política de contraseñas. No promueve a quien no es Administrador.
+    /// </summary>
+    public static async Task RestablecerAdministradorAsync(
+        IServiceProvider servicios, string usuario, string password, CancellationToken ct = default)
+    {
+        using var scope = servicios.CreateScope();
+        var usuarios = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+        var bitacora = scope.ServiceProvider.GetRequiredService<IBitacoraAcceso>();
+        var reloj = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+
+        var admin = await usuarios.FindByNameAsync(usuario);
+        if (admin is null)
+        {
+            admin = new Usuario
+            {
+                UserName = usuario, NombreCompleto = "Administrador", Activo = true, LockoutEnabled = true,
+                DebeCambiarPassword = true, CreadoEn = reloj.GetUtcNow(),
+            };
+            Comprobar(await usuarios.CreateAsync(admin, password), "crear administrador (revise los requisitos de contraseña)");
+            Comprobar(await usuarios.AddToRoleAsync(admin, Roles.Administrador), "asignar rol Administrador");
+            await bitacora.RegistrarAsync(EventoAcceso.UsuarioCreado, usuario, admin.Id,
+                detalle: $"usuario={usuario}; rol={Roles.Administrador}; restablecimiento de emergencia", ct: ct);
+            return;
+        }
+
+        if (!await usuarios.IsInRoleAsync(admin, Roles.Administrador))
+            throw new InvalidOperationException($"El usuario «{usuario}» existe pero no es Administrador; no se restablece.");
+
+        Comprobar(
+            await usuarios.ResetPasswordAsync(admin, await usuarios.GeneratePasswordResetTokenAsync(admin), password),
+            "restablecer contraseña (revise los requisitos: mínimo 12 caracteres, no común)");
+
+        admin.Activo = true;
+        admin.DebeCambiarPassword = true;
+        Comprobar(await usuarios.UpdateAsync(admin), "actualizar administrador");
+        await usuarios.SetLockoutEndDateAsync(admin, null);
+        await usuarios.ResetAccessFailedCountAsync(admin);
+
+        await bitacora.RegistrarAsync(EventoAcceso.PasswordRestablecida, usuario, admin.Id,
+            detalle: $"usuario={usuario}; restablecimiento de emergencia", ct: ct);
     }
 
     private static async Task SincronizarRolesAsync(RoleManager<IdentityRole> roles)

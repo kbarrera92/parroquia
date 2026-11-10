@@ -31,15 +31,17 @@ public sealed class ServidorPostgresFixture : IAsyncLifetime
     }
 }
 
-public sealed class BaseTemporal(string cadena, UsuarioFalso usuario, RelojFalso reloj)
+public sealed class BaseTemporal(string cadenaConexion, UsuarioFalso usuario, RelojFalso reloj)
 {
+    public string Cadena { get; } = cadenaConexion;
+
     public UsuarioFalso Usuario { get; } = usuario;
     public RelojFalso Reloj { get; } = reloj;
 
     public ParroquiaDbContext Crear()
     {
         var opciones = new DbContextOptionsBuilder<ParroquiaDbContext>()
-            .UseNpgsql(cadena)
+            .UseNpgsql(Cadena)
             .UseSnakeCaseNamingConvention()
             .AddInterceptors(new AuditoriaInterceptor(Usuario, Reloj))
             .Options;

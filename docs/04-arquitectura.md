@@ -41,6 +41,27 @@ El acceso va por EF Core; el resto del código no depende del motor salvo la bú
 | `Catalogos.Gestionar`, `Configuracion`, `Usuarios.Gestionar` | — | — | ✅ |
 | `Auditoria.Ver` | — | — | ✅ |
 
+### Autenticación y contraseñas (estrategia)
+Basada en NIST SP 800-63B y OWASP ASVS, sin MFA ni correo (red local sin internet, 2–4 usuarios).
+
+| Tema | Decisión |
+|---|---|
+| Longitud | 12–128 caracteres (`PoliticaContrasena`); se admiten espacios y Unicode (frases). |
+| Composición y caducidad | **Sin** reglas de mayúscula/dígito/símbolo y **sin** cambio periódico (NIST lo desaconseja). |
+| Lista negra | `ValidadorContrasenaComun`: lista pública de ~92 000 contraseñas comunes embebida (offline, `Identidad/contrasenas-comunes.txt`) más términos locales; compara sin mayúsculas ni tildes y sin dígitos/símbolos finales ("Contraseña2026" cae). Rechaza también las que contienen el usuario o palabras de la parroquia. |
+| Hash | PBKDF2-HMAC-SHA512 (formato v3 de Identity) con 210 000 iteraciones; Identity re-hashea al iniciar sesión. |
+| Bloqueo por cuenta | 5 fallos → 15 min (`Lockout`); el Administrador puede desbloquear. |
+| Límite por IP | `AddRateLimiter` política `login`: solo el POST de `/Cuenta/Login`, `Seguridad:LoginPorMinuto` (10 por defecto) por IP y minuto; 429 con `Retry-After`. Contra el rociado de contraseñas que el bloqueo por cuenta no ve. |
+| Enumeración | Mismo mensaje para usuario inexistente, desactivado o contraseña errónea; el motivo real solo queda en la bitácora. |
+| Sesión | Cookie HttpOnly, SameSite=Strict, `Secure` siempre fuera de Development (también la de antiforgery), 30 min deslizantes. El sello de seguridad se revalida **cada minuto**: desactivar, cambiar rol, restablecer o cambiar contraseña cierra las otras sesiones. |
+| Usuario desactivado | `RequireConfirmedAccount` + `ConfirmacionUsuarioActivo`: no inicia sesión aunque la contraseña sea correcta. |
+| Alta y recuperación | El Administrador crea el usuario o restablece su contraseña: se genera una temporal aleatoria (16 caracteres, CSPRNG, sin ambiguos 0/O/1/l/I), se muestra **una sola vez** (TempData, página sin caché) y el usuario queda con `DebeCambiarPassword`: `FiltroCambioObligatorio` lo manda a `/Cuenta/CambiarPassword` hasta que la cambie. Entregarla en persona. |
+| Cambio propio | Pide la contraseña actual; la nueva debe ser distinta; renueva la cookie y cierra otras sesiones. |
+| Salvaguardas | Nadie cambia su propio rol, se desactiva ni se restablece; nunca queda el sistema sin un Administrador activo. |
+| Emergencia | Si el único administrador pierde su contraseña (requiere acceso al servidor): definir `PARROQUIA_ADMIN_RESTABLECER=1` y `PARROQUIA_ADMIN_PASSWORD` y reiniciar. Restablece/activa/desbloquea al usuario (`PARROQUIA_ADMIN_USUARIO`, por defecto `admin`; lo crea si no existe; no asciende a quien no es Administrador), exige cambio y deja bitácora. **Quitar las variables después.** |
+| Cabeceras | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Permissions-Policy`, y CSP `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`. Por eso **no hay scripts ni manejadores de eventos en línea** (`wwwroot/js/confirmar.js` hace los avisos de confirmación; una prueba lo vigila). Los `style` en línea se permiten (vista previa de la constancia). Las respuestas PDF no llevan CSP para no afectar al visor del navegador. |
+| Fuera de alcance | MFA, correo/SMS, preguntas secretas, CAPTCHA: desproporcionado para este entorno. Reconsiderar si algún día hay acceso desde fuera de la red local. |
+
 **Bitácora total:** toda acción relevante (inicio/cierre de sesión, ver detalle, crear, editar, anular, imprimir, cambios de usuarios/permisos/catálogos) se registra con usuario, fecha-hora e IP del equipo. Los cambios de datos van en `Auditoria`; sesión, vistas e impresiones, en `BitacoraAcceso` (solo se agrega; las búsquedas no se registran). El Administrador las consulta en *Administración → Historial y bitácora* (filtros por usuario, entidad y fechas en hora de Guatemala).
 
 ## ADR-06 PDF: QuestPDF ✅ (licencia Community; confirmar elegibilidad 🟡)
