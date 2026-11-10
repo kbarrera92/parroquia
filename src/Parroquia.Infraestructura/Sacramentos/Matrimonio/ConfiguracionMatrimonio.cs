@@ -32,6 +32,9 @@ public sealed class ConfiguracionMatrimonio : IEntityTypeConfiguration<Matrimoni
         e.Property(x => x.BusquedaEsposa).HasMaxLength(ValidadorRegistro.MaxBusqueda).NoAuditar();
         e.HasIndex(x => x.BusquedaEsposo).HasMethod("gin").HasOperators("gin_trgm_ops");
         e.HasIndex(x => x.BusquedaEsposa).HasMethod("gin").HasOperators("gin_trgm_ops");
+
+        // Orden del listado (apellidos y nombres del esposo): EF no permite HasIndex sobre un complex type, por eso el índice
+        // ix_matrimonio_esposo_apellidos_esposo_nombres se crea con SQL en la migración IndiceOrdenMatrimonio (no está en el modelo).
     }
 
     private static void MapearContrayente(

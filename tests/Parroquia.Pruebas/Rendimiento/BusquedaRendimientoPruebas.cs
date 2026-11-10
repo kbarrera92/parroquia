@@ -125,6 +125,112 @@ public class BusquedaRendimientoPruebas(ServidorPostgresFixture servidor, ITestO
             .Should().BeEmpty("RF-06 pide menos de 1 s (p95)");
     }
 
+    /// <summary>
+    /// Listados de cada libro (pantalla Libros → X): COUNT + ORDER BY apellidos/nombres + OFFSET/LIMIT 25, sin texto de búsqueda,
+    /// que es donde el orden pesa más (con texto, el trigram ya reduce las filas).
+    /// </summary>
+    [MedirFact]
+    public async Task Listados_con_50000_filas_por_libro_responden_en_menos_de_un_segundo()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await using var ctx = bd.Crear();
+        await SembrarAsync(ctx);
+
+        var comunion = new ServicioComunion(ctx, bd.Reloj);
+        var bautismo = new ServicioBautismo(ctx, bd.Reloj);
+        var confirmacion = new ServicioConfirmacion(ctx, bd.Reloj);
+        var matrimonio = new ServicioMatrimonio(ctx, bd.Reloj);
+
+        var escenarios = new List<(string Nombre, Func<Task> Accion)>();
+        void Agregar(string libro, string filtro, Func<Task> accion) => escenarios.Add(($"{libro}: {filtro}", accion));
+
+        Agregar("Comunión", "sin filtro, pág. 1", () => comunion.BuscarAsync(new FiltroComunion(), 1));
+        Agregar("Comunión", "sin filtro, pág. 1000", () => comunion.BuscarAsync(new FiltroComunion(), 1000));
+        Agregar("Comunión", "libro 7", () => comunion.BuscarAsync(new FiltroComunion(Libro: "7"), 1));
+        Agregar("Comunión", "años 1990-1995", () => comunion.BuscarAsync(new FiltroComunion(AnioDesde: 1990, AnioHasta: 1995), 1));
+
+        Agregar("Bautismo", "sin filtro, pág. 1", () => bautismo.BuscarAsync(new FiltroBautismo(), 1));
+        Agregar("Bautismo", "sin filtro, pág. 1000", () => bautismo.BuscarAsync(new FiltroBautismo(), 1000));
+        Agregar("Bautismo", "libro 7", () => bautismo.BuscarAsync(new FiltroBautismo(Libro: "7"), 1));
+        Agregar("Bautismo", "años 1990-1995", () => bautismo.BuscarAsync(new FiltroBautismo(AnioDesde: 1990, AnioHasta: 1995), 1));
+
+        Agregar("Confirmación", "sin filtro, pág. 1", () => confirmacion.BuscarAsync(new FiltroConfirmacion(), 1));
+        Agregar("Confirmación", "sin filtro, pág. 1000", () => confirmacion.BuscarAsync(new FiltroConfirmacion(), 1000));
+        Agregar("Confirmación", "libro 7", () => confirmacion.BuscarAsync(new FiltroConfirmacion(Libro: "7"), 1));
+        Agregar("Confirmación", "años 1990-1995", () => confirmacion.BuscarAsync(new FiltroConfirmacion(AnioDesde: 1990, AnioHasta: 1995), 1));
+
+        Agregar("Matrimonio", "sin filtro, pág. 1", () => matrimonio.BuscarAsync(new FiltroMatrimonio(), 1));
+        Agregar("Matrimonio", "sin filtro, pág. 1000", () => matrimonio.BuscarAsync(new FiltroMatrimonio(), 1000));
+        Agregar("Matrimonio", "libro 7", () => matrimonio.BuscarAsync(new FiltroMatrimonio(Libro: "7"), 1));
+        Agregar("Matrimonio", "años 1990-1995", () => matrimonio.BuscarAsync(new FiltroMatrimonio(AnioDesde: 1990, AnioHasta: 1995), 1));
+
+        async Task<List<Medida>> MedirAsync(string titulo)
+        {
+            var medidas = new List<Medida>();
+            foreach (var (nombre, accion) in escenarios)
+            {
+                await accion(); // calentamiento
+                var tiempos = new List<double>();
+                for (var i = 0; i < Repeticiones; i++)
+                {
+                    var t = Stopwatch.StartNew();
+                    await accion();
+                    tiempos.Add(t.Elapsed.TotalMilliseconds);
+                }
+                tiempos.Sort();
+                medidas.Add(new Medida(nombre, 25, Percentil(tiempos, 0.5), Percentil(tiempos, 0.95), tiempos[^1]));
+            }
+
+            salida.WriteLine("");
+            salida.WriteLine(titulo);
+            salida.WriteLine($"{"Listado",-44} {"p50 ms",8} {"p95 ms",8} {"máx ms",8}");
+            foreach (var m in medidas)
+                salida.WriteLine($"{m.Escenario,-44} {m.P50,8:N1} {m.P95,8:N1} {m.Max,8:N1}");
+            return medidas;
+        }
+
+        // La base de pruebas se crea con EnsureCreated (sin migraciones), así que el índice de la migración
+        // IndiceOrdenMatrimonio no existe: se mide sin él y luego se crea con el mismo SQL.
+        var sinIndice = await MedirAsync("SIN índice de orden en matrimonio");
+        await ExplicarListadoMatrimonioAsync(ctx);
+
+        await EjecutarAsync(ctx,
+            "CREATE INDEX ix_matrimonio_esposo_apellidos_esposo_nombres ON matrimonio (esposo_apellidos, esposo_nombres)");
+        await EjecutarAsync(ctx, "ANALYZE matrimonio");
+
+        var conIndice = await MedirAsync("CON índice de orden en matrimonio");
+        await ExplicarListadoMatrimonioAsync(ctx);
+
+        sinIndice.Concat(conIndice).Where(m => m.P95 >= LimiteMs).Select(m => m.Escenario)
+            .Should().BeEmpty("RF-06 pide menos de 1 s (p95)");
+    }
+
+    private static async Task EjecutarAsync(ParroquiaDbContext ctx, string sql)
+    {
+        var conexion = ctx.Database.GetDbConnection();
+        await conexion.OpenAsync();
+        await using var cmd = conexion.CreateCommand();
+        cmd.CommandText = sql;
+        cmd.CommandTimeout = 600;
+        await cmd.ExecuteNonQueryAsync();
+        await conexion.CloseAsync();
+    }
+
+    private async Task ExplicarListadoMatrimonioAsync(ParroquiaDbContext ctx)
+    {
+        var conexion = ctx.Database.GetDbConnection();
+        await conexion.OpenAsync();
+        await using var cmd = conexion.CreateCommand();
+        cmd.CommandText =
+            "EXPLAIN (ANALYZE, BUFFERS, COSTS OFF) SELECT id FROM matrimonio WHERE NOT anulado " +
+            "ORDER BY esposo_apellidos, esposo_nombres, libro_orden, folio_orden, partida_orden, id LIMIT 25";
+        salida.WriteLine("");
+        salida.WriteLine("EXPLAIN ANALYZE listado de matrimonio sin filtro (página 1):");
+        await using var lector = await cmd.ExecuteReaderAsync();
+        while (await lector.ReadAsync()) salida.WriteLine("  " + lector.GetString(0));
+        await conexion.CloseAsync();
+    }
+
     private static double Percentil(List<double> ordenados, double p) =>
         ordenados[Math.Min(ordenados.Count - 1, (int)Math.Ceiling(p * ordenados.Count) - 1)];
 
