@@ -14,6 +14,15 @@ public abstract class RegistroSacramental : EntidadAuditable, IAnulable
     public string Folio { get; set; } = "";
     public string Partida { get; set; } = "";
 
+    /// <summary>
+    /// Libro digital que numeró este asiento. null = transcrito de un libro físico (Libro/Folio/Partida los digitó el capturista);
+    /// con valor = asiento nuevo numerado por el sistema (esos tres campos no se editan).
+    /// </summary>
+    public long? LibroDigitalId { get; set; }
+
+    /// <summary>true si el sistema numeró este asiento (nació digital).</summary>
+    public bool EsAsientoDelSistema => LibroDigitalId is not null;
+
     // Derivadas (no se auditan): orden natural para listar "2" antes que "10".
     public string LibroOrden { get; private set; } = "";
     public string FolioOrden { get; private set; } = "";

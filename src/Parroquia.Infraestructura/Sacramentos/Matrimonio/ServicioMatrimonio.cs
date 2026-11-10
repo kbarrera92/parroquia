@@ -5,6 +5,7 @@ using Parroquia.Aplicacion.Comun;
 using Parroquia.Aplicacion.Sacramentos;
 using Parroquia.Dominio.Comun;
 using Parroquia.Dominio.Sacramentos;
+using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Persistencia;
 
 namespace Parroquia.Infraestructura.Sacramentos;
@@ -20,7 +21,7 @@ public sealed record DatosMatrimonioFormulario(
     DatosContrayenteFormulario Esposo, DatosContrayenteFormulario Esposa,
     string? FechaMatrimonio, string? LugarCelebracion, IReadOnlyList<string?>? Testigos,
     string? Ministro, string? NotasMarginales,
-    bool Revisar, string? MotivoRevision);
+    bool Revisar, string? MotivoRevision, bool AsientoNuevo = false);
 
 public sealed record VistaContrayente(
     string? Tratamiento, string Nombres, string Apellidos, short? Edad,
@@ -32,7 +33,8 @@ public sealed record VistaMatrimonio(
     string FechaMatrimonio, string FechaMatrimonioCaptura, string LugarCelebracion, IReadOnlyList<string> Testigos,
     string Libro, string Folio, string Partida, string? Ministro, string? NotasMarginales,
     bool Revisar, string? MotivoRevision, bool Anulado, string? MotivoAnulacion, uint Version,
-    string? CreadoPor, DateTimeOffset CreadoEn, string? ModificadoPor, DateTimeOffset? ModificadoEn);
+    string? CreadoPor, DateTimeOffset CreadoEn, string? ModificadoPor, DateTimeOffset? ModificadoEn,
+    bool AsientoDelSistema = false);
 
 public sealed record FiltroMatrimonio(
     string? Texto = null, string? Libro = null, string? Folio = null,
@@ -55,14 +57,21 @@ public sealed class ServicioMatrimonio(ParroquiaDbContext db, TimeProvider reloj
     /// <summary>Nombre con el que figura en Auditoria y BitacoraAcceso.</summary>
     public const string NombreEntidad = nameof(Matrimonio);
 
+    /// <summary>Clave del módulo (<see cref="ModuloMatrimonio"/>); también identifica su libro digital.</summary>
+    public const string Clave = ModuloMatrimonio.ClaveModulo;
+
+    private readonly ServicioNumeracion numeracion = new(db, reloj);
+
     public async Task<ResultadoGuardado> GuardarAsync(
         DatosMatrimonioFormulario d, long? id = null, uint? version = null,
         bool confirmarDuplicado = false, CancellationToken ct = default)
     {
         var errores = new List<ErrorCampo>();
-        var libro = ValidadorRegistro.Texto(errores, nameof(d.Libro), d.Libro, "el libro", ValidadorRegistro.MaxClave, true);
-        var folio = ValidadorRegistro.Texto(errores, nameof(d.Folio), d.Folio, "el folio", ValidadorRegistro.MaxClave, true);
-        var partida = ValidadorRegistro.Texto(errores, nameof(d.Partida), d.Partida, "la partida", ValidadorRegistro.MaxClave, true);
+        // Asiento nuevo: libro/folio/partida los pone el sistema al guardar, no se validan los digitados.
+        var asientoNuevo = d.AsientoNuevo && id is null;
+        var libro = asientoNuevo ? "" : ValidadorRegistro.Texto(errores, nameof(d.Libro), d.Libro, "el libro", ValidadorRegistro.MaxClave, true);
+        var folio = asientoNuevo ? "" : ValidadorRegistro.Texto(errores, nameof(d.Folio), d.Folio, "el folio", ValidadorRegistro.MaxClave, true);
+        var partida = asientoNuevo ? "" : ValidadorRegistro.Texto(errores, nameof(d.Partida), d.Partida, "la partida", ValidadorRegistro.MaxClave, true);
         var lugar = ValidadorRegistro.Texto(errores, nameof(d.LugarCelebracion), d.LugarCelebracion, "el lugar de celebración", ValidadorRegistro.MaxNombre, false);
         var ministroTexto = ValidadorRegistro.Texto(errores, nameof(d.Ministro), d.Ministro, "el ministro", ValidadorRegistro.MaxNombre, false);
         var motivo = ValidadorRegistro.Texto(errores, nameof(d.MotivoRevision), d.MotivoRevision, "el motivo", ValidadorRegistro.MaxMotivo, false);
@@ -92,13 +101,26 @@ public sealed class ServicioMatrimonio(ParroquiaDbContext db, TimeProvider reloj
             if (existente.Anulado) return new ResultadoGuardado(EstadoGuardado.Anulado, existente.Id);
 
             // Concurrencia optimista: el UPDATE solo prospera si la fila sigue en la versión que vio el usuario.
+            // Un asiento del sistema conserva su numeración: corregir = anular y asentar de nuevo (el número queda usado).
+            if (existente.EsAsientoDelSistema
+                && (libro != existente.Libro || folio != existente.Folio || partida != existente.Partida))
+                return new ResultadoGuardado(EstadoGuardado.Invalido, Errores:
+                    [new ErrorCampo(nameof(d.Libro), "El libro, folio y partida de un asiento del sistema no se pueden cambiar.")]);
+
             db.Entry(existente).Property(m => m.Version).OriginalValue = version ?? existente.Version;
             registro = existente;
         }
 
-        registro.Libro = libro!;
-        registro.Folio = folio!;
-        registro.Partida = partida!;
+        if (!asientoNuevo && !registro.EsAsientoDelSistema && await numeracion.EsLibroDigitalAsync(Clave, libro!, ct))
+            return new ResultadoGuardado(EstadoGuardado.Invalido, Errores:
+                [new ErrorCampo(nameof(d.Libro), $"El libro {libro} lo numera el sistema (libro digital): no se puede transcribir en él.")]);
+
+        if (!asientoNuevo)
+        {
+            registro.Libro = libro!;
+            registro.Folio = folio!;
+            registro.Partida = partida!;
+        }
         registro.Esposo = esposo;
         registro.Esposa = esposa;
         registro.FechaMatrimonio = fechaMatrimonio!;
@@ -121,11 +143,26 @@ public sealed class ServicioMatrimonio(ParroquiaDbContext db, TimeProvider reloj
             }
         }
 
-        if (id is null) db.Matrimonios.Add(registro);
-
         try
         {
-            await db.SaveChangesAsync(ct);
+            if (asientoNuevo)
+            {
+                // Numerar y guardar en la misma transacción: el libro queda bloqueado hasta el commit.
+                await using var tx = await db.Database.BeginTransactionAsync(ct);
+                if (await numeracion.AsignarAsync(Clave, registro, ct) is null)
+                    return new ResultadoGuardado(EstadoGuardado.Invalido, Errores:
+                        [new ErrorCampo(nameof(d.AsientoNuevo), ServicioNumeracion.SinLibroAbierto)]);
+
+                registro.ActualizarDerivados();
+                db.Matrimonios.Add(registro);
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+            else
+            {
+                if (id is null) db.Matrimonios.Add(registro);
+                await db.SaveChangesAsync(ct);
+            }
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -243,7 +280,7 @@ public sealed class ServicioMatrimonio(ParroquiaDbContext db, TimeProvider reloj
             m.FechaMatrimonio.ATexto(), m.FechaMatrimonio.ATextoCaptura(), m.LugarCelebracion, [.. m.Testigos],
             m.Libro, m.Folio, m.Partida, m.NombreMinistro, m.NotasMarginales,
             m.Revisar, m.MotivoRevision, m.Anulado, m.MotivoAnulacion, m.Version,
-            m.CreadoPor, m.CreadoEn, m.ModificadoPor, m.ModificadoEn);
+            m.CreadoPor, m.CreadoEn, m.ModificadoPor, m.ModificadoEn, m.EsAsientoDelSistema);
     }
 
     /// <summary>Datos que imprime la constancia; null si el registro no existe o está anulado.</summary>

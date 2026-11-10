@@ -5,6 +5,7 @@ using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Dominio.Catalogos;
 using Parroquia.Dominio.Comun;
 using Parroquia.Infraestructura.Catalogos;
+using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Sacramentos;
 
 namespace Parroquia.Web.Pages.Comunion;
@@ -23,21 +24,26 @@ public class EntradaComunion
     public bool Revisar { get; set; }
     public string? MotivoRevision { get; set; }
 
+    /// <summary>Alta de un sacramento nuevo: el sistema numera (libro/folio/partida); false = transcribir de un libro físico.</summary>
+    public bool AsientoNuevo { get; set; }
+
     /// <summary>Versión (xmin) que vio el usuario al abrir el registro; detecta ediciones simultáneas.</summary>
     public uint Version { get; set; }
 
     public DatosComunionFormulario ADatos() =>
-        new(Libro, Folio, Partida, Nombres, Apellidos, Fecha, Ministro, NotasMarginales, Revisar, MotivoRevision);
+        new(Libro, Folio, Partida, Nombres, Apellidos, Fecha, Ministro, NotasMarginales, Revisar, MotivoRevision, AsientoNuevo);
 }
 
 [Authorize(Policy = Permisos.RegistrosVer)]
 public class EditarModel(
     ServicioComunion servicio,
+    ServicioNumeracion numeracion,
     ServicioCatalogo<Ministro> ministros,
     IAuthorizationService autorizacion) : PageModel
 {
     private const string AccionNuevo = "nuevo";
     private const string SufijoForzar = "-forzar";
+    private const string ModoSistema = "sistema";
 
     [BindProperty] public EntradaComunion Input { get; set; } = new();
 
@@ -54,15 +60,22 @@ public class EditarModel(
     public string? Mensaje => TempData["Mensaje"] as string;
     public string? Error { get; private set; }
 
-    public async Task<IActionResult> OnGetAsync(long? id, string? libro, string? folio, string? partida, CancellationToken ct)
+    /// <summary>Número que recibiría el próximo asiento nuevo (orientativo); null si no hay libro digital abierto.</summary>
+    public ProximoNumero? Proximo { get; private set; }
+
+    /// <summary>El registro que se edita lo numeró el sistema: libro/folio/partida son de solo lectura.</summary>
+    public bool AsientoDelSistema { get; private set; }
+
+    public async Task<IActionResult> OnGetAsync(long? id, string? libro, string? folio, string? partida, string? modo, CancellationToken ct)
     {
         if (!await PuedeAsync(id)) return Forbid();
         Id = id;
 
         if (id is null)
         {
-            Input = new EntradaComunion { Libro = libro, Folio = folio, Partida = partida };
-            ContinuaSerie = !string.IsNullOrWhiteSpace(libro);
+            var asiento = modo == ModoSistema;
+            Input = new EntradaComunion { Libro = libro, Folio = folio, Partida = partida, AsientoNuevo = asiento };
+            ContinuaSerie = asiento || !string.IsNullOrWhiteSpace(libro);
         }
         else
         {
@@ -77,7 +90,7 @@ public class EditarModel(
             };
         }
 
-        await CargarMinistrosAsync(ct);
+        await CargarApoyosAsync(ct);
         return Page();
     }
 
@@ -94,13 +107,19 @@ public class EditarModel(
             case EstadoGuardado.Ok:
                 var nombre = $"{Input.Nombres} {Input.Apellidos}".Trim();
                 TempData["Mensaje"] = $"Se guardó el registro de {(nombre.Length == 0 ? "(sin nombre)" : nombre)}.";
+                var asiento = id is null && Input.AsientoNuevo;
+                if (asiento && await servicio.ObtenerVistaAsync(r.Id, ct: ct) is { } v)
+                    TempData["Mensaje"] += $" Asiento numerado por el sistema: libro {v.Libro}, folio {v.Folio}, partida {v.Partida}.";
+
                 if (id is null && AccionPrevia == AccionNuevo)
-                    return RedirectToPage("Editar", new
-                    {
-                        libro = TextoLibro.Limpiar(Input.Libro),
-                        folio = NumeroSiguiente.De(Input.Folio),
-                        partida = NumeroSiguiente.De(Input.Partida),
-                    });
+                    return asiento
+                        ? RedirectToPage("Editar", new { modo = ModoSistema })
+                        : RedirectToPage("Editar", new
+                        {
+                            libro = TextoLibro.Limpiar(Input.Libro),
+                            folio = NumeroSiguiente.De(Input.Folio),
+                            partida = NumeroSiguiente.De(Input.Partida),
+                        });
                 return RedirectToPage("Detalle", new { id = r.Id });
 
             case EstadoGuardado.NoExiste:
@@ -124,13 +143,20 @@ public class EditarModel(
                 break;
         }
 
-        await CargarMinistrosAsync(ct);
+        await CargarApoyosAsync(ct);
         return Page();
     }
 
     private async Task<bool> PuedeAsync(long? id) =>
         (await autorizacion.AuthorizeAsync(User, id is null ? Permisos.RegistrosCrear : Permisos.RegistrosEditar)).Succeeded;
 
-    private async Task CargarMinistrosAsync(CancellationToken ct) =>
+    private async Task CargarApoyosAsync(CancellationToken ct)
+    {
         Ministros = [.. (await ministros.ListarAsync(ct)).Where(m => m.Activo).Select(m => m.Nombre)];
+
+        if (Id is null && Input.AsientoNuevo)
+            Proximo = await numeracion.ProximoAsync(ServicioComunion.Clave, ct);
+        else if (Id is not null)
+            AsientoDelSistema = (await servicio.ObtenerVistaAsync(Id.Value, ct: ct))?.AsientoDelSistema == true;
+    }
 }

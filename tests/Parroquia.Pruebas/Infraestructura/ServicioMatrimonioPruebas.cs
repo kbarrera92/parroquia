@@ -2,6 +2,8 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Parroquia.Dominio.Catalogos;
 using Parroquia.Dominio.Sacramentos;
+using Parroquia.Dominio.Numeracion;
+using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Persistencia;
 using Parroquia.Infraestructura.Sacramentos;
 
@@ -426,5 +428,103 @@ public class ServicioMatrimonioPruebas(ServidorPostgresFixture servidor) : IClas
         d.Testigos.Should().Equal("Noe Lopez Garcia", "Alma Luna de Lopez");
         d.Ministro.Should().Be("P. Andrés Martínez");
         (d.Libro, d.Folio, d.Partida).Should().Be(("18", "5", "15"));
+    }
+
+    // ---- Asientos nuevos: el sistema numera (libro digital) ----
+
+    private static async Task AbrirLibroDigitalAsync(BaseTemporal bd, string numero = "81")
+    {
+        await using var ctx = bd.Crear();
+        var r = await new ServicioNumeracion(ctx, bd.Reloj)
+            .AbrirAsync(new DatosAperturaLibro(ServicioMatrimonio.Clave, numero, 1, 1, 3, 2, ModoPartida.Correlativa));
+        r.Ok.Should().BeTrue();
+    }
+
+    private static DatosMatrimonioFormulario Nuevo(string nombre = "Luis") =>
+        Datos(libro: "", folio: "", partida: "", esposo: Esposo(nombres: nombre)) with { AsientoNuevo = true };
+
+    [Fact]
+    public async Task Asiento_nuevo_recibe_libro_folio_y_partida_del_sistema_y_se_ignoran_los_digitados()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await AbrirLibroDigitalAsync(bd);
+        await using var ctx = bd.Crear();
+        var s = Servicio(ctx, bd);
+
+        var a = await CrearAsync(s, Nuevo("Uno") with { Libro = "999", Folio = "999", Partida = "999" });
+        var b = await CrearAsync(s, Nuevo("Dos"));
+
+        var va = (await s.ObtenerVistaAsync(a))!;
+        var vb = (await s.ObtenerVistaAsync(b))!;
+        (va.Libro, va.Folio, va.Partida, va.AsientoDelSistema).Should().Be(("81", "1", "1", true));
+        (vb.Libro, vb.Folio, vb.Partida).Should().Be(("81", "1", "2"));
+    }
+
+    [Fact]
+    public async Task Asiento_nuevo_sin_libro_digital_abierto_avisa_y_no_guarda()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await using var ctx = bd.Crear();
+
+        var r = await Servicio(ctx, bd).GuardarAsync(Nuevo());
+
+        r.Estado.Should().Be(EstadoGuardado.Invalido);
+        r.Errores!.Should().ContainSingle().Which.Mensaje.Should().Contain("libro digital abierto");
+        (await ctx.Matrimonios.AnyAsync()).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Asiento_del_sistema_se_edita_pero_no_cambia_su_numeracion()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await AbrirLibroDigitalAsync(bd);
+        await using var ctx = bd.Crear();
+        var s = Servicio(ctx, bd);
+        var id = await CrearAsync(s, Nuevo("Luis"));
+        var v = (await s.ObtenerVistaAsync(id))!;
+
+        var mismo = await s.GuardarAsync(Datos(libro: v.Libro, folio: v.Folio, partida: v.Partida, esposo: Esposo(nombres: "Luis Alberto")), id, v.Version);
+        mismo.Estado.Should().Be(EstadoGuardado.Ok);
+
+        await using var otro = bd.Crear();
+        var s2 = Servicio(otro, bd);
+        var v2 = (await s2.ObtenerVistaAsync(id))!;
+        var cambio = await s2.GuardarAsync(Datos(libro: "81", folio: "1", partida: "77", esposo: Esposo(nombres: "Luis Alberto")), id, v2.Version);
+
+        cambio.Estado.Should().Be(EstadoGuardado.Invalido);
+        cambio.Errores!.Single().Mensaje.Should().Contain("no se pueden cambiar");
+        (await s2.ObtenerVistaAsync(id))!.Partida.Should().Be("1");
+    }
+
+    [Fact]
+    public async Task No_se_puede_transcribir_en_un_libro_que_numera_el_sistema()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await AbrirLibroDigitalAsync(bd, numero: "81");
+        await using var ctx = bd.Crear();
+        var s = Servicio(ctx, bd);
+
+        var r = await s.GuardarAsync(Datos(libro: " 81 ", folio: "5", partida: "9"));
+        var fisico = await s.GuardarAsync(Datos(libro: "80", folio: "5", partida: "9"));
+
+        r.Estado.Should().Be(EstadoGuardado.Invalido);
+        r.Errores!.Single().Mensaje.Should().Contain("lo numera el sistema");
+        fisico.Estado.Should().Be(EstadoGuardado.Ok);
+    }
+
+    [Fact]
+    public async Task Anular_un_asiento_del_sistema_conserva_su_numero_y_el_siguiente_no_lo_reutiliza()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await AbrirLibroDigitalAsync(bd);
+        await using var ctx = bd.Crear();
+        var s = Servicio(ctx, bd);
+        var a = await CrearAsync(s, Nuevo("Error"));
+
+        (await s.AnularAsync(a, "Error de captura")).Ok.Should().BeTrue();
+        var b = await CrearAsync(s, Nuevo("Correcto"));
+
+        (await s.ObtenerVistaAsync(b))!.Partida.Should().Be("2");
+        (await s.ObtenerVistaAsync(a, incluirAnulados: true))!.Partida.Should().Be("1");
     }
 }

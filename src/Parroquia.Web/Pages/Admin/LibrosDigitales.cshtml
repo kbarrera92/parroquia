@@ -1,0 +1,94 @@
+@page
+@using Parroquia.Dominio.Numeracion
+@model Parroquia.Web.Pages.Admin.LibrosDigitalesModel
+@{
+    ViewData["Title"] = "Libros digitales";
+}
+
+<div class="mt-4">
+    <h1 class="h3">Libros digitales</h1>
+    <p class="text-muted">
+        Los sacramentos nuevos ya no se escriben en un libro de papel: el sistema les asigna libro, folio y partida
+        correlativos. Abra aquí el libro digital de cada sacramento, continuando la numeración del último libro físico.
+        Cuando un libro se llena, el sistema abre el siguiente solo. Una partida anulada conserva su número.
+    </p>
+
+    @if (Model.Mensaje is not null)
+    {
+        <div class="alert alert-success" role="status">@Model.Mensaje</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.Error</div>
+    }
+
+    @foreach (var f in Model.Filas)
+    {
+        <section class="card mb-3" aria-labelledby="t-@f.Clave">
+            <div class="card-body">
+                <h2 class="h5" id="t-@f.Clave">@f.Nombre</h2>
+
+                @if (f.Libro is { } l)
+                {
+                    <p class="mb-2">
+                        Libro abierto: <strong>@l.Numero</strong> ·
+                        folio actual <strong>@l.FolioActual</strong> ·
+                        última partida <strong>@(l.Entregados == 0 ? "—" : l.UltimaPartida.ToString())</strong> ·
+                        asientos entregados @l.Entregados ·
+                        caben @l.Restantes más
+                        <span class="text-muted">(@l.PartidasPorFolio partidas por folio, @l.FoliosPorLibro folios por libro@(l.ModoPartida switch { ModoPartida.ReiniciaPorFolio => ", la partida vuelve a 1 en cada folio", ModoPartida.ReiniciaPorLibro => ", la partida vuelve a 1 en cada libro", _ => ", la partida es correlativa" }))</span>
+                    </p>
+                    <form method="post" asp-page-handler="Cerrar"
+                          data-confirmar="¿Cerrar el libro @l.Numero de @f.Nombre? No se numerarán más asientos hasta abrir otro libro.">
+                        <input type="hidden" name="clave" value="@f.Clave" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Cerrar libro</button>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-warning py-2">
+                        No hay libro digital abierto: no se pueden registrar asientos nuevos de este sacramento (sí transcribir libros físicos).
+                    </div>
+                    <form method="post" asp-page-handler="Abrir" class="row g-2 align-items-end">
+                        <input type="hidden" name="clave" value="@f.Clave" />
+                        <div class="col-6 col-md-2">
+                            <label for="num-@f.Clave" class="form-label">Número de libro</label>
+                            <input id="num-@f.Clave" name="numero" class="form-control" maxlength="30" required />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label for="fi-@f.Clave" class="form-label">Folio inicial</label>
+                            <input id="fi-@f.Clave" name="folioInicial" type="number" min="1" value="1" class="form-control" required />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label for="pi-@f.Clave" class="form-label">Partida inicial</label>
+                            <input id="pi-@f.Clave" name="partidaInicial" type="number" min="1" value="1" class="form-control" required />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label for="pf-@f.Clave" class="form-label">Partidas por folio</label>
+                            <input id="pf-@f.Clave" name="partidasPorFolio" type="number" min="1" class="form-control" required />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label for="fl-@f.Clave" class="form-label">Folios por libro</label>
+                            <input id="fl-@f.Clave" name="foliosPorLibro" type="number" min="1" class="form-control" required />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label for="ye-@f.Clave" class="form-label">Partidas ya usadas en ese folio</label>
+                            <input id="ye-@f.Clave" name="partidasYaEnFolio" type="number" min="0" value="0" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="mp-@f.Clave" class="form-label">Numeración de la partida</label>
+                            <select id="mp-@f.Clave" name="modoPartida" class="form-select">
+                                <option value="Correlativa">Correlativa: nunca vuelve a 1 (sigue de un libro al siguiente)</option>
+                                <option value="ReiniciaPorLibro">Vuelve a 1 en cada libro</option>
+                                <option value="ReiniciaPorFolio">Vuelve a 1 en cada folio</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Abrir libro digital</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </section>
+    }
+</div>

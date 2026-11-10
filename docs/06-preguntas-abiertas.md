@@ -2,7 +2,7 @@
 
 Última actualización: 8-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
 
-## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8)
+## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8; 37–39 libro digital)
 | # | Tema | Decisión |
 |---|---|---|
 | 1 | Servidor | PC de oficina, Windows 10/11, dedicada, encendida 24/7 |
@@ -41,6 +41,9 @@
 | 34 | Política de contraseñas (M8) | Mínimo **12** caracteres, sin reglas de composición ni caducidad, con lista de contraseñas comunes; ver `04` ADR-05 |
 | 35 | Recuperación de contraseña (M8) | Sin correo: el Administrador restablece (temporal de un solo uso + cambio obligatorio). Emergencia con `PARROQUIA_ADMIN_RESTABLECER` en el servidor |
 | 36 | Usuarios (M8) | Un rol por usuario; desactivar en vez de borrar; cambios de usuarios en `BitacoraAcceso` (no en `Auditoria`); límite de 10 intentos de login por IP y minuto además del bloqueo por cuenta |
+| 37 | Sacramentos nuevos (asientos del sistema) | Nacen en el sistema, que asigna libro/folio/partida **continuando la numeración de los libros físicos**; partidas por folio y folios por libro configurables; al llenarse un libro se abre el siguiente solo (`04` ADR-11) |
+| 38 | Partida anulada | **Conserva su número**; nunca se reutiliza |
+| 39 | Transcribir vs. asentar | Predeterminado = transcribir libro físico; el asiento nuevo se elige a propósito. No se puede transcribir en un libro digital ni abrir uno digital con el número de un libro ya transcrito |
 
 ## 🟡 Pendientes
 
@@ -58,6 +61,11 @@
 ### Servidor y operación (antes de M8)
 - Versión exacta de Windows (si es Windows 10: ¿tiene actualizaciones de seguridad extendidas o se migra a Windows 11?). Marca y capacidad de disco, ¿hay UPS?, ¿disco externo para respaldos?, ¿dónde irá la copia fuera de sitio?
 - Confirmar que no habrá acceso desde fuera de la red de la parroquia.
+
+### Libro digital (asientos nuevos)
+- **¿Se necesita un libro impreso?** Consultar al párroco/diócesis si la partida nueva debe imprimirse (con firmas del ministro y párroco) y encuadernarse por libro, o si basta el registro digital. Hoy solo existe la constancia; el acta de partida sería una plantilla nueva por módulo (con `LibroDigitalId` y folio/partida ya asignados no hay que rehacer la numeración).
+- Por cada sacramento: último libro, folio y partida **físicos** usados, partidas por folio, folios por libro y cómo se numera la partida en el papel: correlativa, reinicia por libro o reinicia por folio (para abrir el primer libro digital sin saltos).
+- Fecha de corte entre el último asiento en papel y el primero digital.
 
 ### Alcance futuro
 - Fase 2: tarifas por tipo de constancia, recibos, quién cobra, corte diario, exoneraciones, otras constancias (solicitar redacción de cada una).

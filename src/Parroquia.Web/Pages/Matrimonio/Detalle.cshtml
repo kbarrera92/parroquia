@@ -91,6 +91,10 @@
         <dt class="col-sm-3">Libro</dt><dd class="col-sm-9">@r.Libro</dd>
         <dt class="col-sm-3">Folio</dt><dd class="col-sm-9">@r.Folio</dd>
         <dt class="col-sm-3">Partida</dt><dd class="col-sm-9">@r.Partida</dd>
+        @if (r.AsientoDelSistema)
+        {
+            <dt class="col-sm-3">Origen</dt><dd class="col-sm-9"><span class="badge text-bg-info">Asiento del sistema</span> numerado automáticamente (libro digital)</dd>
+        }
         <dt class="col-sm-3">Ministro (firma)</dt><dd class="col-sm-9">@Texto(r.Ministro)</dd>
         <dt class="col-sm-3">Notas marginales</dt><dd class="col-sm-9" style="white-space: pre-line">@Texto(r.NotasMarginales)</dd>
         <dt class="col-sm-3">Capturado</dt><dd class="col-sm-9">@Model.Creado</dd>
