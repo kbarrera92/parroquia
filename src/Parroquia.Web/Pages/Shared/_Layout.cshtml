@@ -15,7 +15,7 @@
     var verAdministracion = verCatalogos || verConfiguracion || verHistorial || verUsuarios;
 }
 <!DOCTYPE html>
-<html lang="es-GT">
+<html lang="es-GT" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -74,7 +74,7 @@
                             </li>
                         }
                     </ul>
-                    <a class="navbar-text me-3 text-decoration-none" asp-page="/Cuenta/CambiarPassword" title="Cambiar contraseña">@User.Identity.Name</a>
+                    <a class="navbar-text py-0 me-3 text-decoration-none" asp-page="/Cuenta/CambiarPassword" title="Cambiar contraseña">@User.Identity.Name</a>
                     <a class="btn btn-outline-light btn-sm" asp-page="/Cuenta/Logout">Cerrar sesión</a>
                 }
             </div>

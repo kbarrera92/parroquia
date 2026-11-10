@@ -93,6 +93,7 @@
         else
         {
             var soloLectura = Model.AsientoDelSistema;
+            <div class="col-12"><h2 class="h5 titulo-seccion">Ubicación en el libro</h2></div>
             <div class="col-md-2">
                 <label asp-for="Input.Libro" class="form-label">Libro</label>
                 <input asp-for="Input.Libro" class="form-control" maxlength="30" autofocus="@(!focoNombres && !soloLectura)" autocomplete="off" readonly="@soloLectura" />
@@ -117,6 +118,7 @@
         }
         <div class="col-12"></div>
 
+        <div class="col-12"><h2 class="h5 titulo-seccion">Confirmado</h2></div>
         <div class="col-md-5">
             <label asp-for="Input.Nombres" class="form-label">Nombres</label>
             <input asp-for="Input.Nombres" class="form-control" maxlength="150" autofocus="@focoNombres" autocomplete="off" />
@@ -137,6 +139,7 @@
         </div>
         <div class="col-12"></div>
 
+        <div class="col-12"><h2 class="h5 titulo-seccion">Padrinos y ministro</h2></div>
         <div class="col-md-6">
             <label class="form-label" id="etiqueta-padrinos">Padrinos</label>
             <div id="padrinos" data-filas role="group" aria-labelledby="etiqueta-padrinos">
@@ -145,7 +148,7 @@
                     <partial name="_FilaPadrino" model="padrino" />
                 }
             </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-agregar-fila
+            <button type="button" class="btn btn-outline-secondary" data-agregar-fila
                     hx-get="@Url.Page("/Confirmacion/Editar", "FilaPadrino")" hx-target="#padrinos" hx-swap="beforeend">
                 Agregar padrino
             </button>
@@ -153,7 +156,7 @@
             <span asp-validation-for="Input.Padrinos" class="text-danger d-block"></span>
         </div>
         <div class="col-md-6">
-            <label asp-for="Input.Ministro" class="form-label">Ministro / obispo (opcional, no se imprime)</label>
+            <label asp-for="Input.Ministro" class="form-label">Ministro / obispo (opcional)</label>
             <input asp-for="Input.Ministro" class="form-control" maxlength="150" list="lista-ministros" autocomplete="off" />
             <datalist id="lista-ministros">
                 @foreach (var m in Model.Ministros)
@@ -161,7 +164,7 @@
                     <option value="@m"></option>
                 }
             </datalist>
-            <div class="form-text">Elija de la lista o escriba otro nombre.</div>
+            <div class="form-text">Elija de la lista o escriba otro nombre. No se imprime en la constancia.</div>
             <span asp-validation-for="Input.Ministro" class="text-danger"></span>
         </div>
 
@@ -171,6 +174,7 @@
             <span asp-validation-for="Input.NotasMarginales" class="text-danger"></span>
         </div>
 
+        <div class="col-12"><h2 class="h5 titulo-seccion">Revisión</h2></div>
         <div class="col-12">
             <div class="form-check">
                 <input asp-for="Input.Revisar" class="form-check-input" />
@@ -183,7 +187,7 @@
             <span asp-validation-for="Input.MotivoRevision" class="text-danger"></span>
         </div>
 
-        <div class="col-12 d-flex flex-wrap gap-2">
+        <div class="col-12 d-flex flex-wrap gap-2 barra-acciones">
             @if (Model.EsNuevo)
             {
                 @* Primer botón = el que se activa con Enter. *@

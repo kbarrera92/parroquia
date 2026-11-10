@@ -1,6 +1,7 @@
 @model IReadOnlyList<Parroquia.Web.Presentacion.FilaAuditoria>
 
-<table class="table table-sm align-top">
+<div class="table-responsive">
+<table class="table table-sm align-top historial-cambios">
     <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Cambios</th></tr></thead>
     <tbody>
     @foreach (var f in Model)
@@ -23,3 +24,4 @@
     }
     </tbody>
 </table>
+</div>

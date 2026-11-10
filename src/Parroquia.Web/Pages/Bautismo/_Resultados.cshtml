@@ -5,9 +5,10 @@
 
 <p class="text-muted" aria-live="polite">@r.Total.ToString("N0") registros</p>
 
+<div class="table-responsive">
 <table class="table table-sm align-middle">
     <thead>
-        <tr><th>Apellidos</th><th>Nombres</th><th>Fecha de bautismo</th><th>Libro</th><th>Folio</th><th>Partida</th><th></th></tr>
+        <tr><th>Apellidos</th><th>Nombres</th><th>Fecha de bautismo</th><th class="col-num">Libro</th><th class="col-num">Folio</th><th class="col-num">Partida</th><th></th></tr>
     </thead>
     <tbody>
     @foreach (var f in r.Items)
@@ -16,9 +17,9 @@
             <td><a asp-page="/Bautismo/Detalle" asp-route-id="@f.Id">@(f.Apellidos.Length == 0 ? "(sin apellidos)" : f.Apellidos)</a></td>
             <td>@f.Nombres</td>
             <td>@f.Fecha</td>
-            <td>@f.Libro</td>
-            <td>@f.Folio</td>
-            <td>@f.Partida</td>
+            <td class="col-num">@f.Libro</td>
+            <td class="col-num">@f.Folio</td>
+            <td class="col-num">@f.Partida</td>
             <td>
                 @if (f.Revisar) { <span class="badge text-bg-warning">Revisar</span> }
                 @if (f.Anulado) { <span class="badge text-bg-secondary">Anulado</span> }
@@ -31,6 +32,7 @@
     }
     </tbody>
 </table>
+</div>
 
 @if (r.TotalPaginas > 1)
 {

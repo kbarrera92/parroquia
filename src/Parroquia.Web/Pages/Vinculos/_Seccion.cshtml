@@ -19,7 +19,8 @@
     }
     else
     {
-        <table class="table table-sm align-middle">
+        <div class="table-responsive">
+<table class="table table-sm align-middle">
             <thead><tr><th>Nombre</th><th>Libro</th><th>Fecha</th><th>Ubicación</th><th></th></tr></thead>
             <tbody>
             @foreach (var p in Model.Cadena)
@@ -52,6 +53,7 @@
             }
             </tbody>
         </table>
+</div>
     }
 
     @if (Model.PuedeEditar)
