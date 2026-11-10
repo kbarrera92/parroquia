@@ -93,6 +93,7 @@
         else
         {
             var soloLectura = Model.AsientoDelSistema;
+            <div class="col-12"><h2 class="h5 titulo-seccion">Ubicación en el libro</h2></div>
             <div class="col-md-2">
                 <label asp-for="Input.Libro" class="form-label">Libro</label>
                 <input asp-for="Input.Libro" class="form-control" maxlength="30" autofocus="@(!focoNombres && !soloLectura)" autocomplete="off" readonly="@soloLectura" />
@@ -115,6 +116,7 @@
                 </div>
             }
         }
+        <div class="col-12"><h2 class="h5 titulo-seccion">Celebración</h2></div>
         <div class="col-md-3">
             <label asp-for="Input.FechaMatrimonio" class="form-label">Fecha del matrimonio</label>
             <input asp-for="Input.FechaMatrimonio" class="form-control" maxlength="10" placeholder="21/04/2007" autocomplete="off" aria-describedby="ayuda-fecha" />
@@ -127,7 +129,7 @@
             <span asp-validation-for="Input.LugarCelebracion" class="text-danger"></span>
         </div>
 
-        <div class="col-12"><h2 class="h5 mt-2 mb-0">Esposo</h2></div>
+        <div class="col-12"><h2 class="h5 titulo-seccion">Esposo</h2></div>
         <div class="col-md-2">
             <label asp-for="Input.Esposo.Tratamiento" class="form-label">Tratamiento</label>
             <select asp-for="Input.Esposo.Tratamiento" asp-items="Model.OpcionesTratamiento(Model.Input.Esposo.Tratamiento)" class="form-select">
@@ -171,7 +173,7 @@
             <span asp-validation-for="Input.Esposo.Madre" class="text-danger"></span>
         </div>
 
-        <div class="col-12"><h2 class="h5 mt-2 mb-0">Esposa</h2></div>
+        <div class="col-12"><h2 class="h5 titulo-seccion">Esposa</h2></div>
         <div class="col-md-2">
             <label asp-for="Input.Esposa.Tratamiento" class="form-label">Tratamiento</label>
             <select asp-for="Input.Esposa.Tratamiento" asp-items="Model.OpcionesTratamiento(Model.Input.Esposa.Tratamiento)" class="form-select">
@@ -215,6 +217,7 @@
             <span asp-validation-for="Input.Esposa.Madre" class="text-danger"></span>
         </div>
 
+        <div class="col-12"><h2 class="h5 titulo-seccion">Testigos, ministro y notas</h2></div>
         <div class="col-md-6">
             <label class="form-label" id="etiqueta-testigos">Testigos</label>
             <div id="testigos" data-filas role="group" aria-labelledby="etiqueta-testigos">
@@ -223,7 +226,7 @@
                     <partial name="_FilaTestigo" model="testigo" />
                 }
             </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-agregar-fila
+            <button type="button" class="btn btn-outline-secondary" data-agregar-fila
                     hx-get="@Url.Page("/Matrimonio/Editar", "FilaTestigo")" hx-target="#testigos" hx-swap="beforeend">
                 Agregar testigo
             </button>
@@ -249,6 +252,7 @@
             <span asp-validation-for="Input.NotasMarginales" class="text-danger"></span>
         </div>
 
+        <div class="col-12"><h2 class="h5 titulo-seccion">Revisión</h2></div>
         <div class="col-12">
             <div class="form-check">
                 <input asp-for="Input.Revisar" class="form-check-input" />
@@ -261,7 +265,7 @@
             <span asp-validation-for="Input.MotivoRevision" class="text-danger"></span>
         </div>
 
-        <div class="col-12 d-flex flex-wrap gap-2">
+        <div class="col-12 d-flex flex-wrap gap-2 barra-acciones">
             @if (Model.EsNuevo)
             {
                 @* Primer botón = el que se activa con Enter. *@

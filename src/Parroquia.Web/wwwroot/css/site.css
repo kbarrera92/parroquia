@@ -597,7 +597,103 @@ details[open] > summary {
   --bs-btn-active-border-color: var(--p-success-tint);
 }
 
-/* 13. Excepción: la vista previa de la constancia es papel blanco ----------------------
+/* 13. Libros: listado, captura y detalle ---------------------------------------------- */
+/* Filtros del listado en una tarjeta. */
+.panel-filtros {
+  --bs-card-bg: var(--p-surface);
+  border-radius: var(--bs-border-radius-lg);
+}
+
+/* Libro / Folio / Partida: cifras alineadas y sin cortes de línea. */
+.col-num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Filas anuladas: los enlaces también se atenúan. */
+tr.text-decoration-line-through a {
+  color: var(--p-muted);
+}
+
+/* Subtítulo de grupo dentro de un formulario largo. */
+.titulo-seccion {
+  color: var(--p-text-strong);
+  border-top: 1px solid var(--p-border);
+  padding-top: 1rem;
+  margin: .75rem 0 0;
+}
+
+/* Barra de botones al final del formulario. */
+.barra-acciones {
+  border-top: 1px solid var(--p-border);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+/* Filas dinámicas de padrinos / testigos. */
+[data-fila] {
+  margin-bottom: .5rem;
+}
+
+/* Ficha de detalle (dl.row): etiqueta tenue, valor claro, línea fina entre filas. */
+.ficha > dt,
+.ficha > dd {
+  padding-block: .5rem;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--p-border);
+}
+
+.ficha > dt {
+  color: var(--p-muted);
+  font-weight: 500;
+}
+
+.ficha > dd {
+  color: var(--p-text);
+}
+
+.ficha ol::marker,
+.ficha ol li::marker {
+  color: var(--p-muted);
+}
+
+.texto-multilinea {
+  white-space: pre-line;
+}
+
+/* «Anular este registro…»: zona destacada, con borde de peligro (no solo color: lleva texto). */
+.zona-anular {
+  background-color: var(--p-surface);
+  border: 1px solid var(--p-border);
+  border-left: 4px solid var(--p-danger);
+  border-radius: var(--bs-border-radius);
+  padding: .5rem 1rem 1rem;
+}
+
+/* Cada contrayente de Matrimonio en su tarjeta. */
+.contrayente .card-body {
+  padding: 1.1rem 1.25rem;
+}
+
+.contrayente .ficha > dt:last-of-type,
+.contrayente .ficha > dd:last-of-type {
+  border-bottom: 0;
+}
+
+/* Historial de cambios: fechas alineadas y cada cambio en su línea. */
+.historial-cambios td.text-nowrap {
+  font-variant-numeric: tabular-nums;
+}
+
+.historial-cambios td > div + div {
+  margin-top: .25rem;
+}
+
+.historial-cambios td strong {
+  color: var(--p-text-strong);
+}
+
+/* 14. Excepción: la vista previa de la constancia es papel blanco ----------------------
    Aproximación de la hoja carta (el PDF usa el mismo modelo de documento). Se
    redeclaran los tokens claros para que border-dark, hr y el logo (JPEG sobre
    blanco) se vean como en el papel, aunque el resto de la interfaz sea oscura. */

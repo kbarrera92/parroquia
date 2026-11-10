@@ -7,7 +7,7 @@
 }
 
 <div class="mt-4">
-    <div class="d-flex justify-content-between align-items-start mb-3">
+    <div class="d-flex flex-wrap gap-3 justify-content-between align-items-start mb-3">
         <div>
             <h1 class="h3 mb-1">@Model.NombreCompleto</h1>
             <div>
@@ -15,7 +15,7 @@
                 @if (r.Anulado) { <span class="badge text-bg-secondary">Anulado</span> }
             </div>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
             @if (Model.PuedeImprimir)
             {
                 <a class="btn btn-primary" asp-page="/Constancias/Emitir" asp-route-clave="@Model.Clave" asp-route-id="@r.Id">
@@ -49,7 +49,7 @@
         </div>
     }
 
-    <dl class="row">
+    <dl class="row ficha">
         <dt class="col-sm-3">Fecha del bautismo</dt><dd class="col-sm-9">@Texto(r.FechaBautismo)</dd>
         <dt class="col-sm-3">Fecha de nacimiento</dt><dd class="col-sm-9">@Texto(r.FechaNacimiento)</dd>
         <dt class="col-sm-3">Lugar de nacimiento</dt><dd class="col-sm-9">@Texto(r.LugarNacimiento)</dd>
@@ -79,7 +79,7 @@
             <dt class="col-sm-3">Origen</dt><dd class="col-sm-9"><span class="badge text-bg-info">Asiento del sistema</span> numerado automáticamente (libro digital)</dd>
         }
         <dt class="col-sm-3">Ministro</dt><dd class="col-sm-9">@Texto(r.Ministro)</dd>
-        <dt class="col-sm-3">Notas marginales</dt><dd class="col-sm-9" style="white-space: pre-line">@Texto(r.NotasMarginales)</dd>
+        <dt class="col-sm-3">Notas marginales</dt><dd class="col-sm-9 texto-multilinea">@Texto(r.NotasMarginales)</dd>
         <dt class="col-sm-3">Capturado</dt><dd class="col-sm-9">@Model.Creado</dd>
         @if (Model.Modificado is not null)
         {
@@ -89,7 +89,7 @@
 
     @if (Model.PuedeAnular && !r.Anulado)
     {
-        <details class="mb-4">
+        <details class="mb-4 zona-anular">
             <summary class="text-danger">Anular este registro…</summary>
             <form method="post" asp-page-handler="Anular" asp-route-id="@r.Id" class="row g-2 align-items-end mt-1">
                 <div class="col-md-6">
@@ -113,7 +113,8 @@
     <div hx-get="@Url.Page("/Vinculos/Index", new { clave = Model.Clave, id = r.Id })" hx-trigger="load" hx-swap="outerHTML"></div>
 
     <h2 class="h5">Constancias impresas</h2>
-    <table class="table table-sm mb-4">
+    <div class="table-responsive mb-4">
+    <table class="table table-sm align-middle mb-0">
         <thead><tr><th>Impresa</th><th>Por</th><th>Fecha en la constancia</th><th>Firmó</th><th></th></tr></thead>
         <tbody>
         @foreach (var e in Model.Emitidas)
@@ -132,6 +133,7 @@
         }
         </tbody>
     </table>
+    </div>
 
     <h2 class="h5">Historial de cambios</h2>
     <partial name="_HistorialRegistro" model="Model.Movimientos" />

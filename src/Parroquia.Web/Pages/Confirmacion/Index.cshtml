@@ -5,7 +5,7 @@
 }
 
 <div class="mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Libro de Confirmaciones</h1>
         @if (Model.PuedeCrear)
         {
@@ -13,27 +13,28 @@
         }
     </div>
 
-    <form method="get" id="busqueda" class="row g-2 align-items-end mb-3"
+    <div class="card panel-filtros mb-3"><div class="card-body">
+    <form method="get" id="busqueda" class="row g-2 align-items-end"
           hx-get="@Url.Page("/Confirmacion/Index")" hx-target="#resultados" hx-push-url="true"
           hx-trigger="submit, input delay:300ms from:#texto, change from:#libro, change from:#folio, change from:#desde, change from:#hasta, change from:#pendientes, change from:#anulados">
-        <div class="col-md-4">
+        <div class="col-12 col-lg-4">
             <label for="texto" class="form-label">Nombres y apellidos</label>
             <input id="texto" name="texto" value="@Model.Texto" class="form-control" autofocus autocomplete="off"
                    placeholder="Sin tildes ni mayúsculas, por ejemplo: hidalgo arevalo" />
         </div>
-        <div class="col-md-1">
+        <div class="col-6 col-md-2 col-lg-1">
             <label for="libro" class="form-label">Libro</label>
             <input id="libro" name="libro" value="@Model.Libro" class="form-control" />
         </div>
-        <div class="col-md-1">
+        <div class="col-6 col-md-2 col-lg-1">
             <label for="folio" class="form-label">Folio</label>
             <input id="folio" name="folio" value="@Model.Folio" class="form-control" />
         </div>
-        <div class="col-md-2">
+        <div class="col-6 col-md-2">
             <label for="desde" class="form-label">Año desde</label>
             <input id="desde" name="desde" value="@Model.Desde" inputmode="numeric" maxlength="4" class="form-control" />
         </div>
-        <div class="col-md-2">
+        <div class="col-6 col-md-2">
             <label for="hasta" class="form-label">Año hasta</label>
             <input id="hasta" name="hasta" value="@Model.Hasta" inputmode="numeric" maxlength="4" class="form-control" />
         </div>
@@ -53,6 +54,7 @@
             <a asp-page="/Confirmacion/Index" class="btn btn-link">Limpiar</a>
         </div>
     </form>
+    </div></div>
 
     <div id="resultados">
         <partial name="_Resultados" model="Model" />

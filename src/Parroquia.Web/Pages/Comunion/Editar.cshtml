@@ -93,6 +93,7 @@
         else
         {
             var soloLectura = Model.AsientoDelSistema;
+            <div class="col-12"><h2 class="h5 titulo-seccion">Ubicación en el libro</h2></div>
             <div class="col-md-2">
                 <label asp-for="Input.Libro" class="form-label">Libro</label>
                 <input asp-for="Input.Libro" class="form-control" maxlength="30" autofocus="@(!focoNombres && !soloLectura)" autocomplete="off" readonly="@soloLectura" />
@@ -117,6 +118,7 @@
         }
         <div class="col-12"></div>
 
+        <div class="col-12"><h2 class="h5 titulo-seccion">Datos del registro</h2></div>
         <div class="col-md-5">
             <label asp-for="Input.Nombres" class="form-label">Nombres</label>
             <input asp-for="Input.Nombres" class="form-control" maxlength="150" autofocus="@focoNombres" autocomplete="off" />
@@ -151,6 +153,7 @@
             <span asp-validation-for="Input.NotasMarginales" class="text-danger"></span>
         </div>
 
+        <div class="col-12"><h2 class="h5 titulo-seccion">Revisión</h2></div>
         <div class="col-12">
             <div class="form-check">
                 <input asp-for="Input.Revisar" class="form-check-input" />
@@ -163,7 +166,7 @@
             <span asp-validation-for="Input.MotivoRevision" class="text-danger"></span>
         </div>
 
-        <div class="col-12 d-flex flex-wrap gap-2">
+        <div class="col-12 d-flex flex-wrap gap-2 barra-acciones">
             @if (Model.EsNuevo)
             {
                 @* Primer botón = el que se activa con Enter. *@
