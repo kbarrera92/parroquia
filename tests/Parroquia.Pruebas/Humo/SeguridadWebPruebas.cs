@@ -37,7 +37,7 @@ public class SeguridadWebPruebas(AppFixture app)
     public async Task Las_paginas_de_la_aplicacion_no_usan_scripts_en_linea_ni_manejadores_de_eventos()
     {
         var c = await app.ClienteAdminAsync();
-        foreach (var url in new[] { "/", "/Admin/Usuarios", "/Admin/Usuarios/Editar", "/Cuenta/CambiarPassword", "/Comunion", "/Admin/Historial" })
+        foreach (var url in new[] { "/", "/Admin/Usuarios", "/Admin/Usuarios/Editar", "/Cuenta/CambiarPassword", "/Comunion", "/Admin/Historial", "/Admin/Estado" })
         {
             var html = WebUtility.HtmlDecode(await (await c.GetAsync(url)).Content.ReadAsStringAsync());
 
