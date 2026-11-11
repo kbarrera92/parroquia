@@ -21,9 +21,14 @@ public sealed class AppFixture : WebApplicationFactory<Program>, IAsyncLifetime
     private const string VariableConexion = "ConnectionStrings__Parroquia";
     private readonly Dictionary<string, string?> _anteriores = [];
 
+    /// <summary>Carpeta de datos temporal de la app (logs, marcadores de respaldo): las pruebas no ensucian el repositorio.</summary>
+    public string CarpetaDatos { get; } = Path.Combine(Path.GetTempPath(), "parroquia-pruebas-" + Guid.NewGuid().ToString("N"));
+
     public async Task InitializeAsync()
     {
         await _db.StartAsync();
+        Directory.CreateDirectory(CarpetaDatos);
+        Fijar("Parroquia__CarpetaDatos", CarpetaDatos);
 
         // Program.cs lee la configuración al crear el builder, antes de que ConfigureAppConfiguration
         // pueda sobrescribirla (se usaría la BD de desarrollo). Las variables de entorno sí se leen a tiempo.
@@ -39,6 +44,7 @@ public sealed class AppFixture : WebApplicationFactory<Program>, IAsyncLifetime
         foreach (var (nombre, valor) in _anteriores)
             Environment.SetEnvironmentVariable(nombre, valor);
         await _db.DisposeAsync();
+        try { Directory.Delete(CarpetaDatos, recursive: true); } catch (IOException) { /* el log de Serilog puede seguir abierto */ }
     }
 
     private void Fijar(string nombre, string valor)
