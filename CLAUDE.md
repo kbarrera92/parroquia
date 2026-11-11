@@ -30,8 +30,13 @@ dotnet test --filter "FullyQualifiedName~MatrizPermisosPruebas"   # solo pruebas
 $env:PARROQUIA_PDF_SALIDA = "<carpeta>"; dotnet test --filter "FullyQualifiedName~Muestra_visual"   # deja comunion.pdf y .png para comparar con docs/referencias
 dotnet ef migrations add <Nombre> -p src/Parroquia.Infraestructura -s src/Parroquia.Web -o Persistencia/Migraciones
 docker compose down                                      # detener BD (datos persisten en el volumen)
+.\deploy\Publicar.ps1                                    # paquete de instalación (corre dotnet test) en publish\<versión>\; -OmitirPruebas para saltarlas
+Invoke-Pester deploy\pruebas                             # pruebas de los scripts (Pester 3.4 de Windows; sin BD ni cambios al sistema)
 ```
 Cadena de conexión: `ConnectionStrings:Parroquia` (dev en `appsettings.Development.json`; producción vía variable `ConnectionStrings__Parroquia`).
+
+## Producción (M9)
+Instalar, actualizar, respaldar y restaurar: **`docs/operacion.md`** (scripts en `deploy/`, decisiones en `docs/04` ADR-08/09/10). Manual de capturista y secretaria: `docs/manual-usuario.md`. Reglas al tocar código: nada se escribe con rutas relativas (como servicio el directorio de trabajo es `System32`): usar `CarpetaDatos` (`Aplicacion/Operacion`; `Parroquia:CarpetaDatos`). Fuera de Development las claves de Data Protection van en `{datos}\claves` y la redirección HTTP→HTTPS usa `Parroquia:PuertoHttps`. `/salud` es anónimo y no expone datos; `Administración → Estado del sistema` (`IEstadoSistema`) lee los marcadores `respaldos\ultimo.json` y `ultima-restauracion.json` que escriben los scripts (si cambia su formato, cambiar ambos lados y `EstadoWebPruebas`). Los `.ps1` llevan **BOM UTF-8** (PowerShell 5.1 los lee como ANSI sin él), usan `${var}:` en cadenas y no `$var:`, y `PARROQUIA_ENSAYO=1` permite ensayarlos sin ser Administrador (solo en desarrollo, con binarios de PostgreSQL y `PGPASSWORD`). Nunca subir `.pfx`, `.enc`, `deploy.psd1` real ni respaldos (`.gitignore`).
 
 ## Seguridad (M1)
 Permisos = claims `permiso` en los roles, sincronizados con `MatrizPermisos` (Aplicacion/Seguridad) en cada arranque. Una política por permiso: usar `[Authorize(Policy = Permisos.X)]`, nunca nombres de rol. Todo requiere sesión salvo Login/AccesoDenegado/Error.

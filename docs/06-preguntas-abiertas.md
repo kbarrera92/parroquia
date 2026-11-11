@@ -2,7 +2,7 @@
 
 Última actualización: 8-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
 
-## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8; 37–39 libro digital)
+## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8; 37–39 libro digital; 40–45 en M9)
 | # | Tema | Decisión |
 |---|---|---|
 | 1 | Servidor | PC de oficina, Windows 10/11, dedicada, encendida 24/7 |
@@ -44,6 +44,12 @@
 | 37 | Sacramentos nuevos (asientos del sistema) | Nacen en el sistema, que asigna libro/folio/partida **continuando la numeración de los libros físicos**; partidas por folio y folios por libro configurables; al llenarse un libro se abre el siguiente solo (`04` ADR-11) |
 | 38 | Partida anulada | **Conserva su número**; nunca se reutiliza |
 | 39 | Transcribir vs. asentar | Predeterminado = transcribir libro físico; el asiento nuevo se elige a propósito. No se puede transcribir en un libro digital ni abrir uno digital con el número de un libro ya transcrito |
+| 40 | HTTPS interno (M9) | **CA local propia** de la parroquia (10 años) que firma el certificado del servidor (2 años); los clientes instalan la CA una vez (`Instalar-Cliente.ps1`). Renovar el certificado del servidor no toca los clientes. Descartado: certificado autofirmado suelto |
+| 41 | Nombre del servidor (M9) | `parroquia.local` con IP fija y entrada en el archivo `hosts` de cada cliente (no depende del router) |
+| 42 | Copia fuera de sitio (M9) | **Carpeta parametrizable** (`Respaldo.Copia3` en `deploy.psd1`) y **cifrada** con una frase guardada también en un sobre sellado. El destino real (USB rotado, NAS, carpeta sincronizada) se decide después; ver pendientes |
+| 43 | Hospedaje y cuenta (M9) | Servicio de Windows `ParroquiaWeb` con cuenta virtual (sin contraseña ni privilegios; no lee los archivos de respaldo), .NET incluido en el paquete, PostgreSQL solo en `localhost`. Detalle en `04` ADR-08 |
+| 44 | Alertas de operación (M9) | La página *Estado del sistema* avisa: respaldo fallido o > 36 h, sin prueba de restauración o > 100 días, disco < 10 GB o < 10 %, certificado a < 30 días |
+| 45 | Hitos (M9) | M8 = usuarios y autenticación; **M9 = puesta en producción** (antes llamada M8 en `00` y `05`) |
 
 ## 🟡 Pendientes
 
@@ -51,16 +57,20 @@
 - **[B]** Fotografiar 3–5 páginas de cada libro físico (épocas distintas, con notas marginales). Verificar: ¿padres en comunión y confirmación? ¿parroquia de bautismo? ¿lugar de nacimiento? ¿ministro/obispo en confirmación? ¿máximo de padrinos y de testigos? Define las columnas finales de `02`.
 
 ### Constancias
-- **Licencia de QuestPDF (antes de M8):** el párroco debe confirmar que la parroquia cumple la licencia Community (organización de beneficio público, o ingresos anuales < 1 M USD; no aplica a entidades del sector público). Detalle en `04`, ADR-06. Si no cumpliera, hay que adquirir otra licencia o cambiar de motor.
+- **Licencia de QuestPDF (antes de M9):** el párroco debe confirmar que la parroquia cumple la licencia Community (organización de beneficio público, o ingresos anuales < 1 M USD; no aplica a entidades del sector público). Detalle en `04`, ADR-06. Si no cumpliera, hay que adquirir otra licencia o cambiar de motor.
 - **Fecha "de" vs "del"**: confirmar con el párroco que no le molesta el cambio respecto al papel actual (decisión 20).
 - **"Ref:" en matrimonio**: qué es (correlativo, dato libre, se elimina). *El usuario lo averiguará.* Mientras tanto la línea queda en blanco.
 - Matrimonio: ¿"hijo/a **legítimo/a** de" se mantiene siempre o hay hijos naturales? ¿Se necesita un campo de legitimidad? *(M6 lo imprime como texto fijo; si cambia, columna nueva con migración.)*
 - Matrimonio: la fecha de cierre usa formato dd/MM/yyyy; las otras constancias usan fecha larga. ¿Unificar?
 - Valores iniciales del catálogo de **tratamientos** y de **ministros** (lista de sacerdotes actuales y anteriores).
 
-### Servidor y operación (antes de M8)
-- Versión exacta de Windows (si es Windows 10: ¿tiene actualizaciones de seguridad extendidas o se migra a Windows 11?). Marca y capacidad de disco, ¿hay UPS?, ¿disco externo para respaldos?, ¿dónde irá la copia fuera de sitio?
+### Servidor y operación (antes de M9)
+- Versión exacta de Windows (si es Windows 10: ¿tiene actualizaciones de seguridad extendidas o se migra a Windows 11?). Marca y capacidad de disco, ¿hay UPS?, ¿disco externo para respaldos?
+- **Destino real de la copia 3** (fuera de sitio): ¿USB que rota cada semana?, ¿NAS en otra sede?, ¿carpeta sincronizada (requiere internet solo para sincronizar)? Quién la lleva y dónde se guarda el sobre con la frase de cifrado.
 - Confirmar que no habrá acceso desde fuera de la red de la parroquia.
+- **Instalación real pendiente.** `deploy/` se ensayó en el equipo de desarrollo con datos sintéticos (respaldo, copia cifrada, prueba de restauración, paquete publicado en modo Producción con HTTPS); falta ejecutar `Instalar-PostgreSQL`, `Nueva-CA`, `Nuevo-CertificadoServidor`, `Instalar-App` e `Instalar-Cliente` en el servidor y en un cliente reales (crean el servicio, el firewall y los permisos, que no se pueden ensayar sin administrador), y la **prueba de restauración en otra máquina** (`docs/operacion.md` §6).
+- Repetir la medición de búsqueda y listados en el servidor real con la base cargada (`04`).
+- Capacitación y piloto de 20 registros reales por sacramento (`00` §3.8) con el manual `docs/manual-usuario.md`.
 
 ### Libro digital (asientos nuevos)
 - **¿Se necesita un libro impreso?** Consultar al párroco/diócesis si la partida nueva debe imprimirse (con firmas del ministro y párroco) y encuadernarse por libro, o si basta el registro digital. Hoy solo existe la constancia; el acta de partida sería una plantilla nueva por módulo (con `LibroDigitalId` y folio/partida ya asignados no hay que rehacer la numeración).
