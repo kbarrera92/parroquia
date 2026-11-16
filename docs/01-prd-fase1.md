@@ -39,7 +39,7 @@ Todo lo que cualquier rol haga (ver, crear, editar, anular, imprimir, iniciar se
 
 **RF-06 Búsqueda.** Por nombres y/o apellidos (parcial, sin tildes ni mayúsculas, tolerante a "de"), filtro por sacramento, rango de fechas, libro/folio. Resultado ordenado por apellidos, nombres. Matrimonio se encuentra por cualquiera de los dos contrayentes. Respuesta <1 s con ≥100 000 registros.
 
-**RF-07 Vínculos opcionales.** Desde un registro, "Vincular con…" busca otro registro y los relaciona como misma persona. Desde cualquiera se ven los vinculados. Quitar un vínculo no borra registros.
+**RF-07 Vínculos opcionales.** Desde un registro, "Vincular con…" busca otro registro y los relaciona como misma persona. Desde cualquiera se ven los vinculados. Quitar un vínculo no borra registros. Desde la búsqueda, el botón **«+»** de cada fila ofrece los sacramentos que la persona aún no tiene (según su cadena de vínculos), abre el alta de ese libro **como asiento nuevo** (numera el sistema; requiere libro digital abierto) con nombres, apellidos y padres precargados (editables) y **vincula** el registro nuevo al guardar, para no digitar dos veces —con errores— a la misma persona.
 
 **RF-08 Constancia PDF.** Una plantilla por sacramento (`03-constancias.md`), con membrete, texto, fecha de emisión actual y firmante. Vista previa → imprimir/descargar. Solo Secretaria y Administrador imprimen. La fecha de emisión es la de hoy; solo el Administrador puede cambiarla (queda en bitácora). Firma siempre el párroco vigente. Cada emisión crea una entrada en la bitácora con instantánea del contenido.
 

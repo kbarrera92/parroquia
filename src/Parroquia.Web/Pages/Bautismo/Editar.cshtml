@@ -57,8 +57,11 @@
 
         @if (Model.EsNuevo)
         {
+            <partial name="_OrigenAlta" model="Model.Origen" />
             <div class="col-12">
                 <input asp-for="Input.AsientoNuevo" type="hidden" />
+                @if (!Model.Origen.Valido)
+                {
                 <ul class="nav nav-pills">
                     <li class="nav-item">
                         <a class="nav-link @(Model.Input.AsientoNuevo || Model.Input.Supletoria is not null ? "" : "active")" asp-page="Editar">Transcribir de un libro físico</a>
@@ -70,6 +73,7 @@
                         <a class="nav-link @(Model.Input.Supletoria is not null ? "active" : "")" asp-page="Editar" asp-route-modo="supletoria">Partida supletoria</a>
                     </li>
                 </ul>
+                }
                 <span asp-validation-for="Input.AsientoNuevo" class="text-danger"></span>
             </div>
         }

@@ -13,6 +13,9 @@ public sealed record ResultadoBusquedaRegistro(
     string Libro, string Folio, string Partida, bool Revisar, bool Anulado, string RutaDetalle,
     string Persona = "");
 
+/// <summary>Lo que se copia de una persona al abrir un alta de la misma persona en otro libro.</summary>
+public sealed record DatosPersona(string Nombres, string Apellidos, string? Padre, string? Madre);
+
 public sealed record ResultadosModulo(IReadOnlyList<ResultadoBusquedaRegistro> Items, int Total);
 
 /// <summary>Constancia armada para un registro: el documento a imprimir y los avisos que se muestran antes de imprimir.</summary>
@@ -49,6 +52,19 @@ public interface IModuloSacramental
 
     /// <summary>Una fila por persona de cada id pedido (los anulados no salen). Para mostrar vínculos.</summary>
     Task<IReadOnlyList<ResultadoBusquedaRegistro>> ResumenesAsync(IReadOnlyCollection<long> ids, CancellationToken ct = default);
+
+    /// <summary>Formulario de alta del libro (destino del botón «+» de la búsqueda).</summary>
+    string RutaNuevo => RutaListado + "/Editar";
+
+    /// <summary>
+    /// Datos para precargar un alta de la misma persona (nombres, apellidos y, si el libro los trae, padres).
+    /// Null si el registro o la persona no existen o está anulado. Los módulos con padres la sobrescriben.
+    /// </summary>
+    async Task<DatosPersona?> DatosPersonaAsync(long id, string persona, CancellationToken ct = default)
+    {
+        var fila = (await ResumenesAsync([id], ct)).FirstOrDefault(r => r.Persona == persona);
+        return fila is null ? null : new DatosPersona(fila.Nombres, fila.Apellidos, null, null);
+    }
 
     /// <summary>Busca por nombres y apellidos (parcial, sin tildes). Devuelve hasta <paramref name="maximo"/> filas y el total.</summary>
     Task<ResultadosModulo> BuscarAsync(ConsultaBusqueda consulta, int maximo, CancellationToken ct = default);

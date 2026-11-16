@@ -48,6 +48,18 @@ else
                     {
                         <a class="btn btn-sm btn-outline-primary" href="@Url.Content("~/Constancias/" + f.Clave + "/" + f.Id)">Imprimir</a>
                     }
+                    @if (Model.PuedeCrear && !f.Anulado)
+                    {
+                        <div class="dropdown d-inline-block">
+                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
+                                    aria-label="Agregar un sacramento a @($"{f.Nombres} {f.Apellidos}".Trim())" title="Agregar un sacramento a esta persona"
+                                    hx-get="@Url.Page("/Agregar/Index", new { clave = f.Clave, id = f.Id, persona = f.Persona.Length == 0 ? null : f.Persona })"
+                                    hx-trigger="click once" hx-target="next .dropdown-menu" hx-swap="innerHTML">+</button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><span class="dropdown-item-text text-muted">Cargando…</span></li>
+                            </ul>
+                        </div>
+                    }
                 </td>
             </tr>
         }

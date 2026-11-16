@@ -174,4 +174,42 @@ public class ServicioVinculosPruebas(ServidorPostgresFixture servidor) : IClassF
         var c = await ComunionAsync(e);
         (await e.Vinculos.VincularAsync(c, b)).Ok.Should().BeFalse();
     }
+
+    [Fact]
+    public async Task Faltantes_ofrece_los_libros_sin_registro_y_matrimonio_como_esposo_y_esposa()
+    {
+        var (e, _) = await NuevoAsync();
+        var a = await ComunionAsync(e);
+
+        var faltan = await e.Vinculos.SacramentosFaltantesAsync(a);
+
+        faltan.Should().NotBeNull();
+        faltan!.Select(o => (o.Clave, o.Persona)).Should().Equal(
+            ("confirmacion", ""), ("matrimonio", "esposo"), ("matrimonio", "esposa"));
+        faltan.Should().OnlyContain(o => o.RutaNuevo.EndsWith("/Editar"));
+    }
+
+    [Fact]
+    public async Task Faltantes_descarta_lo_que_ya_esta_en_la_cadena_directa_o_indirecta()
+    {
+        var (e, _) = await NuevoAsync();
+        var a = await ComunionAsync(e);
+        var b = await ConfirmacionAsync(e);
+        var m = new ExtremoVinculo(ModuloMatrimonio.ClaveModulo, await MatrimonioAsync(e), ModuloMatrimonio.Esposo);
+        await e.Vinculos.VincularAsync(a, b);
+        await e.Vinculos.VincularAsync(b, m); // a llega a m "por medio de" b
+
+        (await e.Vinculos.SacramentosFaltantesAsync(a))!.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Faltantes_es_nulo_si_el_registro_no_existe_o_esta_anulado()
+    {
+        var (e, _) = await NuevoAsync();
+        var a = await ComunionAsync(e);
+
+        (await e.Vinculos.SacramentosFaltantesAsync(new ExtremoVinculo("comunion", 999_999))).Should().BeNull();
+        await e.Comunion.AnularAsync(a.Id, "Prueba");
+        (await e.Vinculos.SacramentosFaltantesAsync(a)).Should().BeNull();
+    }
 }
