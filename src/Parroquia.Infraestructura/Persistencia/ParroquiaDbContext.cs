@@ -4,8 +4,10 @@ using Parroquia.Dominio.Catalogos;
 using Parroquia.Dominio.Configuracion;
 using Parroquia.Dominio.Numeracion;
 using Parroquia.Dominio.Sacramentos;
+using Parroquia.Dominio.Supletorias;
 using Parroquia.Dominio.Vinculos;
 using Parroquia.Infraestructura.Numeracion;
+using Parroquia.Infraestructura.Supletorias;
 using Parroquia.Infraestructura.Vinculos;
 using Parroquia.Infraestructura.Constancias;
 using Parroquia.Infraestructura.Identidad;
@@ -29,6 +31,7 @@ public class ParroquiaDbContext(DbContextOptions<ParroquiaDbContext> options)
     public DbSet<ConstanciaEmitida> ConstanciasEmitidas => Set<ConstanciaEmitida>();
     public DbSet<Vinculo> Vinculos => Set<Vinculo>();
     public DbSet<LibroDigital> LibrosDigitales => Set<LibroDigital>();
+    public DbSet<Supletoria> Supletorias => Set<Supletoria>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -91,6 +94,7 @@ public class ParroquiaDbContext(DbContextOptions<ParroquiaDbContext> options)
         builder.ApplyConfiguration(new ConfiguracionConfirmacion());
         builder.ApplyConfiguration(new ConfiguracionMatrimonio());
         builder.ApplyConfiguration(new ConfiguracionVinculo());
+        builder.ApplyConfiguration(new ConfiguracionSupletoria());
 
         ConfiguracionAuditable.Aplicar(builder); // siempre al final
     }

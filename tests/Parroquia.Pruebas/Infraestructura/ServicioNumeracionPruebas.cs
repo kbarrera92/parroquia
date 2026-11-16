@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Parroquia.Dominio.Comun;
 using Parroquia.Dominio.Numeracion;
 using Parroquia.Dominio.Sacramentos;
+using Parroquia.Dominio.Supletorias;
 using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Persistencia;
 
@@ -255,5 +256,60 @@ public class ServicioNumeracionPruebas(ServidorPostgresFixture servidor) : IClas
         r.Ok.Should().BeFalse();
         r.Error.Should().Contain("transcritos");
         (await s.AbrirAsync(Apertura("82"))).Ok.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task AsignarNumero_entrega_el_mismo_numero_que_AsignarAsync_sin_tocar_ningun_registro()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await AbrirAsync(bd, Apertura(porFolio: 2, folios: 2));
+        await using var ctx = bd.Crear();
+
+        await using var tx = await ctx.Database.BeginTransactionAsync();
+        var servicio = new ServicioNumeracion(ctx, bd.Reloj);
+        var a = await servicio.AsignarNumeroAsync(Clave);
+        var b = await servicio.AsignarNumeroAsync(Clave);
+        await ctx.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        (a!.Libro, a.Folio, a.Partida).Should().Be(("81", "1", "1"));
+        (b!.Libro, b.Folio, b.Partida).Should().Be(("81", "1", "2"));
+        a.LibroDigitalId.Should().Be(b.LibroDigitalId);
+        await using var lectura = bd.Crear();
+        (await lectura.LibrosDigitales.SingleAsync()).Entregados.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task AsignarNumero_exige_transaccion_abierta()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await using var ctx = bd.Crear();
+
+        var act = () => new ServicioNumeracion(ctx, bd.Reloj).AsignarNumeroAsync(Clave);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task El_libro_de_supletorias_se_abre_con_su_clave_y_no_choca_con_un_libro_transcrito()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await using (var ctx = bd.Crear())
+        {
+            ctx.Supletorias.Add(new Supletoria { TipoSacramento = "bautismo", RegistroId = 1, Libro = "5", Folio = "1", Partida = "1", Testigo = "Testigo Uno" });
+            await ctx.SaveChangesAsync();
+        }
+        // El libro 5 de supletorias ya tiene una partida transcrita (sin recalcular derivados: se usa la entidad real).
+        await using (var ctx = bd.Crear())
+        {
+            var s = await ctx.Supletorias.SingleAsync();
+            s.ActualizarDerivados();
+            await ctx.SaveChangesAsync();
+        }
+
+        await using var ctx2 = bd.Crear();
+        var servicio = new ServicioNumeracion(ctx2, bd.Reloj);
+        (await servicio.AbrirAsync(new(Supletoria.ClaveLibroDigital, "5", 1, 1, 2, 2, ModoPartida.Correlativa))).Ok.Should().BeFalse();
+        (await servicio.AbrirAsync(new(Supletoria.ClaveLibroDigital, "6", 1, 1, 2, 2, ModoPartida.Correlativa))).Ok.Should().BeTrue();
     }
 }

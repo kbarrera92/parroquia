@@ -3,6 +3,7 @@ using Parroquia.Aplicacion.Comun;
 using Parroquia.Dominio.Comun;
 using Parroquia.Dominio.Numeracion;
 using Parroquia.Dominio.Sacramentos;
+using Parroquia.Dominio.Supletorias;
 using Parroquia.Infraestructura.Persistencia;
 using Parroquia.Infraestructura.Sacramentos;
 
@@ -38,6 +39,22 @@ public sealed class ServicioNumeracion(ParroquiaDbContext db, TimeProvider reloj
     /// </summary>
     public async Task<NumeroAsignado?> AsignarAsync(string clave, RegistroSacramental registro, CancellationToken ct = default)
     {
+        var numero = await AsignarNumeroAsync(clave, ct);
+        if (numero is null) return null;
+
+        registro.Libro = numero.Libro;
+        registro.Folio = numero.Folio;
+        registro.Partida = numero.Partida;
+        registro.LibroDigitalId = numero.LibroDigitalId;
+        return numero;
+    }
+
+    /// <summary>
+    /// Núcleo de <see cref="AsignarAsync"/>: entrega el siguiente número del libro abierto de <paramref name="clave"/> sin
+    /// escribirlo en ninguna entidad (lo usan las partidas supletorias). Mismas reglas: transacción abierta, bloqueo FOR UPDATE.
+    /// </summary>
+    public async Task<NumeroAsignado?> AsignarNumeroAsync(string clave, CancellationToken ct = default)
+    {
         if (db.Database.CurrentTransaction is null)
             throw new InvalidOperationException("La numeración exige una transacción abierta junto con el guardado del registro.");
 
@@ -53,14 +70,11 @@ public sealed class ServicioNumeracion(ParroquiaDbContext db, TimeProvider reloj
         if (libro is null) return null;
 
         var (folio, partida) = libro.Asignar();
-        registro.Libro = libro.Numero;
-        registro.Folio = folio.ToString();
-        registro.Partida = partida.ToString();
-        registro.LibroDigitalId = libro.Id;
+        var numero = new NumeroAsignado(libro.Id, libro.Numero, folio.ToString(), partida.ToString());
 
         if (libro.EstaLleno) await CerrarYAbrirSiguienteAsync(libro, ct);
 
-        return new NumeroAsignado(libro.Id, registro.Libro, registro.Folio, registro.Partida);
+        return numero;
     }
 
     /// <summary>Al llenarse se cierra y, si el número es correlativo y está libre, abre el siguiente con la misma configuración.</summary>
@@ -154,6 +168,7 @@ public sealed class ServicioNumeracion(ParroquiaDbContext db, TimeProvider reloj
             ModuloBautismo.ClaveModulo => db.Bautismos.IgnoreQueryFilters().AnyAsync(r => r.LibroOrden == orden && r.LibroDigitalId == null, ct),
             ModuloConfirmacion.ClaveModulo => db.Confirmaciones.IgnoreQueryFilters().AnyAsync(r => r.LibroOrden == orden && r.LibroDigitalId == null, ct),
             ModuloMatrimonio.ClaveModulo => db.Matrimonios.IgnoreQueryFilters().AnyAsync(r => r.LibroOrden == orden && r.LibroDigitalId == null, ct),
+            Supletoria.ClaveLibroDigital => db.Supletorias.IgnoreQueryFilters().AnyAsync(r => r.LibroOrden == orden && r.LibroDigitalId == null, ct),
             _ => Task.FromResult(false),
         };
     }
