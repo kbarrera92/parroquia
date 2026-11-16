@@ -98,24 +98,37 @@ public static class SembradorIdentidad
             detalle: $"usuario={usuario}; restablecimiento de emergencia", ct: ct);
     }
 
-    private static async Task SincronizarRolesAsync(RoleManager<IdentityRole> roles)
+    /// <summary>
+    /// Crea los roles que falten con la matriz <b>inicial</b> (<see cref="MatrizPermisos"/>). Después los permisos de
+    /// Capturista y Secretaria son del Administrador (pantalla Perfiles) y el arranque no los pisa: solo quita los que
+    /// ya no existen o son reservados. El Administrador siempre queda con todos.
+    /// </summary>
+    public static async Task SincronizarRolesAsync(RoleManager<IdentityRole> roles)
     {
         foreach (var nombre in Roles.Todos)
         {
             var rol = await roles.FindByNameAsync(nombre);
+            var nuevo = rol is null;
             if (rol is null)
             {
                 rol = new IdentityRole(nombre);
                 Comprobar(await roles.CreateAsync(rol), $"crear rol {nombre}");
             }
 
-            var deseados = MatrizPermisos.De(nombre);
             var actuales = (await roles.GetClaimsAsync(rol)).Where(c => c.Type == Permisos.TipoClaim).ToList();
+            IEnumerable<string> deseados;
+            if (nombre == Roles.Administrador)
+                deseados = Permisos.Todos;
+            else if (nuevo)
+                deseados = MatrizPermisos.De(nombre);
+            else
+                deseados = actuales.Select(c => c.Value).Where(p => Permisos.Todos.Contains(p) && !Permisos.Reservados.Contains(p));
+            var conjunto = deseados.ToHashSet();
 
-            foreach (var sobrante in actuales.Where(c => !deseados.Contains(c.Value)))
+            foreach (var sobrante in actuales.Where(c => !conjunto.Contains(c.Value)))
                 Comprobar(await roles.RemoveClaimAsync(rol, sobrante), $"quitar permiso {sobrante.Value}");
 
-            foreach (var permiso in deseados.Where(p => actuales.All(c => c.Value != p)))
+            foreach (var permiso in conjunto.Where(p => actuales.All(c => c.Value != p)))
                 Comprobar(await roles.AddClaimAsync(rol, new Claim(Permisos.TipoClaim, permiso)), $"agregar permiso {permiso}");
         }
     }

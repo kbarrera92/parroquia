@@ -5,6 +5,8 @@ using Parroquia.Dominio.Comun;
 using Parroquia.Dominio.Sacramentos;
 using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Persistencia;
+using Parroquia.Infraestructura.Supletorias;
+using Parroquia.Dominio.Supletorias;
 
 namespace Parroquia.Infraestructura.Sacramentos;
 
@@ -14,7 +16,8 @@ public sealed record DatosBautismoFormulario(
     string? Nombres, string? Apellidos, string? FechaBautismo, string? FechaNacimiento, string? LugarNacimiento,
     string? Padre, string? Madre, IReadOnlyList<string?>? Padrinos,
     string? Ministro, string? NotasMarginales,
-    bool Revisar, string? MotivoRevision, bool AsientoNuevo = false);
+    bool Revisar, string? MotivoRevision, bool AsientoNuevo = false,
+    DatosSupletoriaFormulario? Supletoria = null);
 
 /// <summary>Registro listo para mostrar o editar (sin exponer la entidad a la capa web).</summary>
 public sealed record VistaBautismo(
@@ -24,7 +27,7 @@ public sealed record VistaBautismo(
     string Libro, string Folio, string Partida, string? Ministro, string? NotasMarginales,
     bool Revisar, string? MotivoRevision, bool Anulado, string? MotivoAnulacion, uint Version,
     string? CreadoPor, DateTimeOffset CreadoEn, string? ModificadoPor, DateTimeOffset? ModificadoEn,
-    bool AsientoDelSistema = false);
+    bool AsientoDelSistema = false, VistaSupletoria? Supletoria = null);
 
 public sealed record FiltroBautismo(
     string? Texto = null, string? Libro = null, string? Folio = null,
@@ -48,6 +51,7 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
     public const string Clave = ModuloBautismo.ClaveModulo;
 
     private readonly ServicioNumeracion numeracion = new(db, reloj);
+    private readonly ServicioSupletorias supletorias = new(db, reloj);
 
     public async Task<ResultadoGuardado> GuardarAsync(
         DatosBautismoFormulario d, long? id = null, uint? version = null,
@@ -56,9 +60,15 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
         var errores = new List<ErrorCampo>();
         // Asiento nuevo: libro/folio/partida los pone el sistema al guardar, no se validan los digitados.
         var asientoNuevo = d.AsientoNuevo && id is null;
-        var libro = asientoNuevo ? "" : ValidadorRegistro.Texto(errores, nameof(d.Libro), d.Libro, "el libro", ValidadorRegistro.MaxClave, true);
-        var folio = asientoNuevo ? "" : ValidadorRegistro.Texto(errores, nameof(d.Folio), d.Folio, "el folio", ValidadorRegistro.MaxClave, true);
-        var partida = asientoNuevo ? "" : ValidadorRegistro.Texto(errores, nameof(d.Partida), d.Partida, "la partida", ValidadorRegistro.MaxClave, true);
+        // Partida supletoria: el libro/folio/partida originales son opcionales (los tres o ninguno); sin ellos el registro
+        // toma los del Libro de Supletorias.
+        var supletoriaNueva = d.Supletoria is not null && id is null;
+        var libro = asientoNuevo ? "" : ValidadorRegistro.Texto(errores, nameof(d.Libro), d.Libro, "el libro", ValidadorRegistro.MaxClave, !supletoriaNueva);
+        var folio = asientoNuevo ? "" : ValidadorRegistro.Texto(errores, nameof(d.Folio), d.Folio, "el folio", ValidadorRegistro.MaxClave, !supletoriaNueva);
+        var partida = asientoNuevo ? "" : ValidadorRegistro.Texto(errores, nameof(d.Partida), d.Partida, "la partida", ValidadorRegistro.MaxClave, !supletoriaNueva);
+        var sinOriginal = supletoriaNueva && libro is null && folio is null && partida is null;
+        if (supletoriaNueva && !sinOriginal && (libro is null || folio is null || partida is null) && errores.Count == 0)
+            errores.Add(new ErrorCampo(nameof(d.Libro), "Complete el libro, folio y partida del original, o déjelos vacíos si no se conocen."));
         var nombres = ValidadorRegistro.Texto(errores, nameof(d.Nombres), d.Nombres, "los nombres", ValidadorRegistro.MaxNombre, false);
         var apellidos = ValidadorRegistro.Texto(errores, nameof(d.Apellidos), d.Apellidos, "los apellidos", ValidadorRegistro.MaxNombre, false);
         var lugar = ValidadorRegistro.Texto(errores, nameof(d.LugarNacimiento), d.LugarNacimiento, "el lugar de nacimiento", ValidadorRegistro.MaxNombre, false);
@@ -100,6 +110,10 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
         else if (fechaBautismo is not null && NacioDespues(fechaNacimiento, fechaBautismo))
             errores.Add(new ErrorCampo(nameof(d.FechaNacimiento), "La fecha de nacimiento es posterior a la del bautismo."));
 
+        SupletoriaValidada? supletoriaValidada = null;
+        if (d.Supletoria is not null)
+            supletoriaValidada = supletorias.Validar(d.Supletoria, errores, hoy, testigoOpcional: d.Revisar && motivo is not null);
+
         if (errores.Count > 0) return new ResultadoGuardado(EstadoGuardado.Invalido, Errores: errores);
 
         Bautismo registro;
@@ -114,8 +128,8 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
             if (existente.Anulado) return new ResultadoGuardado(EstadoGuardado.Anulado, existente.Id);
 
             // Concurrencia optimista: el UPDATE solo prospera si la fila sigue en la versión que vio el usuario.
-            // Un asiento del sistema conserva su numeración: corregir = anular y asentar de nuevo (el número queda usado).
-            if (existente.EsAsientoDelSistema
+            // Un asiento del sistema o una supletoria sin original conservan su numeración: corregir = anular y asentar de nuevo.
+            if ((existente.EsAsientoDelSistema || Supletoria.EsLibroReservado(existente.Libro))
                 && (libro != existente.Libro || folio != existente.Folio || partida != existente.Partida))
                 return new ResultadoGuardado(EstadoGuardado.Invalido, Errores:
                     [new ErrorCampo(nameof(d.Libro), "El libro, folio y partida de un asiento del sistema no se pueden cambiar.")]);
@@ -124,11 +138,16 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
             registro = existente;
         }
 
-        if (!asientoNuevo && !registro.EsAsientoDelSistema && await numeracion.EsLibroDigitalAsync(Clave, libro!, ct))
+        if (!asientoNuevo && !sinOriginal && !registro.EsAsientoDelSistema && await numeracion.EsLibroDigitalAsync(Clave, libro!, ct))
             return new ResultadoGuardado(EstadoGuardado.Invalido, Errores:
                 [new ErrorCampo(nameof(d.Libro), $"El libro {libro} lo numera el sistema (libro digital): no se puede transcribir en él.")]);
 
-        if (!asientoNuevo)
+        // «Supletorio N» solo lo escribe el sistema en los registros que nacen de una supletoria.
+        if (!sinOriginal && Supletoria.EsLibroReservado(libro) && !Supletoria.EsLibroReservado(registro.Libro))
+            return new ResultadoGuardado(EstadoGuardado.Invalido, Errores:
+                [new ErrorCampo(nameof(d.Libro), $"El nombre de libro «{Supletoria.PrefijoLibro}» está reservado para las partidas supletorias.")]);
+
+        if (!asientoNuevo && !sinOriginal)
         {
             registro.Libro = libro!;
             registro.Folio = folio!;
@@ -161,7 +180,21 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
 
         try
         {
-            if (asientoNuevo)
+            if (supletoriaNueva)
+            {
+                await using var tx = await db.Database.BeginTransactionAsync(ct);
+                db.Bautismos.Add(registro); // el Id (HiLo) existe desde el Add: la supletoria apunta a él
+                var asiento = await supletorias.AsentarAsync(Clave, registro, supletoriaValidada!, sinOriginal, ct);
+                if (!asiento.Ok)
+                {
+                    db.Entry(registro).State = EntityState.Detached;
+                    return new ResultadoGuardado(EstadoGuardado.Invalido, Errores: [asiento.Error!]);
+                }
+
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+            else if (asientoNuevo)
             {
                 // Numerar y guardar en la misma transacción: el libro queda bloqueado hasta el commit.
                 await using var tx = await db.Database.BeginTransactionAsync(ct);
@@ -177,6 +210,12 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
             else
             {
                 if (id is null) db.Bautismos.Add(registro);
+                if (supletoriaValidada is not null && id is not null)
+                {
+                    var r = await supletorias.ActualizarAsync(Clave, registro.Id, supletoriaValidada, ct);
+                    if (!r.Ok) return new ResultadoGuardado(EstadoGuardado.Invalido, Errores: [r.Error!]);
+                }
+
                 await db.SaveChangesAsync(ct);
             }
         }
@@ -252,14 +291,16 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
         if (incluirAnulados) q = q.IgnoreQueryFilters();
 
         var b = await q.FirstOrDefaultAsync(x => x.Id == id, ct);
-        return b is null ? null : new VistaBautismo(
+        if (b is null) return null;
+        var supletoria = await supletorias.ObtenerPorRegistroAsync(Clave, b.Id, incluirAnulados, ct);
+        return new VistaBautismo(
             b.Id, b.Nombres, b.Apellidos,
             b.FechaBautismo.ATexto(), b.FechaBautismo.ATextoCaptura(),
             b.FechaNacimiento.ATexto(), b.FechaNacimiento.ATextoCaptura(),
             b.LugarNacimiento, b.Padre, b.Madre, [.. b.Padrinos],
             b.Libro, b.Folio, b.Partida, b.NombreMinistro, b.NotasMarginales,
             b.Revisar, b.MotivoRevision, b.Anulado, b.MotivoAnulacion, b.Version,
-            b.CreadoPor, b.CreadoEn, b.ModificadoPor, b.ModificadoEn, b.EsAsientoDelSistema);
+            b.CreadoPor, b.CreadoEn, b.ModificadoPor, b.ModificadoEn, b.EsAsientoDelSistema, supletoria);
     }
 
     /// <summary>Datos que imprime la constancia; null si el registro no existe o está anulado.</summary>
@@ -283,6 +324,7 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
 
         b.Anulado = true;
         b.MotivoAnulacion = limpio;
+        await supletorias.SincronizarAnulacionAsync(Clave, b.Id, true, limpio, ct);
         return await GuardarCambioAsync(ct);
     }
 
@@ -295,6 +337,7 @@ public sealed class ServicioBautismo(ParroquiaDbContext db, TimeProvider reloj)
 
         b.Anulado = false;
         b.MotivoAnulacion = null;
+        await supletorias.SincronizarAnulacionAsync(Clave, b.Id, false, null, ct);
         return await GuardarCambioAsync(ct);
     }
 

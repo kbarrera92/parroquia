@@ -10,6 +10,9 @@ namespace Parroquia.Infraestructura.Vinculos;
 public sealed record PersonaVinculada(
     ExtremoVinculo Extremo, ResultadoBusquedaRegistro Resumen, bool Directo, long? VinculoId, string? PorMedioDe);
 
+/// <summary>Un libro donde se puede dar de alta a la persona; <c>Persona</c> es el contrayente de destino ("" salvo Matrimonio).</summary>
+public sealed record OpcionAlta(string Clave, string Nombre, string RutaNuevo);
+
 /// <summary>
 /// Vínculos opcionales "misma persona" entre registros (RF-07). Los vínculos forman cadenas: si A↔B y B↔C, desde A se ve C
 /// "por medio de B". Desvincular anula (con historial), nunca borra. Quien llama exige <c>Registros.Editar</c>.
@@ -146,6 +149,24 @@ public sealed class ServicioVinculos(ParroquiaDbContext db, IEnumerable<IModuloS
             .ThenBy(x => x.Persona.Resumen.Sacramento, StringComparer.Ordinal)
             .ThenBy(x => x.Persona.Extremo.Id)
             .Select(x => x.Persona)];
+    }
+
+    /// <summary>
+    /// Libros en los que la persona aún no tiene registro (ni directo ni por la cadena de vínculos), en el orden del menú;
+    /// Matrimonio ofrece una opción por contrayente. Null si el registro no existe o está anulado.
+    /// </summary>
+    public async Task<IReadOnlyList<OpcionAlta>?> SacramentosFaltantesAsync(ExtremoVinculo inicio, CancellationToken ct = default)
+    {
+        if (Modulo(inicio.Tipo) is null || await ResumenAsync(inicio, ct) is null) return null;
+
+        var presentes = (await CadenaAsync(inicio, ct)).Select(p => p.Extremo.Tipo).Append(inicio.Tipo).ToHashSet();
+        return
+        [
+            .. modulos
+                .Where(m => !presentes.Contains(m.Clave))
+                .OrderBy(m => m.Orden).ThenBy(m => m.Clave, StringComparer.Ordinal)
+                .Select(m => new OpcionAlta(m.Clave, m.Nombre, m.RutaNuevo)),
+        ];
     }
 
     private async Task<Dictionary<ExtremoVinculo, ResultadoBusquedaRegistro>> ResumirAsync(

@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Parroquia.Aplicacion.Sacramentos;
 using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Dominio.Catalogos;
 using Parroquia.Dominio.Comun;
 using Parroquia.Infraestructura.Catalogos;
 using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Sacramentos;
+using Parroquia.Infraestructura.Vinculos;
+using Parroquia.Dominio.Supletorias;
+using Parroquia.Web.Presentacion;
 
 namespace Parroquia.Web.Pages.Confirmacion;
 
@@ -31,12 +35,16 @@ public class EntradaConfirmacion
     /// <summary>Alta de un sacramento nuevo: el sistema numera (libro/folio/partida); false = transcribir de un libro físico.</summary>
     public bool AsientoNuevo { get; set; }
 
+    /// <summary>Partida supletoria: null = registro normal. Con valor, el registro nace de una supletoria (o la edita).</summary>
+    public EntradaSupletoria? Supletoria { get; set; }
+
     /// <summary>Versión (xmin) que vio el usuario al abrir el registro; detecta ediciones simultáneas.</summary>
     public uint Version { get; set; }
 
     public DatosConfirmacionFormulario ADatos() =>
         new(Libro, Folio, Partida, Nombres, Apellidos, FechaConfirmacion, Padrinos,
-            Ministro, NotasMarginales, Revisar, MotivoRevision, AsientoNuevo);
+            Ministro, NotasMarginales, Revisar, MotivoRevision, AsientoNuevo,
+            Supletoria?.ADatos());
 }
 
 [Authorize(Policy = Permisos.RegistrosVer)]
@@ -44,16 +52,22 @@ public class EditarModel(
     ServicioConfirmacion servicio,
     ServicioNumeracion numeracion,
     ServicioCatalogo<Ministro> ministros,
+    ServicioVinculos vinculos,
+    IEnumerable<IModuloSacramental> modulos,
     IAuthorizationService autorizacion) : PageModel
 {
     private const string AccionNuevo = "nuevo";
     private const string SufijoForzar = "-forzar";
     private const string ModoSistema = "sistema";
+    private const string ModoSupletoria = "supletoria";
 
     /// <summary>Filas de padrino con que arranca un registro nuevo (lo habitual es uno o dos).</summary>
     private const int PadrinosIniciales = 2;
 
     [BindProperty] public EntradaConfirmacion Input { get; set; } = new();
+
+    /// <summary>Alta desde el botón «+» de la búsqueda: precarga los datos de la persona y la vincula al guardar.</summary>
+    [BindProperty(SupportsGet = true)] public OrigenAlta Origen { get; set; } = new();
 
     public long? Id { get; private set; }
     public bool EsNuevo => Id is null;
@@ -74,10 +88,17 @@ public class EditarModel(
     /// <summary>El registro que se edita lo numeró el sistema: libro/folio/partida son de solo lectura.</summary>
     public bool AsientoDelSistema { get; private set; }
 
+    /// <summary>Libro/folio/partida no se cambian: asiento del sistema o registro sin original que tomó el número supletorio.</summary>
+    public bool UbicacionBloqueada { get; private set; }
+
+    /// <summary>Formas de alta que permite el perfil: transcribir y/o asentar nuevo (define pestañas y qué se acepta al guardar).</summary>
+    public PermisosAlta Alta { get; private set; } = new(false, false);
+
     public async Task<IActionResult> OnGetAsync(long? id, string? libro, string? folio, string? partida, string? modo, CancellationToken ct)
     {
         if (!await PuedeAsync(id)) return Forbid();
         Id = id;
+        if (id is null) modo = Alta.ModoInicial(modo);
         var asiento = id is null && modo == ModoSistema;
 
         if (id is null)
@@ -85,9 +106,22 @@ public class EditarModel(
             Input = new EntradaConfirmacion
             {
                 Libro = libro, Folio = folio, Partida = partida, AsientoNuevo = asiento,
+                Supletoria = modo == ModoSupletoria ? new EntradaSupletoria { NumeraSistema = Alta.SupletoriaNumeraPorDefecto } : null,
                 Padrinos = [.. Enumerable.Repeat<string?>(null, PadrinosIniciales)],
             };
-            ContinuaSerie = asiento || !string.IsNullOrWhiteSpace(libro);
+            ContinuaSerie = asiento || modo == ModoSupletoria || !string.IsNullOrWhiteSpace(libro);
+
+            await Origen.CargarAsync(ServicioConfirmacion.Clave, vinculos, modulos, ct);
+            if (Origen.Datos is { } d)
+            {
+                Input.Nombres = d.Nombres;
+                Input.Apellidos = d.Apellidos;
+            }
+            if (Origen.Valido)
+            {
+                if (!Alta.PuedeAsentar) return Forbid();   // el «+» siempre es asiento nuevo
+                ForzarAsientoNuevo();
+            }
         }
         else
         {
@@ -100,6 +134,7 @@ public class EditarModel(
                 FechaConfirmacion = v.FechaConfirmacionCaptura,
                 Padrinos = [.. v.Padrinos], Ministro = v.Ministro, NotasMarginales = v.NotasMarginales,
                 Revisar = v.Revisar, MotivoRevision = v.MotivoRevision, Version = v.Version,
+                Supletoria = v.Supletoria is null ? null : EntradaSupletoria.De(v.Supletoria),
             };
         }
 
@@ -111,7 +146,7 @@ public class EditarModel(
     /// <summary>Fragmento htmx: una fila vacía para agregar otro padrino sin recargar la página.</summary>
     public async Task<IActionResult> OnGetFilaPadrinoAsync()
     {
-        var puede = (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosCrear)).Succeeded
+        var puede = (await PermisosAlta.DeAsync(autorizacion, User)).PuedeCrear
             || (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosEditar)).Succeeded;
         return puede ? Partial("_FilaPadrino", (string?)null) : Forbid();
     }
@@ -123,15 +158,32 @@ public class EditarModel(
         AccionPrevia = (accion ?? "guardar").Replace(SufijoForzar, "");
         var forzar = accion?.EndsWith(SufijoForzar, StringComparison.Ordinal) == true;
 
+        if (id is null)
+        {
+            await Origen.CargarAsync(ServicioConfirmacion.Clave, vinculos, modulos, ct);
+            if (Origen.Valido) ForzarAsientoNuevo();
+            if (!Alta.Permite(Input.AsientoNuevo, Input.Supletoria?.NumeraSistema)) return Forbid();
+        }
+
         var r = await servicio.GuardarAsync(Input.ADatos(), id, id is null ? null : Input.Version, forzar, ct);
         switch (r.Estado)
         {
             case EstadoGuardado.Ok:
                 var nombre = $"{Input.Nombres} {Input.Apellidos}".Trim();
                 TempData["Mensaje"] = $"Se guardó el registro de {(nombre.Length == 0 ? "(sin nombre)" : nombre)}.";
+                if (id is null && Origen.Valido)
+                    TempData["Mensaje"] += await Origen.VincularAsync(
+                        ServicioConfirmacion.Clave, r.Id,
+                        (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosEditar)).Succeeded, vinculos, ct);
                 var asientoGuardado = id is null && Input.AsientoNuevo;
                 if (asientoGuardado && await servicio.ObtenerVistaAsync(r.Id, ct: ct) is { } v)
                     TempData["Mensaje"] += $" Asiento numerado por el sistema: libro {v.Libro}, folio {v.Folio}, partida {v.Partida}.";
+                if (id is null && Input.Supletoria is not null && await servicio.ObtenerVistaAsync(r.Id, ct: ct) is { Supletoria: { } sup })
+                    TempData["Mensaje"] += $" Partida supletoria: libro {sup.Libro}, folio {sup.Folio}, partida {sup.Partida}.";
+
+                if (id is null && AccionPrevia == AccionNuevo && Input.Supletoria is not null)
+                    return RedirectToPage("Editar", new { modo = ModoSupletoria });
+
 
                 if (id is null && AccionPrevia == AccionNuevo)
                     return asientoGuardado
@@ -170,16 +222,32 @@ public class EditarModel(
         return Page();
     }
 
+    /// <summary>Un sacramento agregado desde la búsqueda («+») siempre es un asiento nuevo: numera el sistema.</summary>
+    private void ForzarAsientoNuevo()
+    {
+        Input.AsientoNuevo = true;
+        Input.Supletoria = null;
+        ContinuaSerie = true;
+    }
+
     private async Task CargarNumeracionAsync(CancellationToken ct)
     {
         if (Id is null && Input.AsientoNuevo)
             Proximo = await numeracion.ProximoAsync(ServicioConfirmacion.Clave, ct);
-        else if (Id is not null)
-            AsientoDelSistema = (await servicio.ObtenerVistaAsync(Id.Value, ct: ct))?.AsientoDelSistema == true;
+        else if (Id is not null && await servicio.ObtenerVistaAsync(Id.Value, ct: ct) is { } vista)
+        {
+            AsientoDelSistema = vista.AsientoDelSistema;
+            UbicacionBloqueada = vista.AsientoDelSistema || Supletoria.EsLibroReservado(vista.Libro);
+        }
     }
 
-    private async Task<bool> PuedeAsync(long? id) =>
-        (await autorizacion.AuthorizeAsync(User, id is null ? Permisos.RegistrosCrear : Permisos.RegistrosEditar)).Succeeded;
+    private async Task<bool> PuedeAsync(long? id)
+    {
+        Alta = await PermisosAlta.DeAsync(autorizacion, User);
+        return id is null
+            ? Alta.PuedeCrear
+            : (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosEditar)).Succeeded;
+    }
 
     private async Task CargarMinistrosAsync(CancellationToken ct) =>
         Ministros = [.. (await ministros.ListarAsync(ct)).Where(m => m.Activo).Select(m => m.Nombre)];

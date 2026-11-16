@@ -177,7 +177,7 @@ public class ComunionWebPruebas(AppFixture app)
     }
 
     [Fact]
-    public async Task Secretaria_ve_y_busca_pero_no_crea_edita_ni_anula()
+    public async Task Secretaria_ve_busca_y_corrige_pero_no_transcribe_libros_fisicos()
     {
         var capturista = await app.ClienteConRolAsync(Roles.Capturista);
         var u = Unico();
@@ -187,18 +187,16 @@ public class ComunionWebPruebas(AppFixture app)
 
         (await s.GetAsync("/Comunion")).StatusCode.Should().Be(HttpStatusCode.OK);
         var lista = await HtmlAsync(s, $"/Comunion?texto=lectura{u}");
-        lista.Should().Contain("Lectura" + u).And.NotContain("Nuevo registro");
+        lista.Should().Contain("Lectura" + u).And.Contain("Nuevo registro");
         var detalle = await HtmlAsync(s, $"/Comunion/Detalle/{id}");
-        detalle.Should().Contain("Lectura" + u).And.NotContain("Anular este registro").And.NotContain("/Comunion/Editar/");
+        detalle.Should().Contain("Lectura" + u);
 
-        var nuevo = await s.GetAsync("/Comunion/Editar");
-        nuevo.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        nuevo.Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
-        (await s.GetAsync($"/Comunion/Editar/{id}")).Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
+        // Sin AsentarNuevo→Transcribir: el alta abre directo en «Asiento nuevo» y no ofrece transcribir.
+        var nuevo = await HtmlAsync(s, "/Comunion/Editar");
+        nuevo.Should().Contain("Asiento nuevo (numera el sistema)").And.NotContain("Transcribir de un libro físico");
+        (await s.GetAsync($"/Comunion/Editar/{id}")).StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var anular = await AppFixture.PostFormAsync(s, "/Cuenta/Logout", $"/Comunion/Detalle/{id}?handler=Anular",
-            new() { ["motivo"] = "No debería poder" });
-        anular.Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
+        // Transcribir de un libro físico es del Capturista: el servidor lo rechaza aunque se fuerce el POST.
         var guardar = await AppFixture.PostFormAsync(s, "/Cuenta/Logout", "/Comunion/Editar", Campos("L" + Unico()));
         guardar.Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
     }
@@ -315,7 +313,7 @@ public class ComunionWebPruebas(AppFixture app)
     {
         var admin = await app.ClienteAdminAsync();
         await CerrarLibroDigitalAsync(admin);
-        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var c = await app.ClienteConRolAsync(Roles.Secretaria);
 
         var html = await HtmlAsync(c, "/Comunion/Editar?modo=sistema");
         html.Should().Contain("No hay un libro digital abierto").And.NotContain("name=\"Input.Libro\"");
@@ -329,7 +327,7 @@ public class ComunionWebPruebas(AppFixture app)
     }
 
     [Fact]
-    public async Task Capturista_asienta_un_sacramento_nuevo_y_el_sistema_le_da_el_numero()
+    public async Task Secretaria_asienta_un_sacramento_nuevo_y_el_sistema_le_da_el_numero()
     {
         var admin = await app.ClienteAdminAsync();
         await CerrarLibroDigitalAsync(admin);
@@ -337,7 +335,7 @@ public class ComunionWebPruebas(AppFixture app)
         (await AbrirLibroDigitalAsync(admin, numero)).StatusCode.Should().Be(HttpStatusCode.Redirect);
         try
         {
-            var c = await app.ClienteConRolAsync(Roles.Capturista);
+            var c = await app.ClienteConRolAsync(Roles.Secretaria);
             var form = await HtmlAsync(c, "/Comunion/Editar?modo=sistema");
             form.Should().Contain("Próximo número").And.Contain(numero);
 

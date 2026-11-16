@@ -6,8 +6,8 @@ Que dos empleados digiten los libros físicos de la Parroquia San Bartolomé (Ca
 ## 2. Usuarios y roles
 | Rol | Quién | Puede |
 |---|---|---|
-| **Capturista** | Los empleados que digitan | Buscar y ver registros; **crear, editar y anular** (anulación lógica, con motivo). **No** imprime constancias |
-| **Secretaria** | Quien atiende al feligrés | Buscar y ver registros (solo lectura); **imprimir y reimprimir** constancias. No crea ni edita |
+| **Capturista** | Empleados **temporales** que transcriben los libros físicos | Buscar y ver registros; **transcribir** de un libro físico (también la supletoria de papel), **editar y anular** (anulación lógica, con motivo). **No** asienta sacramentos nuevos ni imprime constancias |
+| **Secretaria** | Quien atiende al feligrés y asienta lo nuevo | Buscar y ver registros; **asentar sacramentos nuevos** (numera el sistema, incluida la supletoria numerada y el botón «+»), **editar y anular** (corregir un asiento del sistema = anular y asentar de nuevo); **imprimir y reimprimir** constancias. No transcribe libros físicos |
 | **Administrador** | Párroco / encargado designado | Todo lo anterior + usuarios, configuración, catálogos, ver historial y bitácora, cambiar fecha de emisión de una constancia |
 
 Todo lo que cualquier rol haga (ver, crear, editar, anular, imprimir, iniciar sesión, cambios de permisos) deja **bitácora** para auditorías.
@@ -39,13 +39,15 @@ Todo lo que cualquier rol haga (ver, crear, editar, anular, imprimir, iniciar se
 
 **RF-06 Búsqueda.** Por nombres y/o apellidos (parcial, sin tildes ni mayúsculas, tolerante a "de"), filtro por sacramento, rango de fechas, libro/folio. Resultado ordenado por apellidos, nombres. Matrimonio se encuentra por cualquiera de los dos contrayentes. Respuesta <1 s con ≥100 000 registros.
 
-**RF-07 Vínculos opcionales.** Desde un registro, "Vincular con…" busca otro registro y los relaciona como misma persona. Desde cualquiera se ven los vinculados. Quitar un vínculo no borra registros.
+**RF-07 Vínculos opcionales.** Desde un registro, "Vincular con…" busca otro registro y los relaciona como misma persona. Desde cualquiera se ven los vinculados. Quitar un vínculo no borra registros. Desde la búsqueda, el botón **«+»** de cada fila ofrece los sacramentos que la persona aún no tiene (según su cadena de vínculos; exige `Registros.AsentarNuevo`), abre el alta de ese libro **como asiento nuevo** (numera el sistema; requiere libro digital abierto) con nombres, apellidos y padres precargados (editables) y **vincula** el registro nuevo al guardar, para no digitar dos veces —con errores— a la misma persona.
 
 **RF-08 Constancia PDF.** Una plantilla por sacramento (`03-constancias.md`), con membrete, texto, fecha de emisión actual y firmante. Vista previa → imprimir/descargar. Solo Secretaria y Administrador imprimen. La fecha de emisión es la de hoy; solo el Administrador puede cambiarla (queda en bitácora). Firma siempre el párroco vigente. Cada emisión crea una entrada en la bitácora con instantánea del contenido.
 
 **RF-09 Historial.** Todo alta/modificación/anulación guarda usuario, fecha-hora y valores anterior/nuevo por campo. Consultable por registro. Los registros **no se borran físicamente**: el Capturista (o Administrador) los anula con motivo, y la anulación se puede revertir solo por Administrador.
 
-**RF-10 Usuarios.** Inicio de sesión individual, contraseñas con hash, bloqueo por intentos fallidos, cierre por inactividad, cambio de contraseña. Administrador crea, edita (nombre y rol; un rol por usuario), desactiva, desbloquea y restablece la contraseña de los usuarios (pantalla *Administración → Usuarios*). **No hay recuperación por correo** (sin internet): el Administrador genera una contraseña temporal que se muestra una sola vez y que el usuario debe cambiar al entrar. Política de contraseñas y demás controles: `04` ADR-05.
+**RF-10 Usuarios.** Inicio de sesión individual, contraseñas con hash, bloqueo por intentos fallidos, cierre por inactividad, cambio de contraseña. Administrador crea, edita (nombre, rol y fecha opcional «Acceso hasta» para capturistas temporales; un rol por usuario), desactiva, desbloquea y restablece la contraseña de los usuarios (pantalla *Administración → Usuarios*). **No hay recuperación por correo** (sin internet): el Administrador genera una contraseña temporal que se muestra una sola vez y que el usuario debe cambiar al entrar. Política de contraseñas y demás controles: `04` ADR-05.
+
+**RF-13 Perfiles.** El Administrador define desde *Administración → Perfiles* qué permisos tiene cada rol (Capturista, Secretaria) con casillas por permiso; el Administrador siempre tiene todos. Queda en bitácora; las sesiones de ese perfil se renuevan en ≤ 1 min.
 
 **RF-11 Configuración y catálogos.** Nombre de parroquia, dirección, teléfono, logo, párroco vigente (con historial de vigencia), texto fijo del membrete. Catálogo de **ministros** (sacerdotes; el campo permite elegir de la lista o escribir otro nombre) y de **tratamientos** de contrayentes.
 

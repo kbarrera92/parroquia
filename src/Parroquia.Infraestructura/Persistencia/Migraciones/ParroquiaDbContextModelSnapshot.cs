@@ -1449,6 +1449,157 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                     b.ToTable("matrimonio", (string)null);
                 });
 
+            modelBuilder.Entity("Parroquia.Dominio.Supletorias.Supletoria", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<long>("Id"), "secuencia_id");
+
+                    b.Property<bool>("Anulado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("anulado");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("CreadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("creado_por");
+
+                    b.Property<string>("Folio")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("folio");
+
+                    b.Property<string>("FolioOrden")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("folio_orden")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<string>("Libro")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("libro");
+
+                    b.Property<long?>("LibroDigitalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("libro_digital_id");
+
+                    b.Property<string>("LibroOrden")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("libro_orden")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificado_en");
+
+                    b.Property<string>("ModificadoPor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("modificado_por");
+
+                    b.Property<string>("MotivoAnulacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("motivo_anulacion");
+
+                    b.Property<string>("ParentescoTestigo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("parentesco_testigo");
+
+                    b.Property<string>("Partida")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("partida");
+
+                    b.Property<string>("PartidaOrden")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("partida_orden")
+                        .HasAnnotation("Parroquia:NoAuditar", true);
+
+                    b.Property<long>("RegistroId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("registro_id");
+
+                    b.Property<string>("Testigo")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("testigo");
+
+                    b.Property<string>("TipoSacramento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tipo_sacramento");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<int>("fecha_supletoria_clave_orden")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("integer")
+                        .HasColumnName("fecha_supletoria_clave_orden")
+                        .HasComputedColumnSql("COALESCE(fecha_supletoria_anio, 0) * 10000 + COALESCE(fecha_supletoria_mes, 0) * 100 + COALESCE(fecha_supletoria_dia, 0)", true);
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "FechaSupletoria", "Parroquia.Dominio.Supletorias.Supletoria.FechaSupletoria#FechaParcial", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<short?>("Anio")
+                                .HasColumnType("smallint")
+                                .HasColumnName("fecha_supletoria_anio");
+
+                            b1.Property<short?>("Dia")
+                                .HasColumnType("smallint")
+                                .HasColumnName("fecha_supletoria_dia");
+
+                            b1.Property<short?>("Mes")
+                                .HasColumnType("smallint")
+                                .HasColumnName("fecha_supletoria_mes");
+                        });
+
+                    b.HasKey("Id")
+                        .HasName("pk_supletoria");
+
+                    b.HasIndex("Anulado")
+                        .HasDatabaseName("ix_supletoria_anulado");
+
+                    b.HasIndex("LibroDigitalId")
+                        .HasDatabaseName("ix_supletoria_libro_digital_id");
+
+                    b.HasIndex("fecha_supletoria_clave_orden")
+                        .HasDatabaseName("ix_supletoria_fecha_supletoria_clave_orden");
+
+                    b.HasIndex("TipoSacramento", "RegistroId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_supletoria_tipo_sacramento_registro_id");
+
+                    b.HasIndex("LibroOrden", "FolioOrden", "PartidaOrden")
+                        .HasDatabaseName("ix_supletoria_libro_orden_folio_orden_partida_orden");
+
+                    b.ToTable("supletoria", (string)null);
+                });
+
             modelBuilder.Entity("Parroquia.Dominio.Vinculos.Vinculo", b =>
                 {
                     b.Property<long>("Id")
@@ -1705,6 +1856,10 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasColumnType("character varying(256)")
                         .HasColumnName("user_name");
 
+                    b.Property<DateOnly?>("VigenteHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_hasta");
+
                     b.HasKey("Id")
                         .HasName("pk_asp_net_users");
 
@@ -1957,6 +2112,15 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasConstraintName("fk_matrimonio_ministros_ministro_id");
 
                     b.Navigation("Ministro");
+                });
+
+            modelBuilder.Entity("Parroquia.Dominio.Supletorias.Supletoria", b =>
+                {
+                    b.HasOne("Parroquia.Dominio.Numeracion.LibroDigital", null)
+                        .WithMany()
+                        .HasForeignKey("LibroDigitalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_supletoria_libro_digital_libro_digital_id");
                 });
 #pragma warning restore 612, 618
         }

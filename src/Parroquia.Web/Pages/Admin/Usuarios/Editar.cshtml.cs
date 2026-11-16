@@ -18,6 +18,9 @@ public class EditarModel(ServicioUsuarios servicio, IUsuarioActual actual) : Pag
     [BindProperty, MaxLength(ServicioUsuarios.LongitudNombreMaxima)] public string? NombreCompleto { get; set; }
     [BindProperty] public string? Rol { get; set; } = Roles.Capturista;
 
+    /// <summary>Último día en que la cuenta puede entrar (capturistas temporales); vacío = sin vencimiento.</summary>
+    [BindProperty] public DateOnly? VigenteHasta { get; set; }
+
     public bool EsNuevo => string.IsNullOrEmpty(Id);
     public bool EsUnoMismo => !EsNuevo && Id == actual.Id;
 
@@ -31,6 +34,7 @@ public class EditarModel(ServicioUsuarios servicio, IUsuarioActual actual) : Pag
         Usuario = fila.Usuario;
         NombreCompleto = fila.NombreCompleto;
         Rol = fila.Rol;
+        VigenteHasta = fila.VigenteHasta;
         return Page();
     }
 
@@ -40,7 +44,7 @@ public class EditarModel(ServicioUsuarios servicio, IUsuarioActual actual) : Pag
 
         if (EsNuevo)
         {
-            var r = await servicio.CrearAsync(Usuario, NombreCompleto, Rol);
+            var r = await servicio.CrearAsync(Usuario, NombreCompleto, Rol, VigenteHasta);
             if (!r.Ok) return await Recargar(r.Error);
 
             TempData["Temporal"] = r.Temporal;
@@ -49,7 +53,7 @@ public class EditarModel(ServicioUsuarios servicio, IUsuarioActual actual) : Pag
             return RedirectToPage("Index");
         }
 
-        var e = await servicio.EditarAsync(Id!, NombreCompleto, Rol);
+        var e = await servicio.EditarAsync(Id!, NombreCompleto, Rol, VigenteHasta);
         if (!e.Ok) return await Recargar(e.Error);
 
         TempData["Mensaje"] = "Usuario actualizado.";

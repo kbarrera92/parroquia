@@ -106,14 +106,13 @@ public class ConfirmacionWebPruebas(AppFixture app)
     }
 
     [Fact]
-    public async Task Secretaria_no_puede_pedir_filas_de_padrino()
+    public async Task Secretaria_puede_pedir_filas_de_padrino_porque_asienta_y_corrige()
     {
         var s = await app.ClienteConRolAsync(Roles.Secretaria);
 
         var r = await s.GetAsync("/Confirmacion/Editar?handler=FilaPadrino");
 
-        r.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        r.Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
+        r.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -182,7 +181,7 @@ public class ConfirmacionWebPruebas(AppFixture app)
     }
 
     [Fact]
-    public async Task Secretaria_ve_y_busca_pero_no_crea_ni_edita()
+    public async Task Secretaria_ve_busca_y_corrige_pero_no_transcribe_libros_fisicos()
     {
         var capturista = await app.ClienteConRolAsync(Roles.Capturista);
         var u = Unico();
@@ -191,10 +190,11 @@ public class ConfirmacionWebPruebas(AppFixture app)
         var s = await app.ClienteConRolAsync(Roles.Secretaria);
 
         var lista = await HtmlAsync(s, $"/Confirmacion?texto=lectura{u}");
-        lista.Should().Contain("Lectura" + u).And.NotContain("Nuevo registro");
-        (await HtmlAsync(s, $"/Confirmacion/Detalle/{id}")).Should().NotContain("/Confirmacion/Editar/").And.NotContain("Anular este registro");
-        (await s.GetAsync("/Confirmacion/Editar")).Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
-        (await s.GetAsync($"/Confirmacion/Editar/{id}")).Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
+        lista.Should().Contain("Lectura" + u).And.Contain("Nuevo registro");
+        (await HtmlAsync(s, $"/Confirmacion/Detalle/{id}")).Should().Contain("Lectura" + u);
+        var nuevo = await HtmlAsync(s, "/Confirmacion/Editar");   // abre directo en «Asiento nuevo»
+        nuevo.Should().Contain("Asiento nuevo (numera el sistema)").And.NotContain("Transcribir de un libro físico");
+        (await s.GetAsync($"/Confirmacion/Editar/{id}")).StatusCode.Should().Be(HttpStatusCode.OK);
         (await PostAsync(s, "/Confirmacion/Editar", Campos("L" + Unico()), "/Cuenta/Logout")).Headers.Location!.ToString()
             .Should().Contain("/Cuenta/AccesoDenegado");
     }

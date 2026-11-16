@@ -1,0 +1,97 @@
+@using Parroquia.Web.Presentacion
+@* Campos de la partida supletoria. Se usa con <partial for="Input.Supletoria"> para que los nombres sean Input.Supletoria.X.
+   ViewData["Edicion"] = true: el número supletorio ya existe y no se cambia (corregir = anular y asentar de nuevo). *@
+@model EntradaSupletoria
+@{
+    var edicion = ViewData["Edicion"] is true;
+    var alta = ViewData["Alta"] as PermisosAlta ?? new PermisosAlta(true, true);
+}
+
+<div class="col-12">
+    <h2 class="h5 titulo-seccion">Partida supletoria</h2>
+    <p class="form-text mb-0">
+        Se asienta en el Libro de Supletorias, que es uno solo para todos los sacramentos. El registro se crea a la vez
+        y se busca e imprime como cualquier otro.
+    </p>
+</div>
+
+@if (edicion)
+{
+    <input asp-for="NumeraSistema" type="hidden" />
+    <div class="col-md-2">
+        <label asp-for="Libro" class="form-label">Libro supletorio</label>
+        <input asp-for="Libro" class="form-control" readonly />
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Folio" class="form-label">Folio</label>
+        <input asp-for="Folio" class="form-control" readonly />
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Partida" class="form-label">Partida</label>
+        <input asp-for="Partida" class="form-control" readonly />
+    </div>
+    <div class="col-md-6 align-self-end form-text">
+        El número del Libro de Supletorias no se cambia. Si hay un error, anule el registro y asiente de nuevo.
+    </div>
+}
+else
+{
+    @if (alta.PuedeTranscribir && alta.PuedeAsentar)
+    {
+        <div class="col-12">
+            <div class="form-check">
+                <input asp-for="NumeraSistema" class="form-check-input" aria-describedby="ayuda-numera" />
+                <label asp-for="NumeraSistema" class="form-check-label">Numerar con el sistema (asiento nuevo en el Libro de Supletorias)</label>
+            </div>
+            <div id="ayuda-numera" class="form-text">
+                Déjela sin marcar para transcribir una partida ya escrita en un libro supletorio de papel.
+            </div>
+            <span asp-validation-for="NumeraSistema" class="text-danger"></span>
+        </div>
+    }
+    else
+    {
+        @* Un solo perfil de alta: la forma de numerar queda fija (el servidor también la exige). *@
+        <input type="hidden" name="@Html.NameFor(m => m.NumeraSistema)" value="@(alta.PuedeAsentar ? "true" : "false")" />
+        <div class="col-12 form-text">
+            @(alta.PuedeAsentar
+                ? "El sistema asigna el libro, folio y partida del Libro de Supletorias al guardar."
+                : "Transcriba una partida ya escrita en un libro supletorio de papel.")
+        </div>
+    }
+    <div class="col-md-2">
+        <label asp-for="Libro" class="form-label">Libro supletorio</label>
+        <input asp-for="Libro" class="form-control" maxlength="30" autocomplete="off" />
+        <span asp-validation-for="Libro" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Folio" class="form-label">Folio</label>
+        <input asp-for="Folio" class="form-control" maxlength="30" autocomplete="off" />
+        <span asp-validation-for="Folio" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Partida" class="form-label">Partida</label>
+        <input asp-for="Partida" class="form-control" maxlength="30" autocomplete="off" />
+        <span asp-validation-for="Partida" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 align-self-end form-text">
+        Solo si transcribe del papel: el número del margen es la partida. Si el sistema numera, estos tres campos se ignoran.
+    </div>
+}
+
+<div class="col-md-4">
+    <label asp-for="Fecha" class="form-label">Fecha del asiento</label>
+    <input asp-for="Fecha" class="form-control" maxlength="10" placeholder="2/10/2026" autocomplete="off" aria-describedby="ayuda-fecha-supletoria" />
+    <div id="ayuda-fecha-supletoria" class="form-text">«En esta Parroquia a…»: día/mes/año (2/10/2026) o solo el año.</div>
+    <span asp-validation-for="Fecha" class="text-danger"></span>
+</div>
+<div class="col-md-5">
+    <label asp-for="Testigo" class="form-label">Testigo</label>
+    <input asp-for="Testigo" class="form-control" maxlength="150" autocomplete="off" />
+    <span asp-validation-for="Testigo" class="text-danger"></span>
+</div>
+<div class="col-md-3">
+    <label asp-for="ParentescoTestigo" class="form-label">Parentesco (opcional)</label>
+    <input asp-for="ParentescoTestigo" class="form-control" maxlength="100" placeholder="Tía" autocomplete="off" />
+    <span asp-validation-for="ParentescoTestigo" class="text-danger"></span>
+</div>

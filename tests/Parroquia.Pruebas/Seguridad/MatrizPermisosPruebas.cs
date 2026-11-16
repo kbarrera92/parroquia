@@ -5,27 +5,43 @@ namespace Parroquia.Pruebas.Seguridad;
 public class MatrizPermisosPruebas
 {
     [Fact]
-    public void Capturista_crea_edita_anula_pero_no_imprime()
+    public void Capturista_transcribe_edita_anula_pero_no_asienta_ni_imprime()
     {
         var p = MatrizPermisos.De(Roles.Capturista);
 
         p.Should().BeEquivalentTo(new[]
         {
             Permisos.RegistrosVer, Permisos.RegistrosBuscar,
-            Permisos.RegistrosCrear, Permisos.RegistrosEditar, Permisos.RegistrosAnular,
+            Permisos.RegistrosTranscribir, Permisos.RegistrosEditar, Permisos.RegistrosAnular,
         });
+        p.Should().NotContain(Permisos.RegistrosAsentarNuevo);
     }
 
     [Fact]
-    public void Secretaria_solo_lee_e_imprime()
+    public void Secretaria_asienta_lo_nuevo_corrige_e_imprime_pero_no_transcribe()
     {
         var p = MatrizPermisos.De(Roles.Secretaria);
 
         p.Should().BeEquivalentTo(new[]
         {
             Permisos.RegistrosVer, Permisos.RegistrosBuscar,
+            Permisos.RegistrosAsentarNuevo, Permisos.RegistrosEditar, Permisos.RegistrosAnular,
             Permisos.ConstanciasImprimir, Permisos.ConstanciasReimprimir,
         });
+        p.Should().NotContain(Permisos.RegistrosTranscribir);
+    }
+
+    [Fact]
+    public void Todo_permiso_tiene_descripcion_y_los_reservados_son_solo_del_administrador()
+    {
+        foreach (var permiso in Permisos.Todos)
+            Permisos.Descripciones.Should().ContainKey(permiso);
+
+        foreach (var reservado in Permisos.Reservados)
+        {
+            MatrizPermisos.De(Roles.Capturista).Should().NotContain(reservado);
+            MatrizPermisos.De(Roles.Secretaria).Should().NotContain(reservado);
+        }
     }
 
     [Fact]

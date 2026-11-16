@@ -52,6 +52,14 @@ public sealed class ModuloMatrimonio(ServicioMatrimonio servicio) : IModuloSacra
         Clave, Nombre, f.Id, nombres, apellidos, f.Fecha, f.Libro, f.Folio, f.Partida,
         f.Revisar, f.Anulado, RutaDetalle(f.Id), persona);
 
+    public async Task<DatosPersona?> DatosPersonaAsync(long id, string persona, CancellationToken ct = default)
+    {
+        var v = await servicio.ObtenerVistaAsync(id, ct: ct);
+        if (v is null) return null;
+        var c = persona switch { Esposo => v.Esposo, Esposa => v.Esposa, _ => null };
+        return c is null ? null : new DatosPersona(c.Nombres, c.Apellidos, c.Padre, c.Madre);
+    }
+
     public async Task<ConstanciaPreparada?> PrepararConstanciaAsync(
         long id, ContextoConstancia contexto, CancellationToken ct = default)
     {

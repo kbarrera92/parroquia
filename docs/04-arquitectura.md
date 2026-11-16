@@ -27,14 +27,15 @@ El acceso va por EF Core; el resto del código no depende del motor salvo la bú
 
 ## ADR-05 Identidad y autorización
 - ASP.NET Core Identity (hash PBKDF2/Argon según versión), bloqueo por intentos, cookie con expiración deslizante corta, sin registro público.
-- Los permisos se guardan como **claims de rol** (tipo `permiso`) y se sincronizan desde `MatrizPermisos` en cada arranque.
+- Los permisos se guardan como **claims de rol** (tipo `permiso`). `MatrizPermisos` es la matriz **inicial**: solo siembra un rol cuando se crea. Después los perfiles **Capturista** y **Secretaria** los edita el Administrador en *Administración → Perfiles* (`ServicioPerfiles`; cada cambio en `BitacoraAcceso`, evento `PermisosModificados`). El **Administrador** siempre tiene todos los permisos (el arranque los repone) y `Usuarios.Gestionar` es **reservado** (no se asigna a otros perfiles). El arranque ya no reescribe los permisos editados; solo quita los que dejaron de existir. Al guardar un perfil se renueva el sello de seguridad de sus usuarios: su sesión se cierra en ≤ 1 min y al entrar reciben los permisos nuevos.
 - Autorización por **políticas basadas en permisos** asignadas a roles; evita `if (rol == "...")` y facilita Fase 2.
 
 | Permiso | Capturista | Secretaria | Administrador |
 |---|:-:|:-:|:-:|
 | `Registros.Ver` / `Buscar` | ✅ | ✅ | ✅ |
-| `Registros.Crear` / `Editar` | ✅ | — | ✅ |
-| `Registros.Anular` | ✅ | — | ✅ |
+| `Registros.Transcribir` (libro físico; supletoria transcrita) | ✅ | — | ✅ |
+| `Registros.AsentarNuevo` (numera el sistema; supletoria numerada; botón «+») | — | ✅ | ✅ |
+| `Registros.Editar` / `Anular` | ✅ | ✅ | ✅ |
 | `Registros.RevertirAnulacion` | — | — | ✅ |
 | `Constancias.Imprimir` / `Reimprimir` | — | ✅ | ✅ |
 | `Constancias.CambiarFecha` | — | — | ✅ |
@@ -54,6 +55,7 @@ Basada en NIST SP 800-63B y OWASP ASVS, sin MFA ni correo (red local sin interne
 | Límite por IP | `AddRateLimiter` política `login`: solo el POST de `/Cuenta/Login`, `Seguridad:LoginPorMinuto` (10 por defecto) por IP y minuto; 429 con `Retry-After`. Contra el rociado de contraseñas que el bloqueo por cuenta no ve. |
 | Enumeración | Mismo mensaje para usuario inexistente, desactivado o contraseña errónea; el motivo real solo queda en la bitácora. |
 | Sesión | Cookie HttpOnly, SameSite=Strict, `Secure` siempre fuera de Development (también la de antiforgery), 30 min deslizantes. El sello de seguridad se revalida **cada minuto**: desactivar, cambiar rol, restablecer o cambiar contraseña cierra las otras sesiones. |
+| Cuenta vencida | `Usuario.VigenteHasta` (capturistas temporales): pasado ese día, `ConfirmacionUsuarioActivo` impide iniciar sesión y `SignInManagerParroquia` invalida la sesión abierta en la siguiente revalidación (≤ 1 min), sin tocar el sello. No se permite al Administrador ni una fecha pasada. El Administrador la extiende o la quita al editar el usuario. Motivo «Cuenta vencida» en la bitácora. |
 | Usuario desactivado | `RequireConfirmedAccount` + `ConfirmacionUsuarioActivo`: no inicia sesión aunque la contraseña sea correcta. |
 | Alta y recuperación | El Administrador crea el usuario o restablece su contraseña: se genera una temporal aleatoria (16 caracteres, CSPRNG, sin ambiguos 0/O/1/l/I), se muestra **una sola vez** (TempData, página sin caché) y el usuario queda con `DebeCambiarPassword`: `FiltroCambioObligatorio` lo manda a `/Cuenta/CambiarPassword` hasta que la cambie. Entregarla en persona. |
 | Cambio propio | Pide la contraseña actual; la nueva debe ser distinta; renueva la cookie y cierra otras sesiones. |
@@ -129,6 +131,16 @@ Los sacramentos que se celebran desde ahora nacen en el sistema y necesitan libr
 - **Alta:** `DatosXFormulario.AsientoNuevo` → se ignoran los Libro/Folio/Partida digitados; sin libro abierto el guardado falla con un mensaje claro y no consume número. Los avisos de duplicados (persona + fecha) corren **antes** de numerar. En la página, pestañas «Transcribir de un libro físico» (predeterminada) / «Asiento nuevo (numera el sistema)» con `?modo=sistema`.
 - **Reglas:** un asiento del sistema no cambia su libro/folio/partida (el servicio lo rechaza); no se puede transcribir en el número de un libro digital; anular no libera el número.
 - Pendiente (ver `06`): acta/hoja impresa de cada partida para encuadernar, si la diócesis lo exige.
+
+## ADR-12 Supletorias (Libro de Supletorias) ✅
+Una partida que no se encuentra en el libro o está dañada se repone en un libro propio. Debe quedar como un registro más de su sacramento: buscable, imprimible y vinculable sin cambiar nada de eso.
+- **Entidad separada** `Supletoria` (ver `02`) que apunta al registro por clave del módulo + id. El registro del sacramento es **normal** (`RegistroSacramental`): por eso la búsqueda de cada libro, la global, los vínculos y la constancia no cambian (la plantilla imprime el libro/folio/partida del registro, tal cual).
+- **Un solo libro para los 4 sacramentos.** Se numera con el mismo `LibroDigital`, clave `supletoria` (se abre en *Administración → Libros digitales*), o se transcribe de un libro supletorio de papel. `ServicioNumeracion.AsignarNumeroAsync(clave)` es el núcleo (transacción + `FOR UPDATE`) que comparten `AsignarAsync` (asientos del sistema) y las supletorias.
+- **`ServicioSupletorias`** (Infraestructura/Supletorias) se crea en cada `ServicioX` con el mismo `DbContext` (`new(db, reloj)`), como `ServicioNumeracion`, sin tocar constructores. `GuardarAsync` del módulo, con `DatosXFormulario.Supletoria`, hace en **una transacción**: `Add` del registro (el Id HiLo ya existe) → `AsentarAsync` (numera o verifica que el número transcrito no se repita, anuladas incluidas) → `SaveChanges`. Editar actualiza fecha y testigo (`ActualizarAsync`); anular/revertir se propaga con `SincronizarAnulacionAsync` en el mismo guardado.
+- **Libro del registro:** original conocido → ese; si no → `Supletorio N` (+ folio y partida supletorios). El libro «Supletorio…» está reservado y un registro sin original no cambia su libro/folio/partida (corregir = anular y asentar de nuevo).
+- **UI:** pestaña «Partida supletoria» (`?modo=supletoria`) en el `Editar` de cada sacramento (parcial `Shared/_CamposSupletoria`, modelo `EntradaSupletoria` en `Input.Supletoria.*`), filas de origen en el `Detalle` (`Shared/_DatosSupletoria`) y el listado `/Supletorias` («Libro de Supletorias», menú «Libros»). Sin permisos nuevos: ver `Registros.Buscar`; transcribir o asentar `Registros.Transcribir/AsentarNuevo` (según cómo se numere), editar/anular `Registros.Editar/Anular`.
+- No hay acta propia: se imprime la constancia del sacramento (pendiente en `06`).
+- Límite conocido: el número transcrito repetido se verifica por consulta, sin índice único (dos capturistas transcribiendo exactamente el mismo número al mismo tiempo podrían duplicarlo).
 
 ## Rendimiento de la búsqueda global (medido en M7)
 `PARROQUIA_MEDIR=1` ejecuta `BusquedaRendimientoPruebas`: 200 000 filas sintéticas (50 000 por libro, índices ya creados, `ANALYZE`), `BusquedaGlobal` real (4 módulos + EF, sin HTTP), 1 calentamiento + 20 repeticiones, PostgreSQL 17 en Docker (equipo de desarrollo). Resultado (ms): apellido raro + nombre p50 125 / p95 167; solo apellido raro 146 / 233; apellido común (~1,7 % por libro) 160 / 191; dos palabras comunes 24 / 32; nombre común + años 58 / 68; token de 2 letras (sin trigram) 114 / 144; apellido común + sacramento + libro 5 / 6; apellido común + folio 31 / 62. Todo p95 < 250 ms (RF-06: < 1 s). Hay que repetirla en el servidor real en M9.

@@ -1,0 +1,68 @@
+@page
+@using Parroquia.Aplicacion.Seguridad
+@model Parroquia.Web.Pages.Admin.PerfilesModel
+@{
+    ViewData["Title"] = "Perfiles";
+}
+
+<div class="mt-4">
+    <h1 class="h3">Perfiles y permisos</h1>
+    <p class="text-muted">
+        Elija qué puede hacer cada perfil. Los cambios se guardan por perfil y quedan en la bitácora. Las personas que ya
+        tengan sesión abierta con ese perfil deberán entrar de nuevo (su sesión se cierra en un minuto).
+        El Administrador siempre tiene todos los permisos.
+    </p>
+
+    @if (Model.Mensaje is not null)
+    {
+        <div class="alert alert-success" role="status">@Model.Mensaje</div>
+    }
+    @if (Model.Error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.Error</div>
+    }
+
+    <div class="row g-3">
+        @foreach (var perfil in Model.Perfiles)
+        {
+            <div class="col-12 col-xl-4">
+                <form method="post" class="card h-100">
+                    <input type="hidden" name="rol" value="@perfil.Rol" />
+                    <div class="card-body">
+                        <h2 class="h5">@perfil.Rol</h2>
+                        @if (!perfil.Editable)
+                        {
+                            <p class="form-text">Siempre tiene todos los permisos; no se puede cambiar.</p>
+                        }
+                        <fieldset>
+                            <legend class="visually-hidden">Permisos de @perfil.Rol</legend>
+                            @foreach (var permiso in Permisos.Todos)
+                            {
+                                var reservado = Permisos.Reservados.Contains(permiso);
+                                var marcado = perfil.Permisos.Contains(permiso);
+                                var id = $"p-{perfil.Rol}-{permiso}".Replace('.', '-');
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="@id" name="permisos" value="@permiso"
+                                           checked="@marcado" disabled="@(!perfil.Editable || reservado)" />
+                                    <label class="form-check-label" for="@id">
+                                        @Permisos.Descripciones[permiso]
+                                        @if (reservado && perfil.Editable)
+                                        {
+                                            <span class="form-text d-block">Solo del Administrador.</span>
+                                        }
+                                    </label>
+                                </div>
+                            }
+                        </fieldset>
+                    </div>
+                    @if (perfil.Editable)
+                    {
+                        <div class="card-footer barra-acciones">
+                            <button type="submit" class="btn btn-primary">Guardar @perfil.Rol</button>
+                        </div>
+                    }
+                </form>
+            </div>
+        }
+    </div>
+</div>

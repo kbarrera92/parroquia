@@ -15,6 +15,7 @@ using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Operacion;
 using Parroquia.Infraestructura.Persistencia;
 using Parroquia.Infraestructura.Sacramentos;
+using Parroquia.Infraestructura.Supletorias;
 using Parroquia.Infraestructura.Vinculos;
 
 namespace Parroquia.Infraestructura;
@@ -45,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<BusquedaGlobal>();
         services.AddScoped<ServicioVinculos>();
         services.AddScoped<ServicioNumeracion>();
+        services.AddScoped<ServicioSupletorias>();
         services.AddSingleton<GeneradorPdfConstancia>();
         services.AddScoped<ServicioConstancias>();
         services.AddScoped<IEstadoSistema, ServicioEstadoSistema>();
@@ -83,6 +85,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<ParroquiaDbContext>()
             .AddClaimsPrincipalFactory<FabricaClaimsUsuario>()
             .AddUserConfirmation<ConfirmacionUsuarioActivo>()
+            .AddSignInManager<SignInManagerParroquia>()
             .AddErrorDescriber<DescriptorErroresIdentidad>()
             .AddPasswordValidator<ValidadorContrasenaComun>()
             .AddDefaultTokenProviders();
@@ -94,6 +97,7 @@ public static class DependencyInjection
         // Revalida el sello de seguridad cada minuto: cambiar contraseña, rol o estado cierra las sesiones abiertas.
         services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.FromMinutes(1));
         services.AddScoped<ServicioUsuarios>();
+        services.AddScoped<ServicioPerfiles>();
 
         return services;
     }

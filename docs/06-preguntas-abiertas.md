@@ -2,7 +2,7 @@
 
 Última actualización: 8-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
 
-## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8; 37–39 libro digital; 40–45 en M9)
+## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8; 37–39 libro digital; 40–50 supletorias, «+», perfiles; 51–56 en M9)
 | # | Tema | Decisión |
 |---|---|---|
 | 1 | Servidor | PC de oficina, Windows 10/11, dedicada, encendida 24/7 |
@@ -44,12 +44,23 @@
 | 37 | Sacramentos nuevos (asientos del sistema) | Nacen en el sistema, que asigna libro/folio/partida **continuando la numeración de los libros físicos**; partidas por folio y folios por libro configurables; al llenarse un libro se abre el siguiente solo (`04` ADR-11) |
 | 38 | Partida anulada | **Conserva su número**; nunca se reutiliza |
 | 39 | Transcribir vs. asentar | Predeterminado = transcribir libro físico; el asiento nuevo se elige a propósito. No se puede transcribir en un libro digital ni abrir uno digital con el número de un libro ya transcrito |
-| 40 | HTTPS interno (M9) | **CA local propia** de la parroquia (10 años) que firma el certificado del servidor (2 años); los clientes instalan la CA una vez (`Instalar-Cliente.ps1`). Renovar el certificado del servidor no toca los clientes. Descartado: certificado autofirmado suelto |
-| 41 | Nombre del servidor (M9) | `parroquia.local` con IP fija y entrada en el archivo `hosts` de cada cliente (no depende del router) |
-| 42 | Copia fuera de sitio (M9) | **Carpeta parametrizable** (`Respaldo.Copia3` en `deploy.psd1`) y **cifrada** con una frase guardada también en un sobre sellado. El destino real (USB rotado, NAS, carpeta sincronizada) se decide después; ver pendientes |
-| 43 | Hospedaje y cuenta (M9) | Servicio de Windows `ParroquiaWeb` con cuenta virtual (sin contraseña ni privilegios; no lee los archivos de respaldo), .NET incluido en el paquete, PostgreSQL solo en `localhost`. Detalle en `04` ADR-08 |
-| 44 | Alertas de operación (M9) | La página *Estado del sistema* avisa: respaldo fallido o > 36 h, sin prueba de restauración o > 100 días, disco < 10 GB o < 10 %, certificado a < 30 días |
-| 45 | Hitos (M9) | M8 = usuarios y autenticación; **M9 = puesta en producción** (antes llamada M8 en `00` y `05`) |
+| 40 | Supletorias: qué son | Reposición de una partida que no se encontró en el libro o está dañada, en un **libro propio compartido por los 4 sacramentos**. Crea a la vez el registro del sacramento, que se busca e imprime como cualquiera (`04` ADR-12) |
+| 41 | Supletorias: modelo | **Entidad separada** que apunta al registro (no un tipo de asiento). Datos propios según la hoja real (`referencias/supletoria.jpeg`): fecha del asiento y un testigo con parentesco; sin motivo en lista, resolución ni declarantes múltiples |
+| 42 | Supletorias: numeración | Ambas formas: transcribir de un libro supletorio de papel o numerar con el sistema (libro digital con clave `supletoria`); libro/folio(hoja)/partida(margen) como los demás libros |
+| 43 | Supletorias: libro/folio/partida del registro | Los del **libro original** si se conocen (los tres o ninguno); si no, los del Libro de Supletorias con el libro escrito `Supletorio N`. La constancia imprime ese texto tal cual |
+| 44 | Supletorias: constancia | La misma de cada sacramento, texto sin cambios; sin acta propia por ahora |
+| 45 | Supletorias: siempre registro nuevo | No se asocia a un registro ya capturado |
+| 46 | Supletorias: anulación | Anular el registro anula su supletoria y revertir la reactiva; el número supletorio nunca se reutiliza |
+| 47 | Botón «+» en la búsqueda | Ofrece los libros sin registro en la cadena de vínculos de la fila (no adivina por nombre); abre el alta **siempre como asiento nuevo** (sin pestañas de transcribir ni supletoria; numera el sistema, requiere libro digital abierto) con nombres, apellidos y padres editables y vincula automáticamente al guardar. Matrimonio se ofrece **una sola vez**: el alta pregunta «¿Quién es X en este matrimonio?» con pestañas «El esposo» (por defecto) / «La esposa», que mueven los datos precargados al contrayente elegido (a los clientes les confundían dos opciones en el menú). Requiere `Registros.AsentarNuevo` (vincular, además, `Registros.Editar`) |
+| 48 | `Registros.Crear` dividido | Capturistas (temporales) **transcriben** libros físicos; los registros nuevos los **asienta la Secretaria**. Dos permisos: `Registros.Transcribir` y `Registros.AsentarNuevo`; la supletoria sigue al modo (transcrita → Transcribir, numerada → AsentarNuevo); el «+» siempre exige AsentarNuevo. La Secretaria también edita y anula (corregir un asiento = anular y asentar de nuevo). El Administrador tiene ambos |
+| 49 | Perfiles editables | El Administrador edita los permisos de Capturista y Secretaria en *Administración → Perfiles* (sin crear roles nuevos). `MatrizPermisos` queda como matriz inicial; el Administrador es fijo (todos) y `Usuarios.Gestionar` es reservado. Cambiar un perfil cierra las sesiones de sus usuarios en ≤ 1 min (deben entrar de nuevo) |
+| 50 | Capturistas temporales | Fecha opcional «Acceso hasta» por usuario (último día, hora de Guatemala): vencida, no inicia sesión y su sesión se cierra en ≤ 1 min; el Administrador la extiende. No aplica al Administrador |
+| 51 | HTTPS interno (M9) | **CA local propia** de la parroquia (10 años) que firma el certificado del servidor (2 años); los clientes instalan la CA una vez (`Instalar-Cliente.ps1`). Renovar el certificado del servidor no toca los clientes. Descartado: certificado autofirmado suelto |
+| 52 | Nombre del servidor (M9) | `parroquia.local` con IP fija y entrada en el archivo `hosts` de cada cliente (no depende del router) |
+| 53 | Copia fuera de sitio (M9) | **Carpeta parametrizable** (`Respaldo.Copia3` en `deploy.psd1`) y **cifrada** con una frase guardada también en un sobre sellado. El destino real (USB rotado, NAS, carpeta sincronizada) se decide después; ver pendientes |
+| 54 | Hospedaje y cuenta (M9) | Servicio de Windows `ParroquiaWeb` con cuenta virtual (sin contraseña ni privilegios; no lee los archivos de respaldo), .NET incluido en el paquete, PostgreSQL solo en `localhost`. Detalle en `04` ADR-08 |
+| 55 | Alertas de operación (M9) | La página *Estado del sistema* avisa: respaldo fallido o > 36 h, sin prueba de restauración o > 100 días, disco < 10 GB o < 10 %, certificado a < 30 días |
+| 56 | Hitos (M9) | M8 = usuarios y autenticación; **M9 = puesta en producción** (antes llamada M8 en `00` y `05`) |
 
 ## 🟡 Pendientes
 
@@ -71,6 +82,11 @@
 - **Instalación real pendiente.** `deploy/` se ensayó en el equipo de desarrollo con datos sintéticos (respaldo, copia cifrada, prueba de restauración, paquete publicado en modo Producción con HTTPS); falta ejecutar `Instalar-PostgreSQL`, `Nueva-CA`, `Nuevo-CertificadoServidor`, `Instalar-App` e `Instalar-Cliente` en el servidor y en un cliente reales (crean el servicio, el firewall y los permisos, que no se pueden ensayar sin administrador), y la **prueba de restauración en otra máquina** (`docs/operacion.md` §6).
 - Repetir la medición de búsqueda y listados en el servidor real con la base cargada (`04`).
 - Capacitación y piloto de 20 registros reales por sacramento (`00` §3.8) con el manual `docs/manual-usuario.md`.
+
+### Supletorias
+- **¿Se necesita el acta impresa de la partida supletoria?** La hoja del libro (texto «En esta Parroquia a… por no haberse encontrado la Partida correspondiente, ha comparecido como testigo…», con firma del testigo y del párroco) se escribe hoy a mano. Si debe imprimirse para firmar y encuadernar, es una plantilla nueva (golden con la hoja de ejemplo); la numeración ya está resuelta.
+- Por cada sacramento: número, folio y partida del último libro supletorio de papel, partidas por folio (la hoja de ejemplo trae 2 por folio) y cómo se numera, para abrir el primer libro digital de supletorias sin saltos.
+- ¿La hoja de ejemplo (confirmación) es igual para bautismo, comunión y matrimonio? El texto impreso dice «Fué bautizado en {sacramento}»; si cada sacramento tuviera su propia hoja o campos extra, se agregan como opcionales.
 
 ### Libro digital (asientos nuevos)
 - **¿Se necesita un libro impreso?** Consultar al párroco/diócesis si la partida nueva debe imprimirse (con firmas del ministro y párroco) y encuadernarse por libro, o si basta el registro digital. Hoy solo existe la constancia; el acta de partida sería una plantilla nueva por módulo (con `LibroDigitalId` y folio/partida ya asignados no hay que rehacer la numeración).

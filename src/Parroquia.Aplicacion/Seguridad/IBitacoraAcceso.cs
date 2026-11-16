@@ -15,6 +15,7 @@ public enum EventoAcceso
     PasswordRestablecida,
     PasswordCambiada,
     CuentaDesbloqueada,
+    PermisosModificados,
 }
 
 /// <summary>
