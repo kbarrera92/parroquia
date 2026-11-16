@@ -2,7 +2,7 @@
 
 Última actualización: 8-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
 
-## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8; 37–39 libro digital)
+## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8; 37–39 libro digital; 40–46 supletorias)
 | # | Tema | Decisión |
 |---|---|---|
 | 1 | Servidor | PC de oficina, Windows 10/11, dedicada, encendida 24/7 |
@@ -44,6 +44,13 @@
 | 37 | Sacramentos nuevos (asientos del sistema) | Nacen en el sistema, que asigna libro/folio/partida **continuando la numeración de los libros físicos**; partidas por folio y folios por libro configurables; al llenarse un libro se abre el siguiente solo (`04` ADR-11) |
 | 38 | Partida anulada | **Conserva su número**; nunca se reutiliza |
 | 39 | Transcribir vs. asentar | Predeterminado = transcribir libro físico; el asiento nuevo se elige a propósito. No se puede transcribir en un libro digital ni abrir uno digital con el número de un libro ya transcrito |
+| 40 | Supletorias: qué son | Reposición de una partida que no se encontró en el libro o está dañada, en un **libro propio compartido por los 4 sacramentos**. Crea a la vez el registro del sacramento, que se busca e imprime como cualquiera (`04` ADR-12) |
+| 41 | Supletorias: modelo | **Entidad separada** que apunta al registro (no un tipo de asiento). Datos propios según la hoja real (`referencias/supletoria.jpeg`): fecha del asiento y un testigo con parentesco; sin motivo en lista, resolución ni declarantes múltiples |
+| 42 | Supletorias: numeración | Ambas formas: transcribir de un libro supletorio de papel o numerar con el sistema (libro digital con clave `supletoria`); libro/folio(hoja)/partida(margen) como los demás libros |
+| 43 | Supletorias: libro/folio/partida del registro | Los del **libro original** si se conocen (los tres o ninguno); si no, los del Libro de Supletorias con el libro escrito `Supletorio N`. La constancia imprime ese texto tal cual |
+| 44 | Supletorias: constancia | La misma de cada sacramento, texto sin cambios; sin acta propia por ahora |
+| 45 | Supletorias: siempre registro nuevo | No se asocia a un registro ya capturado |
+| 46 | Supletorias: anulación | Anular el registro anula su supletoria y revertir la reactiva; el número supletorio nunca se reutiliza |
 
 ## 🟡 Pendientes
 
@@ -61,6 +68,11 @@
 ### Servidor y operación (antes de M8)
 - Versión exacta de Windows (si es Windows 10: ¿tiene actualizaciones de seguridad extendidas o se migra a Windows 11?). Marca y capacidad de disco, ¿hay UPS?, ¿disco externo para respaldos?, ¿dónde irá la copia fuera de sitio?
 - Confirmar que no habrá acceso desde fuera de la red de la parroquia.
+
+### Supletorias
+- **¿Se necesita el acta impresa de la partida supletoria?** La hoja del libro (texto «En esta Parroquia a… por no haberse encontrado la Partida correspondiente, ha comparecido como testigo…», con firma del testigo y del párroco) se escribe hoy a mano. Si debe imprimirse para firmar y encuadernar, es una plantilla nueva (golden con la hoja de ejemplo); la numeración ya está resuelta.
+- Por cada sacramento: número, folio y partida del último libro supletorio de papel, partidas por folio (la hoja de ejemplo trae 2 por folio) y cómo se numera, para abrir el primer libro digital de supletorias sin saltos.
+- ¿La hoja de ejemplo (confirmación) es igual para bautismo, comunión y matrimonio? El texto impreso dice «Fué bautizado en {sacramento}»; si cada sacramento tuviera su propia hoja o campos extra, se agregan como opcionales.
 
 ### Libro digital (asientos nuevos)
 - **¿Se necesita un libro impreso?** Consultar al párroco/diócesis si la partida nueva debe imprimirse (con firmas del ministro y párroco) y encuadernarse por libro, o si basta el registro digital. Hoy solo existe la constancia; el acta de partida sería una plantilla nueva por módulo (con `LibroDigitalId` y folio/partida ya asignados no hay que rehacer la numeración).
