@@ -1,0 +1,14 @@
+@using Parroquia.Infraestructura.Supletorias
+@* Filas <dt>/<dd> para el <dl class="row ficha"> del detalle de un registro que nació de una partida supletoria. *@
+@model VistaSupletoria
+
+<dt class="col-sm-3">Origen</dt>
+<dd class="col-sm-9">
+    <span class="badge text-bg-info">Partida supletoria</span>
+    @(Model.AsientoDelSistema ? "numerada por el sistema en el Libro de Supletorias" : "transcrita del Libro de Supletorias")
+</dd>
+<dt class="col-sm-3">Libro de Supletorias</dt>
+<dd class="col-sm-9">Libro @Model.Libro, folio @Model.Folio, partida @Model.Partida</dd>
+<dt class="col-sm-3">Fecha del asiento</dt><dd class="col-sm-9">@(Model.Fecha.Length == 0 ? "—" : Model.Fecha)</dd>
+<dt class="col-sm-3">Testigo</dt>
+<dd class="col-sm-9">@(Model.Testigo.Length == 0 ? "—" : Model.Testigo)@(string.IsNullOrWhiteSpace(Model.ParentescoTestigo) ? "" : $" ({Model.ParentescoTestigo})")</dd>

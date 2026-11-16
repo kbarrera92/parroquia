@@ -7,6 +7,8 @@ using Parroquia.Dominio.Comun;
 using Parroquia.Infraestructura.Catalogos;
 using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Sacramentos;
+using Parroquia.Dominio.Supletorias;
+using Parroquia.Web.Presentacion;
 
 namespace Parroquia.Web.Pages.Comunion;
 
@@ -27,11 +29,15 @@ public class EntradaComunion
     /// <summary>Alta de un sacramento nuevo: el sistema numera (libro/folio/partida); false = transcribir de un libro físico.</summary>
     public bool AsientoNuevo { get; set; }
 
+    /// <summary>Partida supletoria: null = registro normal. Con valor, el registro nace de una supletoria (o la edita).</summary>
+    public EntradaSupletoria? Supletoria { get; set; }
+
     /// <summary>Versión (xmin) que vio el usuario al abrir el registro; detecta ediciones simultáneas.</summary>
     public uint Version { get; set; }
 
     public DatosComunionFormulario ADatos() =>
-        new(Libro, Folio, Partida, Nombres, Apellidos, Fecha, Ministro, NotasMarginales, Revisar, MotivoRevision, AsientoNuevo);
+        new(Libro, Folio, Partida, Nombres, Apellidos, Fecha, Ministro, NotasMarginales, Revisar, MotivoRevision, AsientoNuevo,
+            Supletoria?.ADatos());
 }
 
 [Authorize(Policy = Permisos.RegistrosVer)]
@@ -44,6 +50,7 @@ public class EditarModel(
     private const string AccionNuevo = "nuevo";
     private const string SufijoForzar = "-forzar";
     private const string ModoSistema = "sistema";
+    private const string ModoSupletoria = "supletoria";
 
     [BindProperty] public EntradaComunion Input { get; set; } = new();
 
@@ -66,6 +73,9 @@ public class EditarModel(
     /// <summary>El registro que se edita lo numeró el sistema: libro/folio/partida son de solo lectura.</summary>
     public bool AsientoDelSistema { get; private set; }
 
+    /// <summary>Libro/folio/partida no se cambian: asiento del sistema o registro sin original que tomó el número supletorio.</summary>
+    public bool UbicacionBloqueada { get; private set; }
+
     public async Task<IActionResult> OnGetAsync(long? id, string? libro, string? folio, string? partida, string? modo, CancellationToken ct)
     {
         if (!await PuedeAsync(id)) return Forbid();
@@ -74,8 +84,13 @@ public class EditarModel(
         if (id is null)
         {
             var asiento = modo == ModoSistema;
-            Input = new EntradaComunion { Libro = libro, Folio = folio, Partida = partida, AsientoNuevo = asiento };
-            ContinuaSerie = asiento || !string.IsNullOrWhiteSpace(libro);
+            var supletoria = modo == ModoSupletoria;
+            Input = new EntradaComunion
+            {
+                Libro = libro, Folio = folio, Partida = partida, AsientoNuevo = asiento,
+                Supletoria = supletoria ? new EntradaSupletoria() : null,
+            };
+            ContinuaSerie = asiento || supletoria || !string.IsNullOrWhiteSpace(libro);
         }
         else
         {
@@ -87,6 +102,7 @@ public class EditarModel(
                 Libro = v.Libro, Folio = v.Folio, Partida = v.Partida, Nombres = v.Nombres, Apellidos = v.Apellidos,
                 Fecha = v.FechaCaptura, Ministro = v.Ministro, NotasMarginales = v.NotasMarginales,
                 Revisar = v.Revisar, MotivoRevision = v.MotivoRevision, Version = v.Version,
+                Supletoria = v.Supletoria is null ? null : EntradaSupletoria.De(v.Supletoria),
             };
         }
 
@@ -108,11 +124,16 @@ public class EditarModel(
                 var nombre = $"{Input.Nombres} {Input.Apellidos}".Trim();
                 TempData["Mensaje"] = $"Se guardó el registro de {(nombre.Length == 0 ? "(sin nombre)" : nombre)}.";
                 var asiento = id is null && Input.AsientoNuevo;
+                var supletoria = id is null && Input.Supletoria is not null;
                 if (asiento && await servicio.ObtenerVistaAsync(r.Id, ct: ct) is { } v)
                     TempData["Mensaje"] += $" Asiento numerado por el sistema: libro {v.Libro}, folio {v.Folio}, partida {v.Partida}.";
+                if (supletoria && await servicio.ObtenerVistaAsync(r.Id, ct: ct) is { Supletoria: { } sup })
+                    TempData["Mensaje"] += $" Partida supletoria: libro {sup.Libro}, folio {sup.Folio}, partida {sup.Partida}.";
 
                 if (id is null && AccionPrevia == AccionNuevo)
-                    return asiento
+                    return supletoria
+                        ? RedirectToPage("Editar", new { modo = ModoSupletoria })
+                        : asiento
                         ? RedirectToPage("Editar", new { modo = ModoSistema })
                         : RedirectToPage("Editar", new
                         {
@@ -156,7 +177,10 @@ public class EditarModel(
 
         if (Id is null && Input.AsientoNuevo)
             Proximo = await numeracion.ProximoAsync(ServicioComunion.Clave, ct);
-        else if (Id is not null)
-            AsientoDelSistema = (await servicio.ObtenerVistaAsync(Id.Value, ct: ct))?.AsientoDelSistema == true;
+        else if (Id is not null && await servicio.ObtenerVistaAsync(Id.Value, ct: ct) is { } v)
+        {
+            AsientoDelSistema = v.AsientoDelSistema;
+            UbicacionBloqueada = v.AsientoDelSistema || Supletoria.EsLibroReservado(v.Libro);
+        }
     }
 }
