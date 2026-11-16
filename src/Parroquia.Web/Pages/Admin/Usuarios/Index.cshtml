@@ -62,7 +62,7 @@
 
     <table class="table align-middle">
         <thead>
-            <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último inicio</th><th></th></tr>
+            <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Acceso hasta</th><th>Último inicio</th><th></th></tr>
         </thead>
         <tbody>
         @foreach (var f in Model.Filas)
@@ -74,10 +74,12 @@
                 <td>@f.Rol</td>
                 <td>
                     @if (!f.Activo) { <span class="badge bg-secondary">Desactivado</span> }
+                    else if (f.Vencida) { <span class="badge bg-secondary">Vencida</span> }
                     else if (f.Bloqueado) { <span class="badge bg-danger">Bloqueado</span> }
                     else { <span class="badge bg-success">Activo</span> }
                     @if (f.DebeCambiarPassword) { <span class="badge bg-warning text-dark">Contraseña temporal</span> }
                 </td>
+                <td class="text-nowrap">@(f.VigenteHasta is { } hasta ? hasta.ToString("dd/MM/yyyy") : "—")</td>
                 <td>@(f.UltimoInicio is { } u ? Parroquia.Aplicacion.Comun.HoraGuatemala.Local(u).ToString("dd/MM/yyyy HH:mm") : "—")</td>
                 <td class="text-end">
                     <div class="d-flex gap-1 justify-content-end flex-wrap">

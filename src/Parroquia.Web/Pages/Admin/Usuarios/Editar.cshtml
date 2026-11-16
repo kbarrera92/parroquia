@@ -44,10 +44,20 @@
                 else
                 {
                     <div class="form-text">
-                        Capturista: crea, edita y anula registros. Secretaria: busca e imprime constancias.
-                        Administrador: todo, incluidos usuarios y configuración.
+                        Los permisos de cada rol se ajustan en
+                        <a asp-page="/Admin/Perfiles">Perfiles y permisos</a>. De fábrica: Capturista transcribe libros físicos,
+                        edita y anula; Secretaria asienta lo nuevo, edita, anula e imprime; Administrador todo.
                     </div>
                 }
+            </div>
+            <div class="mb-3">
+                <label asp-for="VigenteHasta" class="form-label">Acceso hasta (opcional)</label>
+                <input asp-for="VigenteHasta" type="date" class="form-control" />
+                <div class="form-text">
+                    Para capturistas temporales: pasado ese día (inclusive) la cuenta ya no puede entrar y sus sesiones se cierran.
+                    Déjelo vacío si no vence; se puede extender después. No aplica al Administrador.
+                </div>
+                <span asp-validation-for="VigenteHasta" class="text-danger"></span>
             </div>
             @if (Model.EsNuevo)
             {

@@ -45,7 +45,7 @@ public class LoginModel(SignInManager<Usuario> signIn, UserManager<Usuario> usua
             resultado.IsLockedOut ? EventoAcceso.CuentaBloqueada : EventoAcceso.InicioSesionFallido,
             Usuario, usuario?.Id,
             detalle: usuario is null ? "Usuario inexistente"
-                : resultado.IsNotAllowed ? "Usuario desactivado"
+                : resultado.IsNotAllowed ? (usuario.Activo ? "Cuenta vencida" : "Usuario desactivado")
                 : resultado.IsLockedOut ? "Cuenta bloqueada" : "Contraseña incorrecta");
 
         ModelState.AddModelError("", resultado.IsLockedOut

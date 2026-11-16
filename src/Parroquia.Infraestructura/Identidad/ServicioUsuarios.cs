@@ -9,7 +9,8 @@ namespace Parroquia.Infraestructura.Identidad;
 
 public sealed record FilaUsuario(
     string Id, string Usuario, string NombreCompleto, string Rol, bool Activo,
-    bool Bloqueado, bool DebeCambiarPassword, DateTimeOffset CreadoEn, DateTimeOffset? UltimoInicio);
+    bool Bloqueado, bool DebeCambiarPassword, DateTimeOffset CreadoEn, DateTimeOffset? UltimoInicio,
+    DateOnly? VigenteHasta = null, bool Vencida = false);
 
 /// <summary>Resultado de crear/restablecer: la contraseña temporal solo existe aquí, para mostrarla una vez.</summary>
 public readonly record struct ResultadoConTemporal(bool Ok, string? Error = null, string? Temporal = null)
@@ -53,19 +54,22 @@ public sealed partial class ServicioUsuarios(
             .ToDictionaryAsync(x => x.Id, x => x.Fecha, ct);
 
         var ahora = reloj.GetUtcNow();
+        var hoy = HoraGuatemala.Hoy(reloj);
         return
         [
             .. filas.Select(x => new FilaUsuario(
                 x.U.Id, x.U.UserName ?? "", x.U.NombreCompleto, x.Rol, x.U.Activo,
                 x.U.LockoutEnd is { } fin && fin > ahora, x.U.DebeCambiarPassword, x.U.CreadoEn,
-                ultimos.TryGetValue(x.U.Id, out var f) ? f : null)),
+                ultimos.TryGetValue(x.U.Id, out var f) ? f : null,
+                x.U.VigenteHasta, x.U.Vencida(hoy))),
         ];
     }
 
     public async Task<FilaUsuario?> ObtenerAsync(string id, CancellationToken ct = default) =>
         (await ListarAsync(ct: ct)).FirstOrDefault(f => f.Id == id);
 
-    public async Task<ResultadoConTemporal> CrearAsync(string? usuario, string? nombreCompleto, string? rol, CancellationToken ct = default)
+    public async Task<ResultadoConTemporal> CrearAsync(
+        string? usuario, string? nombreCompleto, string? rol, DateOnly? vigenteHasta = null, CancellationToken ct = default)
     {
         var nombreUsuario = (usuario ?? "").Trim().ToLowerInvariant();
         var nombre = (nombreCompleto ?? "").Trim();
@@ -75,13 +79,14 @@ public sealed partial class ServicioUsuarios(
         if (nombre.Length == 0) return ResultadoConTemporal.Falla("Escriba el nombre completo.");
         if (nombre.Length > LongitudNombreMaxima) return ResultadoConTemporal.Falla($"El nombre no puede pasar de {LongitudNombreMaxima} caracteres.");
         if (rol is null || !Roles.Todos.Contains(rol)) return ResultadoConTemporal.Falla("Elija un rol válido.");
+        if (ErrorVigencia(rol, vigenteHasta, actual: null) is { } errorVigencia) return ResultadoConTemporal.Falla(errorVigencia);
         if (await usuarios.FindByNameAsync(nombreUsuario) is not null)
             return ResultadoConTemporal.Falla($"El usuario «{nombreUsuario}» ya existe.");
 
         var nuevo = new Usuario
         {
             UserName = nombreUsuario, NombreCompleto = nombre, Activo = true, LockoutEnabled = true,
-            DebeCambiarPassword = true, CreadoEn = reloj.GetUtcNow(),
+            DebeCambiarPassword = true, CreadoEn = reloj.GetUtcNow(), VigenteHasta = vigenteHasta,
         };
 
         var temporal = GeneradorContrasenaTemporal.Generar();
@@ -95,11 +100,13 @@ public sealed partial class ServicioUsuarios(
             return ResultadoConTemporal.Falla(Errores(conRol));
         }
 
-        await bitacora.RegistrarAsync(EventoAcceso.UsuarioCreado, detalle: $"usuario={nombreUsuario}; rol={rol}", ct: ct);
+        await bitacora.RegistrarAsync(EventoAcceso.UsuarioCreado, 
+            detalle: $"usuario={nombreUsuario}; rol={rol}" + (vigenteHasta is { } v ? $"; acceso hasta={Texto(v)}" : ""), ct: ct);
         return new ResultadoConTemporal(true, Temporal: temporal);
     }
 
-    public async Task<ResultadoOperacion> EditarAsync(string id, string? nombreCompleto, string? rol, CancellationToken ct = default)
+    public async Task<ResultadoOperacion> EditarAsync(
+        string id, string? nombreCompleto, string? rol, DateOnly? vigenteHasta = null, CancellationToken ct = default)
     {
         var u = await usuarios.FindByIdAsync(id);
         if (u is null) return ResultadoOperacion.Falla("El usuario no existe.");
@@ -108,6 +115,8 @@ public sealed partial class ServicioUsuarios(
         if (nombre.Length == 0) return ResultadoOperacion.Falla("Escriba el nombre completo.");
         if (nombre.Length > LongitudNombreMaxima) return ResultadoOperacion.Falla($"El nombre no puede pasar de {LongitudNombreMaxima} caracteres.");
         if (rol is null || !Roles.Todos.Contains(rol)) return ResultadoOperacion.Falla("Elija un rol válido.");
+
+        if (ErrorVigencia(rol, vigenteHasta, actual: u.VigenteHasta) is { } errorVigencia) return ResultadoOperacion.Falla(errorVigencia);
 
         var rolActual = (await usuarios.GetRolesAsync(u)).FirstOrDefault() ?? "";
         var cambiaRol = rolActual != rol;
@@ -129,6 +138,14 @@ public sealed partial class ServicioUsuarios(
             if (!guardado.Succeeded) return ResultadoOperacion.Falla(Errores(guardado));
         }
 
+        if (u.VigenteHasta != vigenteHasta)
+        {
+            cambios.Add($"acceso hasta: {(u.VigenteHasta is { } a ? Texto(a) : "(sin)")} → {(vigenteHasta is { } n ? Texto(n) : "(sin)")}");
+            u.VigenteHasta = vigenteHasta;
+            var guardadoVigencia = await usuarios.UpdateAsync(u);
+            if (!guardadoVigencia.Succeeded) return ResultadoOperacion.Falla(Errores(guardadoVigencia));
+        }
+
         if (cambiaRol)
         {
             var quitar = await usuarios.RemoveFromRolesAsync(u, await usuarios.GetRolesAsync(u));
@@ -142,6 +159,20 @@ public sealed partial class ServicioUsuarios(
         if (cambios.Count > 0)
             await bitacora.RegistrarAsync(EventoAcceso.UsuarioModificado, detalle: $"usuario={u.UserName}; {string.Join("; ", cambios)}", ct: ct);
         return ResultadoOperacion.Exito;
+    }
+
+    private static string Texto(DateOnly d) => d.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Reglas del vencimiento: no a una fecha pasada (salvo conservar la que ya tenía) y nunca al Administrador,
+    /// para que el sistema no se quede sin administrador por una fecha.
+    /// </summary>
+    private string? ErrorVigencia(string? rol, DateOnly? vigenteHasta, DateOnly? actual)
+    {
+        if (vigenteHasta is not { } hasta) return null;
+        if (rol == Roles.Administrador) return "El Administrador no puede tener fecha de vencimiento.";
+        if (hasta != actual && hasta < HoraGuatemala.Hoy(reloj)) return "La fecha de vencimiento no puede ser anterior a hoy.";
+        return null;
     }
 
     public async Task<ResultadoOperacion> CambiarEstadoAsync(string id, bool activo, CancellationToken ct = default)

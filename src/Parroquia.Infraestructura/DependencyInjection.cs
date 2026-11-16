@@ -82,6 +82,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<ParroquiaDbContext>()
             .AddClaimsPrincipalFactory<FabricaClaimsUsuario>()
             .AddUserConfirmation<ConfirmacionUsuarioActivo>()
+            .AddSignInManager<SignInManagerParroquia>()
             .AddErrorDescriber<DescriptorErroresIdentidad>()
             .AddPasswordValidator<ValidadorContrasenaComun>()
             .AddDefaultTokenProviders();
