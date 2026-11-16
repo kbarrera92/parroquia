@@ -48,8 +48,8 @@ public static class Permisos
         [ConstanciasImprimir] = "Imprimir constancias",
         [ConstanciasReimprimir] = "Reimprimir constancias",
         [ConstanciasCambiarFecha] = "Cambiar la fecha de emisión de una constancia",
-        [CatalogosGestionar] = "Gestionar catálogos (ministros, tratamientos, libros digitales)",
-        [Configuracion] = "Configuración de la parroquia y párrocos",
+        [CatalogosGestionar] = "Gestionar catálogos (ministros y tratamientos)",
+        [Configuracion] = "Configuración de la parroquia, párroco y libros digitales",
         [UsuariosGestionar] = "Gestionar usuarios y perfiles",
         [AuditoriaVer] = "Ver historial y bitácora",
     };
