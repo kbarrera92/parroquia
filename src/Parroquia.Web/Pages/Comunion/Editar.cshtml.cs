@@ -103,8 +103,9 @@ public class EditarModel(
             if (Origen.Datos is { } d)
             {
                 Input.Nombres = d.Nombres;
-                Input.Apellidos = d.Apellidos; // el foco queda en Libro: es lo que falta digitar
+                Input.Apellidos = d.Apellidos;
             }
+            if (Origen.Valido) ForzarAsientoNuevo();
         }
         else
         {
@@ -131,7 +132,11 @@ public class EditarModel(
         AccionPrevia = (accion ?? "guardar").Replace(SufijoForzar, "");
         var forzar = accion?.EndsWith(SufijoForzar, StringComparison.Ordinal) == true;
 
-        if (id is null) await Origen.CargarAsync(ServicioComunion.Clave, vinculos, modulos, ct);
+        if (id is null)
+        {
+            await Origen.CargarAsync(ServicioComunion.Clave, vinculos, modulos, ct);
+            if (Origen.Valido) ForzarAsientoNuevo();
+        }
 
         var r = await servicio.GuardarAsync(Input.ADatos(), id, id is null ? null : Input.Version, forzar, ct);
         switch (r.Estado)
@@ -186,6 +191,14 @@ public class EditarModel(
 
         await CargarApoyosAsync(ct);
         return Page();
+    }
+
+    /// <summary>Un sacramento agregado desde la búsqueda («+») siempre es un asiento nuevo: numera el sistema.</summary>
+    private void ForzarAsientoNuevo()
+    {
+        Input.AsientoNuevo = true;
+        Input.Supletoria = null;
+        ContinuaSerie = true;
     }
 
     private async Task<bool> PuedeAsync(long? id) =>

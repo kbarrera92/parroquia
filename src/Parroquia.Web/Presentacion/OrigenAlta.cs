@@ -30,15 +30,6 @@ public sealed class OrigenAlta
 
     public ExtremoVinculo Extremo => new(Clave ?? "", Id ?? 0, Persona ?? "");
 
-    /// <summary>Valores de ruta para conservar el origen al cambiar de pestaña.</summary>
-    public IDictionary<string, string?> Ruta() => !Presente
-        ? new Dictionary<string, string?>()
-        : new Dictionary<string, string?>
-        {
-            ["Origen.Clave"] = Clave, ["Origen.Id"] = Id.ToString(),
-            ["Origen.Persona"] = Persona, ["Origen.Como"] = Como,
-        };
-
     public async Task CargarAsync(
         string claveDestino, ServicioVinculos vinculos, IEnumerable<IModuloSacramental> modulos, CancellationToken ct)
     {

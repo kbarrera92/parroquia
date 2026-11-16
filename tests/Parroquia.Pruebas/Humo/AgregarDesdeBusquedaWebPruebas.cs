@@ -63,30 +63,37 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
     [Fact]
     public async Task Alta_desde_el_menu_precarga_vincula_y_deja_de_ofrecer_ese_libro()
     {
-        var c = await app.ClienteConRolAsync(Roles.Capturista);
-        var u = Unico();
-        var id = await CrearComunionAsync(c, "Ana", "Alta" + u);
-        var url = $"/Confirmacion/Editar?Origen.Clave=comunion&Origen.Id={id}";
-
-        var formulario = await HtmlAsync(c, url);
-        formulario.Should().Contain("misma persona").And.Contain("Alta" + u)
-            .And.Contain("name=\"Origen.Id\"");
-
-        var r = await AppFixture.PostFormAsync(c, url, "/Confirmacion/Editar", new()
+        var admin = await app.ClienteAdminAsync();
+        await CerrarLibroAsync(admin);
+        var numero = "D" + Unico();
+        (await AbrirLibroAsync(admin, numero)).StatusCode.Should().Be(HttpStatusCode.Redirect);
+        try
         {
-            ["Input.Libro"] = "L" + Unico(), ["Input.Folio"] = "1", ["Input.Partida"] = "1",
-            ["Input.Nombres"] = "Ana", ["Input.Apellidos"] = "Alta" + u, ["Input.FechaConfirmacion"] = "5/6/2005",
-            ["Input.Ministro"] = "", ["Input.NotasMarginales"] = "", ["Input.Revisar"] = "false",
-            ["Input.MotivoRevision"] = "", ["Input.Version"] = "0", ["accion"] = "guardar",
-            ["Origen.Clave"] = "comunion", ["Origen.Id"] = id.ToString(), ["Origen.Persona"] = "", ["Origen.Como"] = "",
-        });
-        r.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            var c = await app.ClienteConRolAsync(Roles.Capturista);
+            var u = Unico();
+            var id = await CrearComunionAsync(c, "Ana", "Alta" + u);
+            var url = $"/Confirmacion/Editar?Origen.Clave=comunion&Origen.Id={id}";
 
-        var cadena = await HtmlAsync(c, $"/Vinculos/comunion/{id}");
-        cadena.Should().Contain("/Confirmacion/Detalle/");
+            var formulario = await HtmlAsync(c, url);
+            formulario.Should().Contain("misma persona").And.Contain("Alta" + u)
+                .And.Contain("name=\"Origen.Id\"").And.Contain("Próximo número");
 
-        var menu = await HtmlAsync(c, $"/Agregar/comunion/{id}");
-        menu.Should().NotContain("Confirmación").And.Contain("Bautismo");
+            // Aunque se envíen Libro/Folio/Partida, el alta con origen es un asiento del sistema.
+            var r = await AppFixture.PostFormAsync(c, url, "/Confirmacion/Editar", CamposConfirmacion(u, id));
+            r.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            var idNuevo = long.Parse(Regex.Match(r.Headers.Location!.ToString(), @"Detalle/(\d+)").Groups[1].Value);
+            (await HtmlAsync(c, $"/Confirmacion/Detalle/{idNuevo}")).Should().Contain($"libro {numero}, folio 1, partida 1");
+
+            var cadena = await HtmlAsync(c, $"/Vinculos/comunion/{id}");
+            cadena.Should().Contain("/Confirmacion/Detalle/");
+
+            var menu = await HtmlAsync(c, $"/Agregar/comunion/{id}");
+            menu.Should().NotContain("Confirmación").And.Contain("Bautismo");
+        }
+        finally
+        {
+            await CerrarLibroAsync(admin);
+        }
     }
 
     [Fact]
@@ -102,6 +109,60 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
         Regex.Match(html, @"name=""Input\.Esposa\.Apellidos""[^>]*value=""([^""]*)""").Groups[1].Value.Should().Be("Esposa" + u);
         Regex.Match(html, @"name=""Input\.Esposo\.Apellidos""[^>]*value=""([^""]*)""").Groups[1].Value.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task Con_origen_no_hay_pestanas_y_sin_origen_las_pestanas_cambian_de_modo()
+    {
+        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var id = await CrearComunionAsync(c, "Tab", "Pestana" + Unico());
+
+        var conOrigen = await HtmlAsync(c, $"/Confirmacion/Editar?Origen.Clave=comunion&Origen.Id={id}");
+        conOrigen.Should().NotContain("nav-pills").And.Contain("name=\"Input.AsientoNuevo\"");
+        Regex.Match(conOrigen, @"name=""Input\.AsientoNuevo""[^>]*value=""([^""]*)""").Groups[1].Value.Should().Be("True");
+        conOrigen.Should().NotContain("name=\"Input.Libro\"");
+
+        var sinOrigen = await HtmlAsync(c, "/Confirmacion/Editar");
+        sinOrigen.Should().Contain("modo=sistema").And.Contain("modo=supletoria");
+        Regex.IsMatch(await HtmlAsync(c, "/Confirmacion/Editar?modo=sistema"), @"nav-link active""[^>]*modo=sistema").Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Alta_desde_origen_sin_libro_digital_abierto_no_guarda_ni_vincula()
+    {
+        var admin = await app.ClienteAdminAsync();
+        await CerrarLibroAsync(admin);
+        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var u = Unico();
+        var id = await CrearComunionAsync(c, "Ana", "SinLibro" + u);
+        var url = $"/Confirmacion/Editar?Origen.Clave=comunion&Origen.Id={id}";
+
+        (await HtmlAsync(c, url)).Should().Contain("No hay un libro digital abierto");
+
+        var r = await AppFixture.PostFormAsync(c, url, "/Confirmacion/Editar", CamposConfirmacion(u, id));
+        r.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await HtmlAsync(c, $"/Vinculos/comunion/{id}")).Should().NotContain("/Confirmacion/Detalle/");
+    }
+
+    private const string PaginaLibros = "/Admin/LibrosDigitales";
+
+    private static Task CerrarLibroAsync(HttpClient admin) =>
+        AppFixture.PostFormAsync(admin, PaginaLibros, $"{PaginaLibros}?handler=Cerrar", new() { ["clave"] = "confirmacion" });
+
+    private static Task<HttpResponseMessage> AbrirLibroAsync(HttpClient admin, string numero) =>
+        AppFixture.PostFormAsync(admin, PaginaLibros, $"{PaginaLibros}?handler=Abrir", new()
+        {
+            ["clave"] = "confirmacion", ["numero"] = numero, ["folioInicial"] = "1", ["partidaInicial"] = "1",
+            ["partidasPorFolio"] = "5", ["foliosPorLibro"] = "20", ["modoPartida"] = "Correlativa", ["partidasYaEnFolio"] = "0",
+        });
+
+    private static Dictionary<string, string> CamposConfirmacion(string u, long idOrigen) => new()
+    {
+        ["Input.Libro"] = "L" + Unico(), ["Input.Folio"] = "1", ["Input.Partida"] = "1",
+        ["Input.Nombres"] = "Ana", ["Input.Apellidos"] = "Alta" + u, ["Input.FechaConfirmacion"] = "5/6/2005",
+        ["Input.Ministro"] = "", ["Input.NotasMarginales"] = "", ["Input.Revisar"] = "false",
+        ["Input.MotivoRevision"] = "", ["Input.Version"] = "0", ["accion"] = "guardar",
+        ["Origen.Clave"] = "comunion", ["Origen.Id"] = idOrigen.ToString(), ["Origen.Persona"] = "", ["Origen.Como"] = "",
+    };
 
     [Fact]
     public async Task Origen_inexistente_abre_el_formulario_vacio_con_aviso()

@@ -144,6 +144,7 @@ public class EditarModel(
                 contrayente.Padre = d.Padre;
                 contrayente.Madre = d.Madre;
             }
+            if (Origen.Valido) ForzarAsientoNuevo();
         }
         else
         {
@@ -180,7 +181,11 @@ public class EditarModel(
         AccionPrevia = (accion ?? "guardar").Replace(SufijoForzar, "");
         var forzar = accion?.EndsWith(SufijoForzar, StringComparison.Ordinal) == true;
 
-        if (id is null) await Origen.CargarAsync(ServicioMatrimonio.Clave, vinculos, modulos, ct);
+        if (id is null)
+        {
+            await Origen.CargarAsync(ServicioMatrimonio.Clave, vinculos, modulos, ct);
+            if (Origen.Valido) ForzarAsientoNuevo();
+        }
 
         var r = await servicio.GuardarAsync(Input.ADatos(), id, id is null ? null : Input.Version, forzar, ct);
         switch (r.Estado)
@@ -267,6 +272,14 @@ public class EditarModel(
 
     private string? Sugerido(string texto) =>
         Tratamientos.FirstOrDefault(t => string.Equals(t, texto, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Un sacramento agregado desde la búsqueda («+») siempre es un asiento nuevo: numera el sistema.</summary>
+    private void ForzarAsientoNuevo()
+    {
+        Input.AsientoNuevo = true;
+        Input.Supletoria = null;
+        ContinuaSerie = true;
+    }
 
     private async Task CargarNumeracionAsync(CancellationToken ct)
     {
