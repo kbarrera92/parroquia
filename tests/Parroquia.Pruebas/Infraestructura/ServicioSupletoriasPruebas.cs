@@ -282,4 +282,72 @@ public class ServicioSupletoriasPruebas(ServidorPostgresFixture servidor) : ICla
         libro1.Total.Should().Be(2);
         otroSacramento.Total.Should().Be(0);
     }
+
+    // ---- Los otros tres sacramentos usan el mismo servicio compartido ----
+
+    [Fact]
+    public async Task Bautismo_sin_original_toma_el_numero_supletorio_se_busca_y_anula_junto_con_su_supletoria()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await using var ctx = bd.Crear();
+        var servicio = new ServicioBautismo(ctx, bd.Reloj);
+        var datos = new DatosBautismoFormulario(
+            null, null, null, "Alma Verónica", "Prueba Ejemplo", "24/8/1965", "9/6/1963", "Mazatenango",
+            "Natividad Prueba", null, ["Angela Ortega"], null, null, false, null, Supletoria: Sup(libro: "4", folio: "8", partida: "301"));
+
+        var r = await servicio.GuardarAsync(datos);
+
+        r.Estado.Should().Be(EstadoGuardado.Ok);
+        var vista = (await servicio.ObtenerVistaAsync(r.Id))!;
+        (vista.Libro, vista.Folio, vista.Partida).Should().Be(("Supletorio 4", "8", "301"));
+        vista.Supletoria!.Testigo.Should().Be("Felipa Prueba Ejemplo");
+        (await servicio.BuscarAsync(new FiltroBautismo(Texto: "alma veronica"), 1)).Items.Should().ContainSingle(f => f.Id == r.Id);
+
+        (await servicio.AnularAsync(r.Id, "Duplicado")).Ok.Should().BeTrue();
+        await using var lectura = bd.Crear();
+        (await lectura.Supletorias.IgnoreQueryFilters().SingleAsync()).Anulado.Should().BeTrue();
+        (await new ServicioBautismo(lectura, bd.Reloj).RevertirAnulacionAsync(r.Id)).Ok.Should().BeTrue();
+        (await lectura.Supletorias.SingleAsync()).Anulado.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Confirmacion_con_supletoria_numerada_por_el_sistema_y_original_conocido()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await AbrirLibroSupletoriasAsync(bd);
+        await using var ctx = bd.Crear();
+        var servicio = new ServicioConfirmacion(ctx, bd.Reloj);
+        var datos = new DatosConfirmacionFormulario(
+            "1", "349", "12", "Alma Verónica", "Prueba Ejemplo", "24/8/1965", ["Angela Ortega"], null, null, false, null,
+            Supletoria: Sup(sistema: true));
+
+        var r = await servicio.GuardarAsync(datos);
+
+        r.Estado.Should().Be(EstadoGuardado.Ok);
+        var vista = (await servicio.ObtenerVistaAsync(r.Id))!;
+        (vista.Libro, vista.Folio, vista.Partida).Should().Be(("1", "349", "12"));
+        (vista.Supletoria!.Libro, vista.Supletoria.Folio, vista.Supletoria.Partida, vista.Supletoria.AsientoDelSistema)
+            .Should().Be(("1", "1", "1", true));
+        (await servicio.BuscarAsync(new FiltroConfirmacion(Texto: "prueba ejemplo"), 1)).Items.Should().ContainSingle(f => f.Id == r.Id);
+    }
+
+    [Fact]
+    public async Task Matrimonio_sin_original_se_encuentra_por_cualquiera_de_los_contrayentes()
+    {
+        var bd = await servidor.NuevaBaseAsync();
+        await using var ctx = bd.Crear();
+        var servicio = new ServicioMatrimonio(ctx, bd.Reloj);
+        var esposo = new DatosContrayenteFormulario("don", "Carlos Genaro", "Alvarado Prueba", "29", "San Gabriel", "P. San Bartolome", "Samuel Alvarado", "Estefana de León");
+        var esposa = new DatosContrayenteFormulario("la Srita.", "Gloria Inés", "Ceballos Ejemplo", "22", "Mazatenango", "Catedral", "Raúl Ceballos", "Rosa Tupul");
+        var datos = new DatosMatrimonioFormulario(
+            null, null, null, esposo, esposa, "21/4/2007", null, ["Noe Lopez Garcia"], null, null, false, null,
+            Supletoria: Sup(libro: "6", folio: "2", partida: "77"));
+
+        var r = await servicio.GuardarAsync(datos);
+
+        r.Estado.Should().Be(EstadoGuardado.Ok);
+        (await servicio.ObtenerVistaAsync(r.Id))!.Libro.Should().Be("Supletorio 6");
+        (await servicio.BuscarAsync(new FiltroMatrimonio(Texto: "gloria ceballos"), 1)).Items.Should().ContainSingle(f => f.Id == r.Id);
+        (await servicio.BuscarAsync(new FiltroMatrimonio(Texto: "carlos alvarado"), 1)).Items.Should().ContainSingle(f => f.Id == r.Id);
+    }
 }

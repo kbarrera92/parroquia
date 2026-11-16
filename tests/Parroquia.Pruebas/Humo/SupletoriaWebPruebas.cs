@@ -129,4 +129,20 @@ public class SupletoriaWebPruebas(AppFixture app)
         anular.StatusCode.Should().Be(HttpStatusCode.Redirect);
         (await HtmlAsync(c, $"/Comunion?texto={apellido.ToLowerInvariant()}")).Should().NotContain(apellido);
     }
+
+    [Theory]
+    [InlineData("Bautismo")]
+    [InlineData("Confirmacion")]
+    [InlineData("Matrimonio")]
+    public async Task Los_otros_sacramentos_tambien_ofrecen_la_pestana_de_partida_supletoria(string modulo)
+    {
+        var c = await app.ClienteConRolAsync(Roles.Capturista);
+
+        var supletoria = await HtmlAsync(c, $"/{modulo}/Editar?modo=supletoria");
+        var normal = await HtmlAsync(c, $"/{modulo}/Editar");
+
+        supletoria.Should().Contain("Input.Supletoria.Testigo").And.Contain("Numerar con el sistema")
+            .And.Contain("Ubicación original en el libro (opcional)");
+        normal.Should().Contain("Partida supletoria").And.NotContain("Input.Supletoria.Testigo");
+    }
 }
