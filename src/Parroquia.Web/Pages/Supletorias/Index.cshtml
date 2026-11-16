@@ -1,0 +1,77 @@
+@page
+@model Parroquia.Web.Pages.Supletorias.IndexModel
+@{
+    ViewData["Title"] = "Libro de Supletorias";
+}
+
+<div class="mt-4">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Libro de Supletorias</h1>
+        @if (Model.PuedeCrear)
+        {
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Nueva partida supletoria
+                </button>
+                <ul class="dropdown-menu">
+                    @foreach (var s in Model.Sacramentos)
+                    {
+                        <li><a class="dropdown-item" href="@Url.Content("~" + s.RutaListado + "/Editar?modo=supletoria")">@s.Nombre</a></li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+    <p class="text-muted">
+        Partidas que no se encontraron en los libros o están dañadas. Cada una creó su registro en el libro del sacramento,
+        donde se busca e imprime como cualquier otro.
+    </p>
+
+    <div class="card panel-filtros mb-3"><div class="card-body">
+    <form method="get" id="busqueda" class="row g-2 align-items-end"
+          hx-get="@Url.Page("/Supletorias/Index")" hx-target="#resultados" hx-push-url="true"
+          hx-trigger="submit, change from:#sacramento, change from:#libro, change from:#folio, change from:#desde, change from:#hasta, change from:#anuladas">
+        <div class="col-12 col-md-4">
+            <label for="sacramento" class="form-label">Sacramento</label>
+            <select id="sacramento" name="sacramento" class="form-select">
+                <option value="">Todos</option>
+                @foreach (var s in Model.Sacramentos)
+                {
+                    <option value="@s.Clave" selected="@(s.Clave == Model.Sacramento)">@s.Nombre</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-md-2 col-lg-1">
+            <label for="libro" class="form-label">Libro</label>
+            <input id="libro" name="libro" value="@Model.Libro" class="form-control" />
+        </div>
+        <div class="col-6 col-md-2 col-lg-1">
+            <label for="folio" class="form-label">Folio</label>
+            <input id="folio" name="folio" value="@Model.Folio" class="form-control" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label for="desde" class="form-label">Año desde</label>
+            <input id="desde" name="desde" value="@Model.Desde" inputmode="numeric" maxlength="4" class="form-control" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label for="hasta" class="form-label">Año hasta</label>
+            <input id="hasta" name="hasta" value="@Model.Hasta" inputmode="numeric" maxlength="4" class="form-control" />
+        </div>
+        <div class="col-12 d-flex flex-wrap gap-3 align-items-center">
+            @if (Model.PuedeVerAnuladas)
+            {
+                <div class="form-check">
+                    <input id="anuladas" name="anuladas" type="checkbox" value="true" class="form-check-input" @(Model.Anuladas ? "checked" : null) />
+                    <label for="anuladas" class="form-check-label">Incluir anuladas</label>
+                </div>
+            }
+            <button type="submit" class="btn btn-outline-primary">Buscar</button>
+            <a asp-page="/Supletorias/Index" class="btn btn-link">Limpiar</a>
+        </div>
+    </form>
+    </div></div>
+
+    <div id="resultados">
+        <partial name="_Resultados" model="Model" />
+    </div>
+</div>

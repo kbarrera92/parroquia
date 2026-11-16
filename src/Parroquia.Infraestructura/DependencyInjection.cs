@@ -13,6 +13,7 @@ using Parroquia.Infraestructura.Identidad;
 using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Persistencia;
 using Parroquia.Infraestructura.Sacramentos;
+using Parroquia.Infraestructura.Supletorias;
 using Parroquia.Infraestructura.Vinculos;
 
 namespace Parroquia.Infraestructura;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<BusquedaGlobal>();
         services.AddScoped<ServicioVinculos>();
         services.AddScoped<ServicioNumeracion>();
+        services.AddScoped<ServicioSupletorias>();
         services.AddSingleton<GeneradorPdfConstancia>();
         services.AddScoped<ServicioConstancias>();
 

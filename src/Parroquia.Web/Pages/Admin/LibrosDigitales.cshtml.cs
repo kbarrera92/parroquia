@@ -5,6 +5,7 @@ using Parroquia.Aplicacion.Comun;
 using Parroquia.Aplicacion.Sacramentos;
 using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Dominio.Numeracion;
+using Parroquia.Dominio.Supletorias;
 using Parroquia.Infraestructura.Numeracion;
 
 namespace Parroquia.Web.Pages.Admin;
@@ -24,14 +25,18 @@ public class LibrosDigitalesModel(IEnumerable<IModuloSacramental> modulos, Servi
         var filas = new List<Fila>();
         foreach (var m in modulos.OrderBy(m => m.Orden))
             filas.Add(new Fila(m.Clave, m.Nombre, await numeracion.LibroAbiertoAsync(m.Clave)));
+        // El Libro de Supletorias es uno solo para los 4 sacramentos.
+        filas.Add(new Fila(Supletoria.ClaveLibroDigital, "Libro de Supletorias", await numeracion.LibroAbiertoAsync(Supletoria.ClaveLibroDigital)));
         Filas = filas;
     }
+
+    private bool ClaveValida(string? clave) => clave == Supletoria.ClaveLibroDigital || modulos.Any(m => m.Clave == clave);
 
     public async Task<IActionResult> OnPostAbrirAsync(
         string? clave, string? numero, int folioInicial, int partidaInicial,
         int partidasPorFolio, int foliosPorLibro, ModoPartida modoPartida, int partidasYaEnFolio)
     {
-        if (!modulos.Any(m => m.Clave == clave)) return NotFound();
+        if (!ClaveValida(clave)) return NotFound();
 
         var r = await numeracion.AbrirAsync(new DatosAperturaLibro(
             clave!, numero, folioInicial, partidaInicial, partidasPorFolio, foliosPorLibro,
@@ -41,7 +46,7 @@ public class LibrosDigitalesModel(IEnumerable<IModuloSacramental> modulos, Servi
 
     public async Task<IActionResult> OnPostCerrarAsync(string? clave)
     {
-        if (!modulos.Any(m => m.Clave == clave)) return NotFound();
+        if (!ClaveValida(clave)) return NotFound();
         return Terminar(await numeracion.CerrarAsync(clave!), "Se cerró el libro digital.");
     }
 

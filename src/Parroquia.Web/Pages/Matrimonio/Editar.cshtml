@@ -61,10 +61,13 @@
                 <input asp-for="Input.AsientoNuevo" type="hidden" />
                 <ul class="nav nav-pills">
                     <li class="nav-item">
-                        <a class="nav-link @(Model.Input.AsientoNuevo ? "" : "active")" asp-page="Editar">Transcribir de un libro físico</a>
+                        <a class="nav-link @(Model.Input.AsientoNuevo || Model.Input.Supletoria is not null ? "" : "active")" asp-page="Editar">Transcribir de un libro físico</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link @(Model.Input.AsientoNuevo ? "active" : "")" asp-page="Editar" asp-route-modo="sistema">Asiento nuevo (numera el sistema)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(Model.Input.Supletoria is not null ? "active" : "")" asp-page="Editar" asp-route-modo="supletoria">Partida supletoria</a>
                     </li>
                 </ul>
                 <span asp-validation-for="Input.AsientoNuevo" class="text-danger"></span>
@@ -92,8 +95,18 @@
         }
         else
         {
-            var soloLectura = Model.AsientoDelSistema;
-            <div class="col-12"><h2 class="h5 titulo-seccion">Ubicación en el libro</h2></div>
+            var soloLectura = Model.UbicacionBloqueada;
+            var esSupletoria = Model.Input.Supletoria is not null;
+            <div class="col-12">
+                <h2 class="h5 titulo-seccion">@(esSupletoria && Model.EsNuevo ? "Ubicación original en el libro (opcional)" : "Ubicación en el libro")</h2>
+                @if (esSupletoria && Model.EsNuevo)
+                {
+                    <p class="form-text mb-0">
+                        Si se conoce el libro, folio y partida donde debía estar, escríbalos los tres. Si no, déjelos vacíos:
+                        el registro llevará el número del Libro de Supletorias («Supletorio N»).
+                    </p>
+                }
+            </div>
             <div class="col-md-2">
                 <label asp-for="Input.Libro" class="form-label">Libro</label>
                 <input asp-for="Input.Libro" class="form-control" maxlength="30" autofocus="@(!focoNombres && !soloLectura)" autocomplete="off" readonly="@soloLectura" />
@@ -112,7 +125,7 @@
             @if (soloLectura)
             {
                 <div class="col-md-6 align-self-end form-text">
-                    Asiento numerado por el sistema: libro, folio y partida no se cambian. Si hay un error, anule el registro y asiente de nuevo.
+                    @(Model.AsientoDelSistema ? "Asiento numerado por el sistema" : "Registro sin libro original (lleva el número del Libro de Supletorias)"): libro, folio y partida no se cambian. Si hay un error, anule el registro y asiente de nuevo.
                 </div>
             }
         }
@@ -251,6 +264,11 @@
             <textarea asp-for="Input.NotasMarginales" class="form-control" rows="2" maxlength="2000"></textarea>
             <span asp-validation-for="Input.NotasMarginales" class="text-danger"></span>
         </div>
+
+        @if (Model.Input.Supletoria is not null)
+        {
+            <partial name="_CamposSupletoria" for="Input.Supletoria" view-data="@(new ViewDataDictionary(ViewData) { { "Edicion", !Model.EsNuevo } })" />
+        }
 
         <div class="col-12"><h2 class="h5 titulo-seccion">Revisión</h2></div>
         <div class="col-12">
