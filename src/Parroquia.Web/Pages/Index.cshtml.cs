@@ -21,6 +21,9 @@ public class IndexModel(
     public ResultadoGlobal Resultado { get; private set; } = ResultadoGlobal.Vacio(false);
     public bool HayTexto => !string.IsNullOrWhiteSpace(Texto);
     public bool PuedeImprimir { get; private set; }
+
+    /// <summary>Puede dar de alta registros: ve el botón «+» (agregar un sacramento a la persona encontrada).</summary>
+    public bool PuedeCrear { get; private set; }
     public IReadOnlyList<IModuloSacramental> Modulos { get; private set; } = [];
 
     public bool HayFiltros =>
@@ -41,6 +44,8 @@ public class IndexModel(
         // La página de impresión decide si es la 1.ª impresión o reimpresión; basta con poder hacer alguna.
         PuedeImprimir = (await autorizacion.AuthorizeAsync(User, Permisos.ConstanciasImprimir)).Succeeded
             || (await autorizacion.AuthorizeAsync(User, Permisos.ConstanciasReimprimir)).Succeeded;
+
+        PuedeCrear = (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosCrear)).Succeeded;
 
         if (HayTexto)
             Resultado = await busqueda.BuscarAsync(

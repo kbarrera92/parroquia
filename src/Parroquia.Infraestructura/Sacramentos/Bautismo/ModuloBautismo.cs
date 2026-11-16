@@ -35,6 +35,12 @@ public sealed class ModuloBautismo(ServicioBautismo servicio) : IModuloSacrament
             Clave, Nombre, f.Id, f.Nombres, f.Apellidos, f.Fecha, f.Libro, f.Folio, f.Partida,
             f.Revisar, f.Anulado, RutaDetalle(f.Id)))];
 
+    public async Task<DatosPersona?> DatosPersonaAsync(long id, string persona, CancellationToken ct = default)
+    {
+        var v = await servicio.ObtenerVistaAsync(id, ct: ct);
+        return v is null || persona.Length != 0 ? null : new DatosPersona(v.Nombres, v.Apellidos, v.Padre, v.Madre);
+    }
+
     public async Task<ConstanciaPreparada?> PrepararConstanciaAsync(
         long id, ContextoConstancia contexto, CancellationToken ct = default)
     {

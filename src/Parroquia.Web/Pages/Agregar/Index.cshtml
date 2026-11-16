@@ -1,0 +1,17 @@
+@page "/Agregar/{clave}/{id:long}/{persona?}"
+@model Parroquia.Web.Pages.Agregar.IndexModel
+@{
+    Layout = null; // fragmento htmx: solo los elementos del menú
+}
+@if (Model.Opciones.Count == 0)
+{
+    <li><span class="dropdown-item-text text-muted">Ya tiene todos los sacramentos vinculados.</span></li>
+}
+else
+{
+    <li><h6 class="dropdown-header">Agregar a la misma persona</h6></li>
+    @foreach (var o in Model.Opciones)
+    {
+        <li><a class="dropdown-item" href="@Model.Enlace(o)">@Parroquia.Web.Pages.Agregar.IndexModel.Etiqueta(o)</a></li>
+    }
+}

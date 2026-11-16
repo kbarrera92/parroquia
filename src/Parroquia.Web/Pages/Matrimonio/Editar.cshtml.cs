@@ -9,6 +9,7 @@ using Parroquia.Dominio.Comun;
 using Parroquia.Infraestructura.Catalogos;
 using Parroquia.Infraestructura.Numeracion;
 using Parroquia.Infraestructura.Sacramentos;
+using Parroquia.Infraestructura.Vinculos;
 using Parroquia.Dominio.Supletorias;
 using Parroquia.Web.Presentacion;
 
@@ -70,6 +71,8 @@ public class EditarModel(
     ServicioNumeracion numeracion,
     ServicioCatalogo<Ministro> ministros,
     ServicioCatalogo<Tratamiento> tratamientos,
+    ServicioVinculos vinculos,
+    IEnumerable<IModuloSacramental> modulos,
     IAuthorizationService autorizacion) : PageModel
 {
     private const string AccionNuevo = "nuevo";
@@ -85,6 +88,9 @@ public class EditarModel(
     private const string TratamientoEsposaPorDefecto = "la Srita.";
 
     [BindProperty] public EntradaMatrimonio Input { get; set; } = new();
+
+    /// <summary>Alta desde el botón «+» de la búsqueda: precarga a la persona en el contrayente <c>Como</c> y la vincula al guardar.</summary>
+    [BindProperty(SupportsGet = true)] public OrigenAlta Origen { get; set; } = new();
 
     public long? Id { get; private set; }
     public bool EsNuevo => Id is null;
@@ -128,6 +134,16 @@ public class EditarModel(
                 Testigos = [.. Enumerable.Repeat<string?>(null, TestigosIniciales)],
             };
             ContinuaSerie = asiento || modo == ModoSupletoria || !string.IsNullOrWhiteSpace(libro);
+
+            await Origen.CargarAsync(ServicioMatrimonio.Clave, vinculos, modulos, ct);
+            if (Origen.Datos is { } d)
+            {
+                var contrayente = Origen.Como == ModuloMatrimonio.Esposa ? Input.Esposa : Input.Esposo;
+                contrayente.Nombres = d.Nombres;
+                contrayente.Apellidos = d.Apellidos;
+                contrayente.Padre = d.Padre;
+                contrayente.Madre = d.Madre;
+            }
         }
         else
         {
@@ -164,11 +180,17 @@ public class EditarModel(
         AccionPrevia = (accion ?? "guardar").Replace(SufijoForzar, "");
         var forzar = accion?.EndsWith(SufijoForzar, StringComparison.Ordinal) == true;
 
+        if (id is null) await Origen.CargarAsync(ServicioMatrimonio.Clave, vinculos, modulos, ct);
+
         var r = await servicio.GuardarAsync(Input.ADatos(), id, id is null ? null : Input.Version, forzar, ct);
         switch (r.Estado)
         {
             case EstadoGuardado.Ok:
                 TempData["Mensaje"] = $"Se guardó el matrimonio de {Resumen()}.";
+                if (id is null && Origen.Valido)
+                    TempData["Mensaje"] += await Origen.VincularAsync(
+                        ServicioMatrimonio.Clave, r.Id,
+                        (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosEditar)).Succeeded, vinculos, ct);
                 var asientoGuardado = id is null && Input.AsientoNuevo;
                 if (asientoGuardado && await servicio.ObtenerVistaAsync(r.Id, ct: ct) is { } v)
                     TempData["Mensaje"] += $" Asiento numerado por el sistema: libro {v.Libro}, folio {v.Folio}, partida {v.Partida}.";

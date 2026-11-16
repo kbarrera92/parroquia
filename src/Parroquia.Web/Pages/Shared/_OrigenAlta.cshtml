@@ -1,0 +1,21 @@
+@model Parroquia.Web.Presentacion.OrigenAlta
+@* Va dentro del <form> del alta: el aviso informa y los campos ocultos llevan el origen al guardar. *@
+@if (Model.Valido)
+{
+    <div class="col-12">
+        <div class="alert alert-info mb-0" role="status">
+            Nuevo registro de la <strong>misma persona</strong> que @Model.Descripcion.
+            Los datos vienen precargados y puede corregirlos tal como está en el libro; al guardar quedarán vinculados.
+        </div>
+        <input type="hidden" name="Origen.Clave" value="@Model.Clave" />
+        <input type="hidden" name="Origen.Id" value="@Model.Id" />
+        <input type="hidden" name="Origen.Persona" value="@Model.Persona" />
+        <input type="hidden" name="Origen.Como" value="@Model.Como" />
+    </div>
+}
+else if (Model.Aviso is not null)
+{
+    <div class="col-12">
+        <div class="alert alert-warning mb-0" role="alert">@Model.Aviso</div>
+    </div>
+}
