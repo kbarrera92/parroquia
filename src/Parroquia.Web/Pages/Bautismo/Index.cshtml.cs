@@ -1,3 +1,4 @@
+using Parroquia.Web.Presentacion;
 using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,7 @@ public class IndexModel(ServicioBautismo servicio, IAuthorizationService autoriz
 
     public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
-        PuedeCrear = (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosCrear)).Succeeded;
+        PuedeCrear = (await PermisosAlta.DeAsync(autorizacion, User)).PuedeCrear;
         PuedeVerAnulados = (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosRevertirAnulacion)).Succeeded;
 
         var filtro = new FiltroBautismo(

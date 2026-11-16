@@ -45,7 +45,7 @@ public class IndexModel(
         PuedeImprimir = (await autorizacion.AuthorizeAsync(User, Permisos.ConstanciasImprimir)).Succeeded
             || (await autorizacion.AuthorizeAsync(User, Permisos.ConstanciasReimprimir)).Succeeded;
 
-        PuedeCrear = (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosCrear)).Succeeded;
+        PuedeCrear = (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosAsentarNuevo)).Succeeded;
 
         if (HayTexto)
             Resultado = await busqueda.BuscarAsync(

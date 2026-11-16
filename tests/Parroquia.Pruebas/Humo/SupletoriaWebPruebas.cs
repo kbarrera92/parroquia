@@ -44,7 +44,7 @@ public class SupletoriaWebPruebas(AppFixture app)
     [Fact]
     public async Task El_formulario_ofrece_la_pestana_de_partida_supletoria_con_sus_campos()
     {
-        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var c = await app.ClienteAdminAsync();   // tiene ambos permisos de alta: ve la opción de numerar
 
         var html = await HtmlAsync(c, "/Comunion/Editar?modo=supletoria");
 
@@ -93,14 +93,15 @@ public class SupletoriaWebPruebas(AppFixture app)
     }
 
     [Fact]
-    public async Task Secretaria_no_puede_asentar_una_supletoria()
+    public async Task Secretaria_solo_asienta_supletorias_numeradas_por_el_sistema()
     {
         var s = await app.ClienteConRolAsync(Roles.Secretaria);
 
-        var get = await s.GetAsync("/Comunion/Editar?modo=supletoria");
-        get.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        get.Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
+        var get = await HtmlAsync(s, "/Comunion/Editar?modo=supletoria");
+        get.Should().Contain("Input.Supletoria.Testigo").And.NotContain("Numerar con el sistema");
+        Regex.Match(get, @"name=""Input\.Supletoria\.NumeraSistema""[^>]*value=""([^""]*)""").Groups[1].Value.Should().Be("true");
 
+        // Transcribir una supletoria de papel exige Registros.Transcribir.
         var apellido = "Theta" + Unico();
         var post = await AppFixture.PostFormAsync(s, "/Cuenta/Logout", "/Comunion/Editar?modo=supletoria", Campos(apellido, "S" + Unico()));
         post.Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
@@ -136,7 +137,7 @@ public class SupletoriaWebPruebas(AppFixture app)
     [InlineData("Matrimonio")]
     public async Task Los_otros_sacramentos_tambien_ofrecen_la_pestana_de_partida_supletoria(string modulo)
     {
-        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var c = await app.ClienteAdminAsync();
 
         var supletoria = await HtmlAsync(c, $"/{modulo}/Editar?modo=supletoria");
         var normal = await HtmlAsync(c, $"/{modulo}/Editar");
@@ -164,13 +165,13 @@ public class SupletoriaWebPruebas(AppFixture app)
     }
 
     [Fact]
-    public async Task Secretaria_ve_el_libro_de_supletorias_pero_no_puede_crear()
+    public async Task Secretaria_ve_el_libro_de_supletorias_y_puede_crear_las_numeradas()
     {
         var s = await app.ClienteConRolAsync(Roles.Secretaria);
 
         var html = await HtmlAsync(s, "/Supletorias");
 
-        html.Should().Contain("Libro de Supletorias").And.NotContain("Nueva partida supletoria");
+        html.Should().Contain("Libro de Supletorias").And.Contain("Nueva partida supletoria");
     }
 
     [Fact]
@@ -190,7 +191,7 @@ public class SupletoriaWebPruebas(AppFixture app)
         {
             (await HtmlAsync(admin, pagina)).Should().Contain("Libro de Supletorias").And.Contain(numero);
 
-            var c = await app.ClienteConRolAsync(Roles.Capturista);
+            var c = await app.ClienteConRolAsync(Roles.Secretaria);
             var apellido = "Lambda" + Unico();
             var campos = Campos(apellido, "");
             campos["Input.Supletoria.NumeraSistema"] = "true";

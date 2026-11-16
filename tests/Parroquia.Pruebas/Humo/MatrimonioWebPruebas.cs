@@ -125,14 +125,13 @@ public class MatrimonioWebPruebas(AppFixture app)
     }
 
     [Fact]
-    public async Task Secretaria_no_puede_pedir_filas_de_testigo()
+    public async Task Secretaria_puede_pedir_filas_de_testigo_porque_asienta_y_corrige()
     {
         var s = await app.ClienteConRolAsync(Roles.Secretaria);
 
         var r = await s.GetAsync("/Matrimonio/Editar?handler=FilaTestigo");
 
-        r.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        r.Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
+        r.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -207,7 +206,7 @@ public class MatrimonioWebPruebas(AppFixture app)
     }
 
     [Fact]
-    public async Task Secretaria_ve_y_busca_pero_no_crea_ni_edita()
+    public async Task Secretaria_ve_busca_y_corrige_pero_no_transcribe_libros_fisicos()
     {
         var capturista = await app.ClienteConRolAsync(Roles.Capturista);
         var u = Unico();
@@ -216,10 +215,11 @@ public class MatrimonioWebPruebas(AppFixture app)
         var s = await app.ClienteConRolAsync(Roles.Secretaria);
 
         var lista = await HtmlAsync(s, $"/Matrimonio?texto=lectura{u}");
-        lista.Should().Contain("Lectura" + u).And.NotContain("Nuevo registro");
-        (await HtmlAsync(s, $"/Matrimonio/Detalle/{id}")).Should().NotContain("/Matrimonio/Editar/").And.NotContain("Anular este registro");
-        (await s.GetAsync("/Matrimonio/Editar")).Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
-        (await s.GetAsync($"/Matrimonio/Editar/{id}")).Headers.Location!.ToString().Should().Contain("/Cuenta/AccesoDenegado");
+        lista.Should().Contain("Lectura" + u).And.Contain("Nuevo registro");
+        (await HtmlAsync(s, $"/Matrimonio/Detalle/{id}")).Should().Contain("Lectura" + u);
+        var nuevo = await HtmlAsync(s, "/Matrimonio/Editar");   // abre directo en «Asiento nuevo»
+        nuevo.Should().Contain("Asiento nuevo (numera el sistema)").And.NotContain("Transcribir de un libro físico");
+        (await s.GetAsync($"/Matrimonio/Editar/{id}")).StatusCode.Should().Be(HttpStatusCode.OK);
         (await PostAsync(s, "/Matrimonio/Editar", Campos("L" + Unico()), "/Cuenta/Logout")).Headers.Location!.ToString()
             .Should().Contain("/Cuenta/AccesoDenegado");
     }

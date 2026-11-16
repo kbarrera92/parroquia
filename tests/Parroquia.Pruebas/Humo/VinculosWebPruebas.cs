@@ -82,7 +82,7 @@ public class VinculosWebPruebas(AppFixture app)
     }
 
     [Fact]
-    public async Task Secretaria_ve_los_vinculos_pero_no_puede_vincular_ni_buscar()
+    public async Task Secretaria_ve_y_puede_vincular_porque_corrige_registros()
     {
         var capturista = await app.ClienteConRolAsync(Roles.Capturista);
         var u = Unico();
@@ -90,18 +90,10 @@ public class VinculosWebPruebas(AppFixture app)
 
         var secretaria = await app.ClienteConRolAsync(Roles.Secretaria);
         var vista = await HtmlAsync(secretaria, $"/Vinculos/comunion/{id}");
-        vista.Should().Contain("No hay registros vinculados").And.NotContain("Vincular con otro registro");
+        vista.Should().Contain("No hay registros vinculados").And.Contain("Vincular con otro registro");
 
         var buscar = await secretaria.GetAsync($"/Vinculos/comunion/{id}?handler=Buscar&texto=solo{u}");
-        buscar.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        buscar.Headers.Location!.ToString().Should().Contain("AccesoDenegado");
-
-        var post = await AppFixture.PostFormAsync(secretaria, "/Cuenta/Logout", $"/Vinculos/comunion/{id}?handler=Vincular", new()
-        {
-            ["tipo"] = "comunion", ["idDestino"] = "1", ["personaDestino"] = "",
-        });
-        post.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        post.Headers.Location!.ToString().Should().Contain("AccesoDenegado");
+        buscar.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]

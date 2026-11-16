@@ -115,10 +115,14 @@ public class EditarModel(
     /// <summary>Libro/folio/partida no se cambian: asiento del sistema o registro sin original que tomó el número supletorio.</summary>
     public bool UbicacionBloqueada { get; private set; }
 
+    /// <summary>Formas de alta que permite el perfil: transcribir y/o asentar nuevo (define pestañas y qué se acepta al guardar).</summary>
+    public PermisosAlta Alta { get; private set; } = new(false, false);
+
     public async Task<IActionResult> OnGetAsync(long? id, string? libro, string? folio, string? partida, string? modo, CancellationToken ct)
     {
         if (!await PuedeAsync(id)) return Forbid();
         Id = id;
+        if (id is null) modo = Alta.ModoInicial(modo);
         var asiento = id is null && modo == ModoSistema;
         await CargarCatalogosAsync(ct);
 
@@ -127,7 +131,7 @@ public class EditarModel(
             Input = new EntradaMatrimonio
             {
                 Libro = libro, Folio = folio, Partida = partida, AsientoNuevo = asiento,
-                Supletoria = modo == ModoSupletoria ? new EntradaSupletoria() : null,
+                Supletoria = modo == ModoSupletoria ? new EntradaSupletoria { NumeraSistema = Alta.SupletoriaNumeraPorDefecto } : null,
                 Esposo = new EntradaContrayente { Tratamiento = Sugerido(TratamientoEsposoPorDefecto) },
                 Esposa = new EntradaContrayente { Tratamiento = Sugerido(TratamientoEsposaPorDefecto) },
                 LugarCelebracion = PlantillaMatrimonio.LugarPorDefecto,
@@ -144,7 +148,11 @@ public class EditarModel(
                 contrayente.Padre = d.Padre;
                 contrayente.Madre = d.Madre;
             }
-            if (Origen.Valido) ForzarAsientoNuevo();
+            if (Origen.Valido)
+            {
+                if (!Alta.PuedeAsentar) return Forbid();   // el «+» siempre es asiento nuevo
+                ForzarAsientoNuevo();
+            }
         }
         else
         {
@@ -169,7 +177,7 @@ public class EditarModel(
     /// <summary>Fragmento htmx: una fila vacía para agregar otro testigo sin recargar la página.</summary>
     public async Task<IActionResult> OnGetFilaTestigoAsync()
     {
-        var puede = (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosCrear)).Succeeded
+        var puede = (await PermisosAlta.DeAsync(autorizacion, User)).PuedeCrear
             || (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosEditar)).Succeeded;
         return puede ? Partial("_FilaTestigo", (string?)null) : Forbid();
     }
@@ -185,6 +193,7 @@ public class EditarModel(
         {
             await Origen.CargarAsync(ServicioMatrimonio.Clave, vinculos, modulos, ct);
             if (Origen.Valido) ForzarAsientoNuevo();
+            if (!Alta.Permite(Input.AsientoNuevo, Input.Supletoria?.NumeraSistema)) return Forbid();
         }
 
         var r = await servicio.GuardarAsync(Input.ADatos(), id, id is null ? null : Input.Version, forzar, ct);
@@ -300,8 +309,13 @@ public class EditarModel(
         }
     }
 
-    private async Task<bool> PuedeAsync(long? id) =>
-        (await autorizacion.AuthorizeAsync(User, id is null ? Permisos.RegistrosCrear : Permisos.RegistrosEditar)).Succeeded;
+    private async Task<bool> PuedeAsync(long? id)
+    {
+        Alta = await PermisosAlta.DeAsync(autorizacion, User);
+        return id is null
+            ? Alta.PuedeCrear
+            : (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosEditar)).Succeeded;
+    }
 
     private async Task CargarCatalogosAsync(CancellationToken ct)
     {

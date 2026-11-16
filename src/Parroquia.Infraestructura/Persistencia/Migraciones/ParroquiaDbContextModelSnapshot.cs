@@ -1856,6 +1856,10 @@ namespace Parroquia.Infraestructura.Persistencia.Migraciones
                         .HasColumnType("character varying(256)")
                         .HasColumnName("user_name");
 
+                    b.Property<DateOnly?>("VigenteHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_hasta");
+
                     b.HasKey("Id")
                         .HasName("pk_asp_net_users");
 

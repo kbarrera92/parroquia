@@ -83,6 +83,9 @@ public class EditarModel(
     /// <summary>Libro/folio/partida no se cambian: asiento del sistema o registro sin original que tomó el número supletorio.</summary>
     public bool UbicacionBloqueada { get; private set; }
 
+    /// <summary>Formas de alta que permite el perfil: transcribir y/o asentar nuevo (define pestañas y qué se acepta al guardar).</summary>
+    public PermisosAlta Alta { get; private set; } = new(false, false);
+
     public async Task<IActionResult> OnGetAsync(long? id, string? libro, string? folio, string? partida, string? modo, CancellationToken ct)
     {
         if (!await PuedeAsync(id)) return Forbid();
@@ -90,12 +93,13 @@ public class EditarModel(
 
         if (id is null)
         {
+            modo = Alta.ModoInicial(modo);
             var asiento = modo == ModoSistema;
             var supletoria = modo == ModoSupletoria;
             Input = new EntradaComunion
             {
                 Libro = libro, Folio = folio, Partida = partida, AsientoNuevo = asiento,
-                Supletoria = supletoria ? new EntradaSupletoria() : null,
+                Supletoria = supletoria ? new EntradaSupletoria { NumeraSistema = Alta.SupletoriaNumeraPorDefecto } : null,
             };
             ContinuaSerie = asiento || supletoria || !string.IsNullOrWhiteSpace(libro);
 
@@ -105,7 +109,11 @@ public class EditarModel(
                 Input.Nombres = d.Nombres;
                 Input.Apellidos = d.Apellidos;
             }
-            if (Origen.Valido) ForzarAsientoNuevo();
+            if (Origen.Valido)
+            {
+                if (!Alta.PuedeAsentar) return Forbid();   // el «+» siempre es asiento nuevo
+                ForzarAsientoNuevo();
+            }
         }
         else
         {
@@ -136,6 +144,7 @@ public class EditarModel(
         {
             await Origen.CargarAsync(ServicioComunion.Clave, vinculos, modulos, ct);
             if (Origen.Valido) ForzarAsientoNuevo();
+            if (!Alta.Permite(Input.AsientoNuevo, Input.Supletoria?.NumeraSistema)) return Forbid();
         }
 
         var r = await servicio.GuardarAsync(Input.ADatos(), id, id is null ? null : Input.Version, forzar, ct);
@@ -201,8 +210,13 @@ public class EditarModel(
         ContinuaSerie = true;
     }
 
-    private async Task<bool> PuedeAsync(long? id) =>
-        (await autorizacion.AuthorizeAsync(User, id is null ? Permisos.RegistrosCrear : Permisos.RegistrosEditar)).Succeeded;
+    private async Task<bool> PuedeAsync(long? id)
+    {
+        Alta = await PermisosAlta.DeAsync(autorizacion, User);
+        return id is null
+            ? Alta.PuedeCrear
+            : (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosEditar)).Succeeded;
+    }
 
     private async Task CargarApoyosAsync(CancellationToken ct)
     {

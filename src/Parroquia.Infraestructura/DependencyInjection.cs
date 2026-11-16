@@ -82,6 +82,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<ParroquiaDbContext>()
             .AddClaimsPrincipalFactory<FabricaClaimsUsuario>()
             .AddUserConfirmation<ConfirmacionUsuarioActivo>()
+            .AddSignInManager<SignInManagerParroquia>()
             .AddErrorDescriber<DescriptorErroresIdentidad>()
             .AddPasswordValidator<ValidadorContrasenaComun>()
             .AddDefaultTokenProviders();
@@ -93,6 +94,7 @@ public static class DependencyInjection
         // Revalida el sello de seguridad cada minuto: cambiar contraseña, rol o estado cierra las sesiones abiertas.
         services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.FromMinutes(1));
         services.AddScoped<ServicioUsuarios>();
+        services.AddScoped<ServicioPerfiles>();
 
         return services;
     }
