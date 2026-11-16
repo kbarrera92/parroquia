@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Parroquia.Aplicacion.Operacion;
 using Parroquia.Aplicacion.Sacramentos;
 using Parroquia.Aplicacion.Seguridad;
 using Parroquia.Infraestructura.Catalogos;
@@ -11,6 +12,7 @@ using Parroquia.Infraestructura.Constancias;
 using Parroquia.Infraestructura.Historial;
 using Parroquia.Infraestructura.Identidad;
 using Parroquia.Infraestructura.Numeracion;
+using Parroquia.Infraestructura.Operacion;
 using Parroquia.Infraestructura.Persistencia;
 using Parroquia.Infraestructura.Sacramentos;
 using Parroquia.Infraestructura.Supletorias;
@@ -47,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<ServicioSupletorias>();
         services.AddSingleton<GeneradorPdfConstancia>();
         services.AddScoped<ServicioConstancias>();
+        services.AddScoped<IEstadoSistema, ServicioEstadoSistema>();
 
         // Un sacramento = un módulo: su servicio y su registro como IModuloSacramental.
         services.AddScoped<ServicioBautismo>();

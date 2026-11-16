@@ -19,3 +19,12 @@ respaldos/
 .env
 appsettings.Production.json
 secrets.json
+# Datos locales de la app (dev) y publicación
+datos-dev/
+publish/
+*.pfx
+*.enc
+
+# Configuración real de despliegue (el ejemplo sí se versiona)
+deploy/deploy.psd1
+*.cer

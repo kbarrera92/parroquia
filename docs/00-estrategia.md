@@ -33,7 +33,7 @@
 5. **Pruebas antes que PDF.** El texto de cada constancia se verifica con pruebas "golden" contra los 4 ejemplos reales. La redacción legal-eclesiástica no puede cambiar por accidente.
 6. **Modo plan por hito.** Para cada hito: pedir plan → revisarlo contra `docs/` → aprobar → implementar → `dotnet test` → commit. `/clear` entre hitos.
 7. **Commits pequeños y frecuentes**, uno por rebanada o sub-paso, con la suite de pruebas en verde.
-8. **Datos reales, poco a poco.** Piloto con ~20 registros reales por sacramento *antes* de la captura masiva (hito M8). Los empleados detectan lo que ningún documento anticipa.
+8. **Datos reales, poco a poco.** Piloto con ~20 registros reales por sacramento *antes* de la captura masiva (hito M9). Los empleados detectan lo que ningún documento anticipa.
 9. **Nunca datos personales reales en el repo ni en prompts.** Usar datos de ejemplo. Las imágenes de `referencias/` son ejemplos.
 
 ## 4. Hitos
@@ -48,7 +48,8 @@
 | **M5 Confirmación** | Ídem | Ídem |
 | **M6 Matrimonio** | Ídem (dos contrayentes, testigos, texto "literalmente dice") | Ídem |
 | **M7 Búsqueda global y vínculos** | Búsqueda por persona en todos los libros, enlace opcional entre registros | Encontrar a una persona en los 4 libros desde una sola pantalla |
-| **M8 Puesta en producción** | Instalación en servidor local, HTTPS interno, respaldos automáticos **con restauración probada**, manual breve, capacitación, piloto | Restauración probada en otra máquina; piloto sin bloqueos |
+| **M8 Usuarios y autenticación** | Alta/edición/desactivación de usuarios, política de contraseñas NIST/ASVS, restablecimiento por el Administrador (`04` ADR-05) | Hecho |
+| **M9 Puesta en producción** | Instalación en servidor local, HTTPS interno, respaldos automáticos **con restauración probada**, manual breve, capacitación, piloto | Restauración probada en otra máquina; piloto sin bloqueos |
 
 Luego: **Fase 2** (solicitudes e ingresos) y módulos futuros (ver §6).
 
@@ -72,7 +73,7 @@ Luego: **Fase 2** (solicitudes e ingresos) y módulos futuros (ver §6).
 
 | Riesgo | Mitigación |
 |---|---|
-| Pérdida de datos en servidor local | Respaldo automático diario + copia en disco externo + copia fuera de sitio; **prueba de restauración** obligatoria en M8; UPS |
+| Pérdida de datos en servidor local | Respaldo automático diario + copia en disco externo + copia fuera de sitio; **prueba de restauración** obligatoria en M9; UPS |
 | Libros físicos con más campos que la constancia | Fotografiar páginas reales de cada libro en M0 y ajustar el modelo antes de programar |
 | Errores de digitación masiva | Marca "Revisar", detección de duplicados (libro+folio+partida), auditoría total (sin doble verificación, por decisión) |
 | Cambio de redacción accidental en constancias | Pruebas golden contra los ejemplos; plantillas en un solo lugar |

@@ -26,7 +26,8 @@ Todos los prompts asumen que `CLAUDE.md` y `docs/` están en el repo.
 ## M7 — Búsqueda global y vínculos
 > Plan primero. Implementa la pantalla de inicio con búsqueda global (nombres/apellidos parcial, sin tildes, filtros de sacramento/fecha/libro) sobre los módulos registrados, resultados ordenados por apellidos, matrimonio por ambos contrayentes, y enlace al detalle y a imprimir constancia. Implementa `Vinculo` (misma persona, opcional) con UI para vincular/desvincular y mostrar vinculados en el detalle. Mide la búsqueda con 200 000 filas de datos sintéticos y reporta tiempos.
 
-## M8 — Producción
+## M9 — Producción
+*(Antes M8; M8 pasó a ser usuarios y autenticación. Implementado: scripts en `deploy/`, `docs/operacion.md`, `docs/manual-usuario.md`, página `Administración → Estado del sistema`; queda pendiente la instalación real en la PC de la parroquia y la prueba de restauración en otra máquina, ver `06`.)*
 > Plan primero. Prepara el despliegue en la PC de oficina con Windows 10/11 según @docs/04 ADR-08/09. Entrega: scripts PowerShell de instalación/actualización, PostgreSQL como servicio, la app como servicio de Windows con arranque automático, configuración HTTPS interna, tarea programada de respaldo diario con retención, script de restauración y **procedimiento de prueba de restauración**, página de estado para el Administrador, `docs/operacion.md` y manual de usuario de 2 páginas (capturista y secretaria). No toques datos de producción; todo con datos sintéticos.
 
 ---

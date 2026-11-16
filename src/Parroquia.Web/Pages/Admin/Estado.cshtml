@@ -1,0 +1,61 @@
+@page
+@model Parroquia.Web.Pages.Admin.EstadoModel
+@using Parroquia.Web.Pages.Admin
+@{
+    ViewData["Title"] = "Estado del sistema";
+    var e = Model.Estado;
+}
+
+<div class="mt-4">
+    <h1 class="h3">Estado del sistema</h1>
+    <p class="text-muted">Lo primero que hay que mirar cada día: respaldos, espacio y certificado. No muestra datos de personas.</p>
+
+    <h2 class="h5">Respaldos y recuperación</h2>
+    <div id="estado-respaldo" class="alert @EstadoModel.Alerta(e.Respaldo)" role="@EstadoModel.Rol(e.Respaldo)">
+        <strong>@e.Respaldo.Resumen</strong>
+        @if (!string.IsNullOrWhiteSpace(e.Respaldo.Detalle)) { <div>@e.Respaldo.Detalle</div> }
+    </div>
+    <div id="estado-restauracion" class="alert @EstadoModel.Alerta(e.Restauracion)" role="@EstadoModel.Rol(e.Restauracion)">
+        <strong>@e.Restauracion.Resumen</strong>
+        @if (!string.IsNullOrWhiteSpace(e.Restauracion.Detalle)) { <div>@e.Restauracion.Detalle</div> }
+    </div>
+
+    <h2 class="h5">Servidor</h2>
+    <div id="estado-disco" class="alert @EstadoModel.Alerta(e.Disco)" role="@EstadoModel.Rol(e.Disco)">
+        <strong>Disco:</strong> @(e.Disco.Detalle ?? e.Disco.Resumen)
+        @if (e.Disco.Detalle is not null) { <div>@e.Disco.Resumen</div> }
+    </div>
+    <div id="estado-certificado" class="alert @EstadoModel.Alerta(e.Certificado)" role="@EstadoModel.Rol(e.Certificado)">
+        <strong>@e.Certificado.Resumen</strong>
+        @if (!string.IsNullOrWhiteSpace(e.Certificado.Detalle)) { <div>@e.Certificado.Detalle</div> }
+    </div>
+
+    <h2 class="h5">Aplicación y base de datos</h2>
+    <dl class="row ficha">
+        <dt class="col-sm-4">Versión de la aplicación</dt>
+        <dd class="col-sm-8">@e.Version</dd>
+        <dt class="col-sm-4">Entorno</dt>
+        <dd class="col-sm-8">@e.Entorno</dd>
+        <dt class="col-sm-4">Encendida desde</dt>
+        <dd class="col-sm-8">@Model.InicioLocal (@Model.Encendido)</dd>
+        <dt class="col-sm-4">Base de datos</dt>
+        <dd class="col-sm-8">@e.VersionPostgres</dd>
+        <dt class="col-sm-4">Tamaño de la base de datos</dt>
+        <dd class="col-sm-8">@Model.TamanoBase</dd>
+        <dt class="col-sm-4">Última migración</dt>
+        <dd class="col-sm-8">@e.UltimaMigracion</dd>
+    </dl>
+
+    <h2 class="h5">Registros por libro</h2>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th scope="col">Libro</th><th scope="col" class="text-end">Registros</th></tr></thead>
+            <tbody>
+                @foreach (var l in e.Registros)
+                {
+                    <tr><td>@l.Libro</td><td class="text-end">@l.Total.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("es-GT"))</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -2,7 +2,7 @@
 
 Última actualización: 8-nov-2026. Las decisiones ✅ ya están reflejadas en los demás documentos.
 
-## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8; 37–39 libro digital; 40–46 supletorias)
+## ✅ Resueltas (7-nov-2026; 20–23 durante M3; 24–26 en M4; 27 en M5; 28–30 en M6; 31–33 en M7; 34–36 en M8; 37–39 libro digital; 40–50 supletorias, «+», perfiles; 51–56 en M9)
 | # | Tema | Decisión |
 |---|---|---|
 | 1 | Servidor | PC de oficina, Windows 10/11, dedicada, encendida 24/7 |
@@ -55,6 +55,12 @@
 | 48 | `Registros.Crear` dividido | Capturistas (temporales) **transcriben** libros físicos; los registros nuevos los **asienta la Secretaria**. Dos permisos: `Registros.Transcribir` y `Registros.AsentarNuevo`; la supletoria sigue al modo (transcrita → Transcribir, numerada → AsentarNuevo); el «+» siempre exige AsentarNuevo. La Secretaria también edita y anula (corregir un asiento = anular y asentar de nuevo). El Administrador tiene ambos |
 | 49 | Perfiles editables | El Administrador edita los permisos de Capturista y Secretaria en *Administración → Perfiles* (sin crear roles nuevos). `MatrizPermisos` queda como matriz inicial; el Administrador es fijo (todos) y `Usuarios.Gestionar` es reservado. Cambiar un perfil cierra las sesiones de sus usuarios en ≤ 1 min (deben entrar de nuevo) |
 | 50 | Capturistas temporales | Fecha opcional «Acceso hasta» por usuario (último día, hora de Guatemala): vencida, no inicia sesión y su sesión se cierra en ≤ 1 min; el Administrador la extiende. No aplica al Administrador |
+| 51 | HTTPS interno (M9) | **CA local propia** de la parroquia (10 años) que firma el certificado del servidor (2 años); los clientes instalan la CA una vez (`Instalar-Cliente.ps1`). Renovar el certificado del servidor no toca los clientes. Descartado: certificado autofirmado suelto |
+| 52 | Nombre del servidor (M9) | `parroquia.local` con IP fija y entrada en el archivo `hosts` de cada cliente (no depende del router) |
+| 53 | Copia fuera de sitio (M9) | **Carpeta parametrizable** (`Respaldo.Copia3` en `deploy.psd1`) y **cifrada** con una frase guardada también en un sobre sellado. El destino real (USB rotado, NAS, carpeta sincronizada) se decide después; ver pendientes |
+| 54 | Hospedaje y cuenta (M9) | Servicio de Windows `ParroquiaWeb` con cuenta virtual (sin contraseña ni privilegios; no lee los archivos de respaldo), .NET incluido en el paquete, PostgreSQL solo en `localhost`. Detalle en `04` ADR-08 |
+| 55 | Alertas de operación (M9) | La página *Estado del sistema* avisa: respaldo fallido o > 36 h, sin prueba de restauración o > 100 días, disco < 10 GB o < 10 %, certificado a < 30 días |
+| 56 | Hitos (M9) | M8 = usuarios y autenticación; **M9 = puesta en producción** (antes llamada M8 en `00` y `05`) |
 
 ## 🟡 Pendientes
 
@@ -62,16 +68,20 @@
 - **[B]** Fotografiar 3–5 páginas de cada libro físico (épocas distintas, con notas marginales). Verificar: ¿padres en comunión y confirmación? ¿parroquia de bautismo? ¿lugar de nacimiento? ¿ministro/obispo en confirmación? ¿máximo de padrinos y de testigos? Define las columnas finales de `02`.
 
 ### Constancias
-- **Licencia de QuestPDF (antes de M8):** el párroco debe confirmar que la parroquia cumple la licencia Community (organización de beneficio público, o ingresos anuales < 1 M USD; no aplica a entidades del sector público). Detalle en `04`, ADR-06. Si no cumpliera, hay que adquirir otra licencia o cambiar de motor.
+- **Licencia de QuestPDF (antes de M9):** el párroco debe confirmar que la parroquia cumple la licencia Community (organización de beneficio público, o ingresos anuales < 1 M USD; no aplica a entidades del sector público). Detalle en `04`, ADR-06. Si no cumpliera, hay que adquirir otra licencia o cambiar de motor.
 - **Fecha "de" vs "del"**: confirmar con el párroco que no le molesta el cambio respecto al papel actual (decisión 20).
 - **"Ref:" en matrimonio**: qué es (correlativo, dato libre, se elimina). *El usuario lo averiguará.* Mientras tanto la línea queda en blanco.
 - Matrimonio: ¿"hijo/a **legítimo/a** de" se mantiene siempre o hay hijos naturales? ¿Se necesita un campo de legitimidad? *(M6 lo imprime como texto fijo; si cambia, columna nueva con migración.)*
 - Matrimonio: la fecha de cierre usa formato dd/MM/yyyy; las otras constancias usan fecha larga. ¿Unificar?
 - Valores iniciales del catálogo de **tratamientos** y de **ministros** (lista de sacerdotes actuales y anteriores).
 
-### Servidor y operación (antes de M8)
-- Versión exacta de Windows (si es Windows 10: ¿tiene actualizaciones de seguridad extendidas o se migra a Windows 11?). Marca y capacidad de disco, ¿hay UPS?, ¿disco externo para respaldos?, ¿dónde irá la copia fuera de sitio?
+### Servidor y operación (antes de M9)
+- Versión exacta de Windows (si es Windows 10: ¿tiene actualizaciones de seguridad extendidas o se migra a Windows 11?). Marca y capacidad de disco, ¿hay UPS?, ¿disco externo para respaldos?
+- **Destino real de la copia 3** (fuera de sitio): ¿USB que rota cada semana?, ¿NAS en otra sede?, ¿carpeta sincronizada (requiere internet solo para sincronizar)? Quién la lleva y dónde se guarda el sobre con la frase de cifrado.
 - Confirmar que no habrá acceso desde fuera de la red de la parroquia.
+- **Instalación real pendiente.** `deploy/` se ensayó en el equipo de desarrollo con datos sintéticos (respaldo, copia cifrada, prueba de restauración, paquete publicado en modo Producción con HTTPS); falta ejecutar `Instalar-PostgreSQL`, `Nueva-CA`, `Nuevo-CertificadoServidor`, `Instalar-App` e `Instalar-Cliente` en el servidor y en un cliente reales (crean el servicio, el firewall y los permisos, que no se pueden ensayar sin administrador), y la **prueba de restauración en otra máquina** (`docs/operacion.md` §6).
+- Repetir la medición de búsqueda y listados en el servidor real con la base cargada (`04`).
+- Capacitación y piloto de 20 registros reales por sacramento (`00` §3.8) con el manual `docs/manual-usuario.md`.
 
 ### Supletorias
 - **¿Se necesita el acta impresa de la partida supletoria?** La hoja del libro (texto «En esta Parroquia a… por no haberse encontrado la Partida correspondiente, ha comparecido como testigo…», con firma del testigo y del párroco) se escribe hoy a mano. Si debe imprimirse para firmar y encuadernar, es una plantilla nueva (golden con la hoja de ejemplo); la numeración ya está resuelta.
