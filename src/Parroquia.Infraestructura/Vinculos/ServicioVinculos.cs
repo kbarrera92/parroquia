@@ -11,7 +11,7 @@ public sealed record PersonaVinculada(
     ExtremoVinculo Extremo, ResultadoBusquedaRegistro Resumen, bool Directo, long? VinculoId, string? PorMedioDe);
 
 /// <summary>Un libro donde se puede dar de alta a la persona; <c>Persona</c> es el contrayente de destino ("" salvo Matrimonio).</summary>
-public sealed record OpcionAlta(string Clave, string Nombre, string Persona, string RutaNuevo);
+public sealed record OpcionAlta(string Clave, string Nombre, string RutaNuevo);
 
 /// <summary>
 /// Vínculos opcionales "misma persona" entre registros (RF-07). Los vínculos forman cadenas: si A↔B y B↔C, desde A se ve C
@@ -165,7 +165,7 @@ public sealed class ServicioVinculos(ParroquiaDbContext db, IEnumerable<IModuloS
             .. modulos
                 .Where(m => !presentes.Contains(m.Clave))
                 .OrderBy(m => m.Orden).ThenBy(m => m.Clave, StringComparer.Ordinal)
-                .SelectMany(m => m.Personas.Select(p => new OpcionAlta(m.Clave, m.Nombre, p, m.RutaNuevo))),
+                .Select(m => new OpcionAlta(m.Clave, m.Nombre, m.RutaNuevo)),
         ];
     }
 

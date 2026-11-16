@@ -1,5 +1,6 @@
 @page "{id:long?}"
 @model Parroquia.Web.Pages.Matrimonio.EditarModel
+@using Parroquia.Infraestructura.Sacramentos
 @{
     ViewData["Title"] = Model.EsNuevo ? "Nuevo registro de Matrimonio" : "Editar registro de Matrimonio";
     var focoNombres = Model.ContinuaSerie;
@@ -60,7 +61,19 @@
             <partial name="_OrigenAlta" model="Model.Origen" />
             <div class="col-12">
                 <input asp-for="Input.AsientoNuevo" type="hidden" />
-                @if (!Model.Origen.Valido)
+                @if (Model.Origen.Valido)
+                {
+                <p class="form-label mb-2">¿Quién es <strong>@Model.Origen.NombreMostrado</strong> en este matrimonio?</p>
+                <ul class="nav nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link @(Model.Origen.Como == ModuloMatrimonio.Esposa ? "" : "active")" href="@Model.EnlaceComo(ModuloMatrimonio.Esposo)">El esposo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(Model.Origen.Como == ModuloMatrimonio.Esposa ? "active" : "")" href="@Model.EnlaceComo(ModuloMatrimonio.Esposa)">La esposa</a>
+                    </li>
+                </ul>
+                }
+                else
                 {
                 <ul class="nav nav-pills">
                     <li class="nav-item">

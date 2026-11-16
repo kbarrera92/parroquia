@@ -176,7 +176,7 @@ public class ServicioVinculosPruebas(ServidorPostgresFixture servidor) : IClassF
     }
 
     [Fact]
-    public async Task Faltantes_ofrece_los_libros_sin_registro_y_matrimonio_como_esposo_y_esposa()
+    public async Task Faltantes_ofrece_una_sola_opcion_por_libro_sin_registro()
     {
         var (e, _) = await NuevoAsync();
         var a = await ComunionAsync(e);
@@ -184,8 +184,7 @@ public class ServicioVinculosPruebas(ServidorPostgresFixture servidor) : IClassF
         var faltan = await e.Vinculos.SacramentosFaltantesAsync(a);
 
         faltan.Should().NotBeNull();
-        faltan!.Select(o => (o.Clave, o.Persona)).Should().Equal(
-            ("confirmacion", ""), ("matrimonio", "esposo"), ("matrimonio", "esposa"));
+        faltan!.Select(o => o.Clave).Should().Equal("confirmacion", "matrimonio");
         faltan.Should().OnlyContain(o => o.RutaNuevo.EndsWith("/Editar"));
     }
 

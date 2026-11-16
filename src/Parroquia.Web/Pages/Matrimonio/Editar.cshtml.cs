@@ -273,6 +273,14 @@ public class EditarModel(
     private string? Sugerido(string texto) =>
         Tratamientos.FirstOrDefault(t => string.Equals(t, texto, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>Enlace de la pestaña «El esposo» / «La esposa»: reabre el alta con la persona de origen en ese contrayente.</summary>
+    public string EnlaceComo(string como) =>
+        Url.Page("Editar")
+        + "?Origen.Clave=" + Uri.EscapeDataString(Origen.Clave ?? "")
+        + "&Origen.Id=" + Origen.Id
+        + (string.IsNullOrEmpty(Origen.Persona) ? "" : "&Origen.Persona=" + Uri.EscapeDataString(Origen.Persona))
+        + "&Origen.Como=" + Uri.EscapeDataString(como);
+
     /// <summary>Un sacramento agregado desde la búsqueda («+») siempre es un asiento nuevo: numera el sistema.</summary>
     private void ForzarAsientoNuevo()
     {
