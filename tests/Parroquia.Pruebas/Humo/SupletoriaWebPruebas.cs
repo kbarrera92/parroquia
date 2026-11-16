@@ -145,4 +145,66 @@ public class SupletoriaWebPruebas(AppFixture app)
             .And.Contain("Ubicación original en el libro (opcional)");
         normal.Should().Contain("Partida supletoria").And.NotContain("Input.Supletoria.Testigo");
     }
+
+    [Fact]
+    public async Task El_libro_de_supletorias_lista_la_partida_con_enlace_al_registro_y_filtra_por_libro()
+    {
+        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var apellido = "Kappa" + Unico();
+        var libroSup = "S" + Unico();
+        var r = await PostAsync(c, Campos(apellido, libroSup));
+        var id = long.Parse(Regex.Match(r.Headers.Location!.ToString(), @"Detalle/(\d+)").Groups[1].Value);
+
+        var html = await HtmlAsync(c, $"/Supletorias?libro={libroSup}");
+
+        html.Should().Contain(apellido).And.Contain("Primera Comunión").And.Contain("Felipa Prueba (Tía)")
+            .And.Contain($"/Comunion/Detalle/{id}").And.Contain("2 de octubre de 2026").And.Contain("Nueva partida supletoria");
+        (await HtmlAsync(c, "/Supletorias?libro=NoExiste" + Unico())).Should().Contain("No hay partidas supletorias con esos datos");
+        (await HtmlAsync(c, "/")).Should().Contain("Libro de Supletorias");
+    }
+
+    [Fact]
+    public async Task Secretaria_ve_el_libro_de_supletorias_pero_no_puede_crear()
+    {
+        var s = await app.ClienteConRolAsync(Roles.Secretaria);
+
+        var html = await HtmlAsync(s, "/Supletorias");
+
+        html.Should().Contain("Libro de Supletorias").And.NotContain("Nueva partida supletoria");
+    }
+
+    [Fact]
+    public async Task Admin_abre_numera_con_el_sistema_y_cierra_el_libro_digital_de_supletorias()
+    {
+        const string pagina = "/Admin/LibrosDigitales";
+        var admin = await app.ClienteAdminAsync();
+        await AppFixture.PostFormAsync(admin, pagina, $"{pagina}?handler=Cerrar", new() { ["clave"] = "supletoria" }); // por si quedó uno abierto
+        var numero = "T" + Unico();
+        await AppFixture.PostFormAsync(admin, pagina, $"{pagina}?handler=Abrir", new()
+        {
+            ["clave"] = "supletoria", ["numero"] = numero, ["folioInicial"] = "1", ["partidaInicial"] = "1",
+            ["partidasPorFolio"] = "2", ["foliosPorLibro"] = "50", ["partidasYaEnFolio"] = "0", ["modoPartida"] = "Correlativa",
+        });
+
+        try
+        {
+            (await HtmlAsync(admin, pagina)).Should().Contain("Libro de Supletorias").And.Contain(numero);
+
+            var c = await app.ClienteConRolAsync(Roles.Capturista);
+            var apellido = "Lambda" + Unico();
+            var campos = Campos(apellido, "");
+            campos["Input.Supletoria.NumeraSistema"] = "true";
+            var r = await PostAsync(c, campos);
+            r.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            var id = long.Parse(Regex.Match(r.Headers.Location!.ToString(), @"Detalle/(\d+)").Groups[1].Value);
+
+            var detalle = await HtmlAsync(c, $"/Comunion/Detalle/{id}");
+            detalle.Should().Contain("numerada por el sistema").And.Contain($"Libro {numero}, folio 1, partida 1");
+        }
+        finally
+        {
+            var cerrar = await AppFixture.PostFormAsync(admin, pagina, $"{pagina}?handler=Cerrar", new() { ["clave"] = "supletoria" });
+            cerrar.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        }
+    }
 }
