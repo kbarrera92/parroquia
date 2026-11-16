@@ -1,6 +1,6 @@
 namespace Parroquia.Aplicacion.Seguridad;
 
-/// <summary>Fuente única de qué permisos tiene cada rol (docs/04, ADR-05).</summary>
+/// <summary>Permisos <b>iniciales</b> de cada rol (docs/04, ADR-05): se siembran al crear el rol; luego el Administrador los edita en Perfiles.</summary>
 public static class MatrizPermisos
 {
     private static readonly IReadOnlyList<string> Lectura = [Permisos.RegistrosVer, Permisos.RegistrosBuscar];
@@ -10,12 +10,15 @@ public static class MatrizPermisos
         {
             [Roles.Capturista] = new HashSet<string>(Lectura)
             {
-                Permisos.RegistrosCrear,
+                Permisos.RegistrosTranscribir,
                 Permisos.RegistrosEditar,
                 Permisos.RegistrosAnular,
             },
             [Roles.Secretaria] = new HashSet<string>(Lectura)
             {
+                Permisos.RegistrosAsentarNuevo,
+                Permisos.RegistrosEditar,
+                Permisos.RegistrosAnular,
                 Permisos.ConstanciasImprimir,
                 Permisos.ConstanciasReimprimir,
             },

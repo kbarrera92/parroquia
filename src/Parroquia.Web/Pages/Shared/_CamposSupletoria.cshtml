@@ -4,6 +4,7 @@
 @model EntradaSupletoria
 @{
     var edicion = ViewData["Edicion"] is true;
+    var alta = ViewData["Alta"] as PermisosAlta ?? new PermisosAlta(true, true);
 }
 
 <div class="col-12">
@@ -35,16 +36,29 @@
 }
 else
 {
-    <div class="col-12">
-        <div class="form-check">
-            <input asp-for="NumeraSistema" class="form-check-input" aria-describedby="ayuda-numera" />
-            <label asp-for="NumeraSistema" class="form-check-label">Numerar con el sistema (asiento nuevo en el Libro de Supletorias)</label>
+    @if (alta.PuedeTranscribir && alta.PuedeAsentar)
+    {
+        <div class="col-12">
+            <div class="form-check">
+                <input asp-for="NumeraSistema" class="form-check-input" aria-describedby="ayuda-numera" />
+                <label asp-for="NumeraSistema" class="form-check-label">Numerar con el sistema (asiento nuevo en el Libro de Supletorias)</label>
+            </div>
+            <div id="ayuda-numera" class="form-text">
+                Déjela sin marcar para transcribir una partida ya escrita en un libro supletorio de papel.
+            </div>
+            <span asp-validation-for="NumeraSistema" class="text-danger"></span>
         </div>
-        <div id="ayuda-numera" class="form-text">
-            Déjela sin marcar para transcribir una partida ya escrita en un libro supletorio de papel.
+    }
+    else
+    {
+        @* Un solo perfil de alta: la forma de numerar queda fija (el servidor también la exige). *@
+        <input type="hidden" name="@Html.NameFor(m => m.NumeraSistema)" value="@(alta.PuedeAsentar ? "true" : "false")" />
+        <div class="col-12 form-text">
+            @(alta.PuedeAsentar
+                ? "El sistema asigna el libro, folio y partida del Libro de Supletorias al guardar."
+                : "Transcriba una partida ya escrita en un libro supletorio de papel.")
         </div>
-        <span asp-validation-for="NumeraSistema" class="text-danger"></span>
-    </div>
+    }
     <div class="col-md-2">
         <label asp-for="Libro" class="form-label">Libro supletorio</label>
         <input asp-for="Libro" class="form-control" maxlength="30" autocomplete="off" />
@@ -61,7 +75,7 @@ else
         <span asp-validation-for="Partida" class="text-danger"></span>
     </div>
     <div class="col-md-6 align-self-end form-text">
-        Solo si transcribe del papel: el número del margen es la partida. Con «Numerar con el sistema» estos tres campos se ignoran.
+        Solo si transcribe del papel: el número del margen es la partida. Si el sistema numera, estos tres campos se ignoran.
     </div>
 }
 

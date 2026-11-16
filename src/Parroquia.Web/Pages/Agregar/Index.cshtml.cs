@@ -11,7 +11,7 @@ namespace Parroquia.Web.Pages.Agregar;
 /// Fragmento htmx del botón «+» de la búsqueda: los libros donde la persona aún no tiene registro
 /// (<c>/Agregar/{clave}/{id}/{persona?}</c>). Cada opción abre el alta de ese libro con la persona precargada.
 /// </summary>
-[Authorize(Policy = Permisos.RegistrosCrear)]
+[Authorize(Policy = Permisos.RegistrosAsentarNuevo)]
 public class IndexModel(ServicioVinculos vinculos) : PageModel
 {
     public IReadOnlyList<OpcionAlta> Opciones { get; private set; } = [];

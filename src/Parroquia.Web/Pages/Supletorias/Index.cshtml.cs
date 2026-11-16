@@ -1,3 +1,4 @@
+using Parroquia.Web.Presentacion;
 using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +38,7 @@ public class IndexModel(
     public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
         Sacramentos = [.. modulos.OrderBy(m => m.Orden)];
-        PuedeCrear = (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosCrear)).Succeeded;
+        PuedeCrear = (await PermisosAlta.DeAsync(autorizacion, User)).PuedeCrear;
         PuedeVerAnuladas = (await autorizacion.AuthorizeAsync(User, Permisos.RegistrosRevertirAnulacion)).Succeeded;
 
         var filtro = new FiltroSupletorias(

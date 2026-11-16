@@ -33,8 +33,9 @@ El acceso va por EF Core; el resto del código no depende del motor salvo la bú
 | Permiso | Capturista | Secretaria | Administrador |
 |---|:-:|:-:|:-:|
 | `Registros.Ver` / `Buscar` | ✅ | ✅ | ✅ |
-| `Registros.Crear` / `Editar` | ✅ | — | ✅ |
-| `Registros.Anular` | ✅ | — | ✅ |
+| `Registros.Transcribir` (libro físico; supletoria transcrita) | ✅ | — | ✅ |
+| `Registros.AsentarNuevo` (numera el sistema; supletoria numerada; botón «+») | — | ✅ | ✅ |
+| `Registros.Editar` / `Anular` | ✅ | ✅ | ✅ |
 | `Registros.RevertirAnulacion` | — | — | ✅ |
 | `Constancias.Imprimir` / `Reimprimir` | — | ✅ | ✅ |
 | `Constancias.CambiarFecha` | — | — | ✅ |

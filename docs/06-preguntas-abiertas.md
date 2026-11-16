@@ -53,6 +53,8 @@
 | 46 | Supletorias: anulación | Anular el registro anula su supletoria y revertir la reactiva; el número supletorio nunca se reutiliza |
 | 47 | Botón «+» en la búsqueda | Ofrece los libros sin registro en la cadena de vínculos de la fila (no adivina por nombre); abre el alta **siempre como asiento nuevo** (sin pestañas de transcribir ni supletoria; numera el sistema, requiere libro digital abierto) con nombres, apellidos y padres editables y vincula automáticamente al guardar. Matrimonio se ofrece **una sola vez**: el alta pregunta «¿Quién es X en este matrimonio?» con pestañas «El esposo» (por defecto) / «La esposa», que mueven los datos precargados al contrayente elegido (a los clientes les confundían dos opciones en el menú). Requiere `Registros.Crear` (vincular, además, `Registros.Editar`) |
 
+| 48 | `Registros.Crear` dividido | Capturistas (temporales) **transcriben** libros físicos; los registros nuevos los **asienta la Secretaria**. Dos permisos: `Registros.Transcribir` y `Registros.AsentarNuevo`; la supletoria sigue al modo (transcrita → Transcribir, numerada → AsentarNuevo); el «+» siempre exige AsentarNuevo. La Secretaria también edita y anula (corregir un asiento = anular y asentar de nuevo). El Administrador tiene ambos |
+
 ## 🟡 Pendientes
 
 ### Bloquea M0 — datos reales de los libros

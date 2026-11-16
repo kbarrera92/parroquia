@@ -16,7 +16,7 @@ Aplicación web en servidor **local** (red interna) para digitalizar libros sacr
 - @docs/07-ui.md — tema oscuro, tokens y reglas de interfaz
 
 ## Stack
-C# / .NET (LTS vigente), ASP.NET Core **Razor Pages + htmx**, EF Core + **PostgreSQL** (Npgsql), ASP.NET Core Identity, QuestPDF (licencia Community; fuentes Liberation incrustadas), xUnit + Testcontainers, Serilog. Producción: **Windows 10/11** dedicado 24/7, app como servicio de Windows, sin Docker. Roles: **Capturista** (crea/edita/anula), **Secretaria** (imprime), **Administrador** (todo).
+C# / .NET (LTS vigente), ASP.NET Core **Razor Pages + htmx**, EF Core + **PostgreSQL** (Npgsql), ASP.NET Core Identity, QuestPDF (licencia Community; fuentes Liberation incrustadas), xUnit + Testcontainers, Serilog. Producción: **Windows 10/11** dedicado 24/7, app como servicio de Windows, sin Docker. Roles: **Capturista** (temporal: transcribe libros físicos, edita, anula), **Secretaria** (asienta lo nuevo, edita, anula, imprime), **Administrador** (todo).
 
 ## Comandos
 Requiere Docker Desktop en marcha (PostgreSQL de desarrollo y Testcontainers). SDK fijado en `global.json` (.NET 10).
@@ -69,7 +69,7 @@ Patrón: **Comunión** (copiar y adaptar; `X` = el sacramento). Carpeta por mód
 4. **EF**: `Infraestructura/Sacramentos/X/ConfiguracionX.cs` (`ConfigurarRegistro("tabla")` da longitudes, índices, trigram y filtro de anulados; `MapearFechaParcial` + índice de la clave de fecha). Registrar `DbSet` y `ApplyConfiguration` en `ParroquiaDbContext` **antes** de `ConfiguracionAuditable.Aplicar`; luego `dotnet ef migrations add AgregarX`.
 5. **Servicio**: `ServicioX` calcado de `ServicioComunion` (`ValidadorRegistro`, `ActualizarDerivados()`, duplicados que avisan sin bloquear, `Version` para concurrencia, anular/revertir, `BuscarAsync` con `PaginarAsync`, `DatosParaConstanciaAsync`). Columnas derivadas se marcan `.NoAuditar()`.
 6. **Módulo**: `ModuloX : IModuloSacramental` (clave en minúsculas, entidad, ruta, `BuscarAsync`, `PrepararConstanciaAsync`). Registrar en `DependencyInjection`: `AddScoped<ServicioX>()` + `AddModuloSacramental<ModuloX>()`. **Menú "Libros", búsqueda de Inicio y página de impresión lo descubren solos.**
-7. **Páginas**: `Pages/X/{Index,_Resultados,Editar,Detalle}` copiando las de Comunión (autorización manual con `IAuthorizationService` según crear/editar; "Guardar y nuevo"; botón de imprimir hacia `/Constancias/{clave}/{id}`).
+7. **Páginas**: `Pages/X/{Index,_Resultados,Editar,Detalle}` copiando las de Comunión (autorización con `PermisosAlta` (Web/Presentacion): `Registros.Transcribir` / `Registros.AsentarNuevo` según la pestaña, `Registros.Editar` al editar; el POST también lo exige; "Guardar y nuevo"; botón de imprimir hacia `/Constancias/{clave}/{id}`).
 8. **Pruebas**: servicio con `ServidorPostgresFixture` (`ServicioComunionPruebas`), web con `AppFixture` (`ComunionWebPruebas`, `ConstanciaWebPruebas`) y datos sintéticos únicos por prueba (la base web se comparte).
 9. Si el libro trae más campos que la constancia, agregarlos como opcionales y reflejarlos en `docs/02`.
 10. **Colecciones** (padrinos, testigos): `List<string>` → `text[]` (patrón: **Bautismo**). Formulario: filas `name="Input.X"` repetido + parcial `_FilaX` y handler `OnGetFilaXAsync` para htmx; baja con `data-quitar-fila` (`wwwroot/js/filas-dinamicas.js`). Constancia: filas "rótulo: valor" con `Parrafo.Fila` y listas con `FormatoConstancia.UnirLista`.

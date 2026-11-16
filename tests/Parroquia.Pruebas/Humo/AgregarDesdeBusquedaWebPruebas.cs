@@ -27,23 +27,24 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
         WebUtility.HtmlDecode(await (await c.GetAsync(url)).Content.ReadAsStringAsync());
 
     [Fact]
-    public async Task La_busqueda_muestra_el_boton_solo_a_quien_puede_crear()
+    public async Task La_busqueda_muestra_el_boton_solo_a_quien_puede_asentar_nuevo()
     {
         var capturista = await app.ClienteConRolAsync(Roles.Capturista);
         var u = Unico();
         var id = await CrearComunionAsync(capturista, "Ana", "Boton" + u);
 
-        (await HtmlAsync(capturista, $"/?texto=boton{u}")).Should().Contain($"/Agregar/comunion/{id}");
-
         var secretaria = await app.ClienteConRolAsync(Roles.Secretaria);
-        (await HtmlAsync(secretaria, $"/?texto=boton{u}")).Should().Contain("Boton" + u).And.NotContain("/Agregar/");
+        (await HtmlAsync(secretaria, $"/?texto=boton{u}")).Should().Contain($"/Agregar/comunion/{id}");
+
+        (await HtmlAsync(capturista, $"/?texto=boton{u}")).Should().Contain("Boton" + u).And.NotContain("/Agregar/");
     }
 
     [Fact]
-    public async Task El_menu_ofrece_los_libros_que_faltan_y_secretaria_no_entra()
+    public async Task El_menu_ofrece_los_libros_que_faltan_y_el_capturista_no_entra()
     {
-        var c = await app.ClienteConRolAsync(Roles.Capturista);
-        var id = await CrearComunionAsync(c, "Ana", "Menu" + Unico());
+        var capturista = await app.ClienteConRolAsync(Roles.Capturista);
+        var id = await CrearComunionAsync(capturista, "Ana", "Menu" + Unico());
+        var c = await app.ClienteConRolAsync(Roles.Secretaria);
 
         var html = await HtmlAsync(c, $"/Agregar/comunion/{id}");
 
@@ -53,8 +54,7 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
             .And.NotContain("Primera Comunión")
             .And.Contain($"Origen.Clave=comunion&Origen.Id={id}");
 
-        var secretaria = await app.ClienteConRolAsync(Roles.Secretaria);
-        var r = await secretaria.GetAsync($"/Agregar/comunion/{id}");
+        var r = await capturista.GetAsync($"/Agregar/comunion/{id}");
         r.StatusCode.Should().Be(HttpStatusCode.Redirect);
         r.Headers.Location!.ToString().Should().Contain("AccesoDenegado");
 
@@ -70,7 +70,7 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
         (await AbrirLibroAsync(admin, numero)).StatusCode.Should().Be(HttpStatusCode.Redirect);
         try
         {
-            var c = await app.ClienteConRolAsync(Roles.Capturista);
+            var c = await app.ClienteAdminAsync();
             var u = Unico();
             var id = await CrearComunionAsync(c, "Ana", "Alta" + u);
             var url = $"/Confirmacion/Editar?Origen.Clave=comunion&Origen.Id={id}";
@@ -100,7 +100,7 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
     [Fact]
     public async Task Matrimonio_como_esposa_precarga_a_la_persona_en_ese_contrayente()
     {
-        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var c = await app.ClienteAdminAsync();
         var u = Unico();
         var id = await CrearComunionAsync(c, "Gloria", "Esposa" + u);
 
@@ -115,7 +115,7 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
     [Fact]
     public async Task Matrimonio_sin_elegir_precarga_al_esposo_y_pregunta_quien_es()
     {
-        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var c = await app.ClienteAdminAsync();
         var u = Unico();
         var id = await CrearComunionAsync(c, "Mario", "Esposo" + u);
 
@@ -131,7 +131,7 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
     [Fact]
     public async Task Con_origen_no_hay_pestanas_y_sin_origen_las_pestanas_cambian_de_modo()
     {
-        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var c = await app.ClienteAdminAsync();
         var id = await CrearComunionAsync(c, "Tab", "Pestana" + Unico());
 
         var conOrigen = await HtmlAsync(c, $"/Confirmacion/Editar?Origen.Clave=comunion&Origen.Id={id}");
@@ -149,7 +149,7 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
     {
         var admin = await app.ClienteAdminAsync();
         await CerrarLibroAsync(admin);
-        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var c = await app.ClienteAdminAsync();
         var u = Unico();
         var id = await CrearComunionAsync(c, "Ana", "SinLibro" + u);
         var url = $"/Confirmacion/Editar?Origen.Clave=comunion&Origen.Id={id}";
