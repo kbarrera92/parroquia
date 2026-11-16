@@ -27,18 +27,13 @@ public class IndexModel(ServicioVinculos vinculos) : PageModel
         return Page();
     }
 
-    public static string Etiqueta(OpcionAlta o) => o.Persona switch
-    {
-        "esposo" => $"{o.Nombre} (como esposo)",
-        "esposa" => $"{o.Nombre} (como esposa)",
-        _ => o.Nombre,
-    };
-
-    /// <summary>Alta del libro elegido con el origen en la consulta (lo lee <c>OrigenAlta</c> en la página <c>Editar</c>).</summary>
+    /// <summary>
+    /// Alta del libro elegido con el origen en la consulta (lo lee <c>OrigenAlta</c> en la página <c>Editar</c>).
+    /// Si el libro tiene varias personas (Matrimonio), el propio formulario pregunta cuál es.
+    /// </summary>
     public string Enlace(OpcionAlta o) =>
         Url.Content("~" + o.RutaNuevo)
         + "?Origen.Clave=" + Uri.EscapeDataString(origen.Tipo)
         + "&Origen.Id=" + origen.Id
-        + (origen.Persona.Length == 0 ? "" : "&Origen.Persona=" + Uri.EscapeDataString(origen.Persona))
-        + (o.Persona.Length == 0 ? "" : "&Origen.Como=" + Uri.EscapeDataString(o.Persona));
+        + (origen.Persona.Length == 0 ? "" : "&Origen.Persona=" + Uri.EscapeDataString(origen.Persona));
 }

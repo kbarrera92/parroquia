@@ -51,7 +51,7 @@
 | 44 | Supletorias: constancia | La misma de cada sacramento, texto sin cambios; sin acta propia por ahora |
 | 45 | Supletorias: siempre registro nuevo | No se asocia a un registro ya capturado |
 | 46 | Supletorias: anulación | Anular el registro anula su supletoria y revertir la reactiva; el número supletorio nunca se reutiliza |
-| 47 | Botón «+» en la búsqueda | Ofrece los libros sin registro en la cadena de vínculos de la fila (no adivina por nombre); abre el alta **siempre como asiento nuevo** (sin pestañas de transcribir ni supletoria; numera el sistema, requiere libro digital abierto) con nombres, apellidos y padres editables y vincula automáticamente al guardar. Matrimonio se ofrece «como esposo» y «como esposa». Requiere `Registros.Crear` (vincular, además, `Registros.Editar`) |
+| 47 | Botón «+» en la búsqueda | Ofrece los libros sin registro en la cadena de vínculos de la fila (no adivina por nombre); abre el alta **siempre como asiento nuevo** (sin pestañas de transcribir ni supletoria; numera el sistema, requiere libro digital abierto) con nombres, apellidos y padres editables y vincula automáticamente al guardar. Matrimonio se ofrece **una sola vez**: el alta pregunta «¿Quién es X en este matrimonio?» con pestañas «El esposo» (por defecto) / «La esposa», que mueven los datos precargados al contrayente elegido (a los clientes les confundían dos opciones en el menú). Requiere `Registros.Crear` (vincular, además, `Registros.Editar`) |
 
 ## 🟡 Pendientes
 

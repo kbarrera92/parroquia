@@ -48,7 +48,8 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
         var html = await HtmlAsync(c, $"/Agregar/comunion/{id}");
 
         html.Should().Contain("Bautismo").And.Contain("Confirmación")
-            .And.Contain("Matrimonio (como esposo)").And.Contain("Matrimonio (como esposa)")
+            .And.Contain("Matrimonio")
+            .And.NotContain("como esposo").And.NotContain("como esposa")
             .And.NotContain("Primera Comunión")
             .And.Contain($"Origen.Clave=comunion&Origen.Id={id}");
 
@@ -108,6 +109,23 @@ public class AgregarDesdeBusquedaWebPruebas(AppFixture app)
         html.Should().Contain("misma persona").And.Contain("Origen.Como");
         Regex.Match(html, @"name=""Input\.Esposa\.Apellidos""[^>]*value=""([^""]*)""").Groups[1].Value.Should().Be("Esposa" + u);
         Regex.Match(html, @"name=""Input\.Esposo\.Apellidos""[^>]*value=""([^""]*)""").Groups[1].Value.Should().BeEmpty();
+        Regex.IsMatch(html, @"nav-link active""[^>]*Origen\.Como=esposa").Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Matrimonio_sin_elegir_precarga_al_esposo_y_pregunta_quien_es()
+    {
+        var c = await app.ClienteConRolAsync(Roles.Capturista);
+        var u = Unico();
+        var id = await CrearComunionAsync(c, "Mario", "Esposo" + u);
+
+        var html = await HtmlAsync(c, $"/Matrimonio/Editar?Origen.Clave=comunion&Origen.Id={id}");
+
+        html.Should().Contain("en este matrimonio");
+        Regex.Match(html, @"name=""Input\.Esposo\.Apellidos""[^>]*value=""([^""]*)""").Groups[1].Value.Should().Be("Esposo" + u);
+        Regex.Match(html, @"name=""Input\.Esposa\.Apellidos""[^>]*value=""([^""]*)""").Groups[1].Value.Should().BeEmpty();
+        Regex.Match(html, @"name=""Origen\.Como""[^>]*value=""([^""]*)""").Groups[1].Value.Should().Be("esposo");
+        Regex.IsMatch(html, @"nav-link active""[^>]*Origen\.Como=esposo").Should().BeTrue();
     }
 
     [Fact]

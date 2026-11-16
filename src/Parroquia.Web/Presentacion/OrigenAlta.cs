@@ -26,6 +26,9 @@ public sealed class OrigenAlta
     /// <summary>«Bautismo de Ana Prueba (libro 1, folio 2, partida 3)».</summary>
     public string? Descripcion { get; private set; }
 
+    /// <summary>«Nombres Apellidos» de la persona de origen (para preguntar qué papel tiene en el destino).</summary>
+    public string? NombreMostrado { get; private set; }
+
     public string? Aviso { get; private set; }
 
     public ExtremoVinculo Extremo => new(Clave ?? "", Id ?? 0, Persona ?? "");
@@ -35,10 +38,11 @@ public sealed class OrigenAlta
     {
         if (!Presente) return;
         Persona ??= "";
-        Como ??= "";
 
         var origen = modulos.FirstOrDefault(m => m.Clave == Clave);
         var destino = modulos.FirstOrDefault(m => m.Clave == claveDestino);
+        // Sin elección, la persona entra como la primera del destino (en Matrimonio, el esposo).
+        if (string.IsNullOrEmpty(Como)) Como = destino?.Personas.FirstOrDefault() ?? "";
         var resumen = origen is null || destino is null || !destino.Personas.Contains(Como)
             ? null
             : await vinculos.ResumenAsync(Extremo, ct);
@@ -52,6 +56,7 @@ public sealed class OrigenAlta
 
         Valido = true;
         Datos = datos;
+        NombreMostrado = $"{resumen.Nombres} {resumen.Apellidos}".Trim();
         Descripcion = $"{resumen.Sacramento} de {resumen.Nombres} {resumen.Apellidos}".Trim()
             + $" (libro {resumen.Libro}, folio {resumen.Folio}, partida {resumen.Partida})";
     }
