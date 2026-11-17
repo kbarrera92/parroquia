@@ -351,6 +351,18 @@ function Aplicar-Retencion {
 
 # ---- Seguridad de archivos y certificados ---------------------------------------------------------------------------
 
+function Resolver-Cuenta {
+    # "S-1-..." = SID (independiente del idioma); cualquier otro texto = nombre de cuenta (p. ej. NT SERVICE\ParroquiaWeb).
+    # Traduce a SID aquí para que un nombre que no existe falle con un mensaje claro y no dentro de AddAccessRule.
+    param([string]$Cuenta)
+    if ($Cuenta -match '^S-1-') { return New-Object Security.Principal.SecurityIdentifier($Cuenta) }
+    try {
+        return (New-Object Security.Principal.NTAccount($Cuenta)).Translate([Security.Principal.SecurityIdentifier])
+    } catch {
+        throw "Windows no reconoce la cuenta '$Cuenta'. Si es NT SERVICE\<nombre>, el servicio debe existir antes de dar permisos."
+    }
+}
+
 function Proteger-Carpeta {
     # Quita la herencia y deja control total solo a Administradores y SYSTEM; $Lectura/$Modificacion son cuentas extra.
     param([string]$Ruta, [string[]]$Lectura = @(), [string[]]$Modificacion = @())
@@ -361,13 +373,17 @@ function Proteger-Carpeta {
     $herencia = [Security.AccessControl.InheritanceFlags]'ContainerInherit,ObjectInherit'
     $nada = [Security.AccessControl.PropagationFlags]::None
     $allow = [Security.AccessControl.AccessControlType]::Allow
-    foreach ($cuenta in 'BUILTIN\Administrators', 'NT AUTHORITY\SYSTEM') {
+    # Administradores y SYSTEM por SID: el nombre del grupo cambia con el idioma de Windows ("Administradores" en español).
+    foreach ($sid in 'S-1-5-32-544', 'S-1-5-18') {
+        $cuenta = Resolver-Cuenta $sid
         $acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($cuenta, 'FullControl', $herencia, $nada, $allow)))
     }
-    foreach ($cuenta in $Lectura) {
+    foreach ($nombre in $Lectura) {
+        $cuenta = Resolver-Cuenta $nombre
         $acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($cuenta, 'ReadAndExecute', $herencia, $nada, $allow)))
     }
-    foreach ($cuenta in $Modificacion) {
+    foreach ($nombre in $Modificacion) {
+        $cuenta = Resolver-Cuenta $nombre
         $acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($cuenta, 'Modify', $herencia, $nada, $allow)))
     }
     Set-Acl -LiteralPath $Ruta -AclObject $acl
@@ -388,6 +404,6 @@ function Dar-AccesoClave {
     }
     if (-not $archivo) { throw "No se encontró el archivo de la clave privada ($nombre)." }
     $acl = Get-Acl -LiteralPath $archivo
-    $acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($Cuenta, 'Read', 'Allow')))
+    $acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule((Resolver-Cuenta $Cuenta), 'Read', 'Allow')))
     Set-Acl -LiteralPath $archivo -AclObject $acl
 }
